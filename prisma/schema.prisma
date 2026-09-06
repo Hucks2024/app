@@ -1,0 +1,125 @@
+// Pacemates — verified running-meetup app
+// Small, self-contained SQLite database. Photos are stored as binary blobs
+// directly in the DB (not on disk) so the app has no external file-storage
+// dependency and works the same in dev and in production.
+//
+// Note: SQLite has no native enum type, so status/role fields below are
+// plain strings constrained by convention (and by the app code, which only
+// ever writes the values listed in the comment above each field).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String  @id @default(cuid())
+  name         String
+  email        String  @unique
+  passwordHash String
+  bio          String?
+  city         String?
+  pace         String? // free text, e.g. "5:30 / km"
+
+  profilePhoto     Bytes?
+  profilePhotoType String?
+
+  /// "USER" | "ADMIN"
+  role String @default("USER")
+
+  /// "UNSUBMITTED" | "PENDING" | "APPROVED" | "REJECTED"
+  verificationStatus String @default("UNSUBMITTED")
+
+  /// "ACTIVE" | "SUSPENDED"
+  accountStatus String @default("ACTIVE")
+
+  createdAt DateTime @default(now())
+
+  verification     VerificationRequest?
+  hostedActivities RunActivity[]        @relation("HostedActivities")
+  participations   Participation[]
+  comments         Comment[]
+  reportsMade      Report[]             @relation("ReportsMade")
+  reportsReceived  Report[]             @relation("ReportsReceived")
+}
+
+// Holds the sensitive verification photos separately from the User record.
+// idPhoto is intentionally wiped once an admin makes a decision — we only
+// need to have looked at it once, not keep it forever.
+model VerificationRequest {
+  id              String @id @default(cuid())
+  userId          String @unique
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selfiePhoto     Bytes
+  selfiePhotoType String
+  idPhoto         Bytes?
+  idPhotoType     String?
+
+  /// "PENDING" | "APPROVED" | "REJECTED"
+  status String @default("PENDING")
+
+  reviewerNote String?
+  submittedAt  DateTime  @default(now())
+  reviewedAt   DateTime?
+}
+
+model RunActivity {
+  id              String   @id @default(cuid())
+  hostId          String
+  host            User     @relation("HostedActivities", fields: [hostId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  location        String
+  startsAt        DateTime
+  distanceKm      Float?
+  pace            String?
+  maxParticipants Int?
+  createdAt       DateTime @default(now())
+
+  participations Participation[]
+  comments       Comment[]
+}
+
+model Participation {
+  id         String      @id @default(cuid())
+  activityId String
+  activity   RunActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// "JOINED" | "WAITLIST" | "CANCELLED"
+  status String @default("JOINED")
+
+  joinedAt DateTime @default(now())
+
+  @@unique([activityId, userId])
+}
+
+model Comment {
+  id         String      @id @default(cuid())
+  activityId String
+  activity   RunActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String
+  createdAt  DateTime    @default(now())
+}
+
+model Report {
+  id             String @id @default(cuid())
+  reporterId     String
+  reporter       User   @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUserId String
+  reportedUser   User   @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  activityId     String?
+  reason         String
+
+  /// "OPEN" | "RESOLVED"
+  status String @default("OPEN")
+
+  createdAt DateTime @default(now())
+}
