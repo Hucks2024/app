@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/auth";
 
 const signupSchema = z.object({
@@ -26,6 +26,7 @@ export async function signupAction(formData: FormData) {
 
   const { name, email, password, city } = parsed.data;
 
+  const prisma = await getPrisma();
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     redirect(`/signup?error=${encodeURIComponent("An account with that email already exists.")}`);
@@ -56,6 +57,7 @@ export async function loginAction(formData: FormData) {
   }
 
   const { email, password } = parsed.data;
+  const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   const genericError = encodeURIComponent("Incorrect email or password.");
   if (!user) {

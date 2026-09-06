@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import type { User } from "@prisma/client";
 
 const SESSION_COOKIE = "pacemates_session";
@@ -64,6 +64,7 @@ export async function getSessionUserId(): Promise<string | null> {
 export async function getCurrentUser(): Promise<User | null> {
   const userId = await getSessionUserId();
   if (!userId) return null;
+  const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.accountStatus === "SUSPENDED") return null;
   return user;

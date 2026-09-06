@@ -1,7 +1,28 @@
+import path from "path";
 import { PrismaClient } from "@prisma/client";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// Same resolution as src/lib/db.ts, minus the Cloudflare-binding lookup
+// (this script only ever runs as a plain Node CLI, e.g. `prisma db seed` or
+// `npm run db:seed` — locally, or against a real Turso database if
+// TURSO_DATABASE_URL is set, e.g. to seed a freshly-deployed production DB).
+function resolvedLocalFileUrl(): string {
+  const url = process.env.DATABASE_URL ?? "file:./dev.db";
+  if (!url.startsWith("file:")) return url;
+  const relativePath = url.slice("file:".length);
+  if (path.isAbsolute(relativePath)) return url;
+  return `file:${path.resolve(process.cwd(), relativePath)}`;
+}
+
+const adapter = process.env.TURSO_DATABASE_URL
+  ? new PrismaLibSql({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    })
+  : new PrismaLibSql({ url: resolvedLocalFileUrl() });
+
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || "admin@doyoulikepizza.com";

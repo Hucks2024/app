@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import VerificationBadge from "@/components/VerificationBadge";
 import {
@@ -21,6 +21,7 @@ export default async function ActivityDetailPage({
   const user = await requireUser();
   const { id } = await params;
   const { error, reported } = await searchParams;
+  const prisma = await getPrisma();
 
   const activity = await prisma.runActivity.findUnique({
     where: { id },
@@ -198,7 +199,7 @@ function ParticipantRow({
   activityId,
   viewer,
 }: {
-  user: { id: string; name: string; profilePhoto: Buffer | null; verificationStatus: string };
+  user: { id: string; name: string; profilePhoto: Uint8Array | null; verificationStatus: string };
   activityId: string;
   viewer: string;
 }) {

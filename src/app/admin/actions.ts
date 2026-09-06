@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export async function approveVerificationAction(formData: FormData) {
   await requireAdmin();
   const requestId = String(formData.get("requestId"));
 
+  const prisma = await getPrisma();
   const request = await prisma.verificationRequest.findUnique({ where: { id: requestId } });
   if (!request) return;
 
@@ -41,6 +42,7 @@ export async function rejectVerificationAction(formData: FormData) {
   const requestId = String(formData.get("requestId"));
   const note = (formData.get("note") as string)?.trim() || null;
 
+  const prisma = await getPrisma();
   const request = await prisma.verificationRequest.findUnique({ where: { id: requestId } });
   if (!request) return;
 
@@ -67,6 +69,7 @@ export async function rejectVerificationAction(formData: FormData) {
 export async function resolveReportAction(formData: FormData) {
   await requireAdmin();
   const reportId = String(formData.get("reportId"));
+  const prisma = await getPrisma();
   await prisma.report.update({ where: { id: reportId }, data: { status: "RESOLVED" } });
   revalidatePath("/admin");
 }
@@ -75,6 +78,7 @@ export async function banUserAction(formData: FormData) {
   const admin = await requireAdmin();
   const userId = String(formData.get("userId"));
   if (userId === admin.id) return;
+  const prisma = await getPrisma();
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "SUSPENDED" } });
   revalidatePath("/admin");
 }
@@ -82,6 +86,7 @@ export async function banUserAction(formData: FormData) {
 export async function unbanUserAction(formData: FormData) {
   await requireAdmin();
   const userId = String(formData.get("userId"));
+  const prisma = await getPrisma();
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "ACTIVE" } });
   revalidatePath("/admin");
 }

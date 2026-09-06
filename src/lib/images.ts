@@ -3,9 +3,14 @@ const MAX_BYTES = 6 * 1024 * 1024; // 6MB per photo
 
 export class ImageValidationError extends Error {}
 
-/** Reads a File from a form upload into a Buffer, enforcing type/size limits. */
+/**
+ * Reads a File from a form upload into a plain Uint8Array (not a Node
+ * Buffer), enforcing type/size limits. A plain Uint8Array is what Prisma's
+ * Bytes fields expect and what the Cloudflare Workers runtime supports —
+ * Buffer-specific methods aren't needed anywhere we use these bytes.
+ */
 export async function readImageFile(file: File | null): Promise<{
-  bytes: Buffer;
+  bytes: Uint8Array<ArrayBuffer>;
   type: string;
 } | null> {
   if (!file || file.size === 0) return null;
@@ -18,5 +23,5 @@ export async function readImageFile(file: File | null): Promise<{
   }
 
   const arrayBuffer = await file.arrayBuffer();
-  return { bytes: Buffer.from(arrayBuffer), type: file.type };
+  return { bytes: new Uint8Array(arrayBuffer), type: file.type };
 }

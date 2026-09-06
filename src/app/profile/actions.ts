@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { readImageFile, ImageValidationError } from "@/lib/images";
 
@@ -27,7 +27,7 @@ export async function updateProfileAction(formData: FormData) {
     redirect(`/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
   }
 
-  let photo: { bytes: Buffer; type: string } | null = null;
+  let photo: { bytes: Uint8Array<ArrayBuffer>; type: string } | null = null;
   try {
     photo = await readImageFile(formData.get("profilePhoto") as File | null);
   } catch (err) {
@@ -35,6 +35,7 @@ export async function updateProfileAction(formData: FormData) {
     redirect(`/profile?error=${encodeURIComponent(message)}`);
   }
 
+  const prisma = await getPrisma();
   await prisma.user.update({
     where: { id: user.id },
     data: {

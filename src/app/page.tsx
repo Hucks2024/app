@@ -10,7 +10,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-5xl px-4 py-20 text-center">
         <p className="badge-green mb-4">Photo-ID verified members only</p>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
-          Find your next run, not a stranger.
+          Helping people connect
         </h1>
         <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
           {SITE.name} is a small, verified community for runners to organize group runs, find

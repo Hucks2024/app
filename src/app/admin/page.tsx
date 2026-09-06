@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import {
   approveVerificationAction,
@@ -12,6 +12,7 @@ import {
 
 export default async function AdminPage() {
   await requireAdmin();
+  const prisma = await getPrisma();
 
   const [pending, openReports, users] = await Promise.all([
     prisma.verificationRequest.findMany({

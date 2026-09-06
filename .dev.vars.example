@@ -1,0 +1,13 @@
+# Copy to .dev.vars to test the Cloudflare Workers build locally via
+# `npm run preview` (wrangler dev / Miniflare — no live Cloudflare account
+# needed for this). NOT used by plain `npm run dev`.
+#
+# See README's "Cloudflare Workers (prepared, currently blocked)" section —
+# the deployed worker currently fails on its first database query regardless
+# of what's set here, due to an open upstream Prisma bug.
+
+NEXTJS_ENV=development
+SESSION_SECRET=local-preview-only-secret-do-not-use-in-production
+NEXT_PUBLIC_SITE_URL=https://doyoulikepizza.com
+TURSO_DATABASE_URL=libsql://your-db-name.turso.io
+TURSO_AUTH_TOKEN=your-turso-auth-token

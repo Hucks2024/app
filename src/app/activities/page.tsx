@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 
 export default async function ActivitiesPage() {
   const user = await requireUser();
+  const prisma = await getPrisma();
 
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() } },

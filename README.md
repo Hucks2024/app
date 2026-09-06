@@ -35,9 +35,10 @@ and `src/app/admin/actions.ts`.
 
 ## Tech stack
 
-- **Next.js 14** (App Router, Server Actions — no separate API layer for most
+- **Next.js 16** (App Router, Server Actions — no separate API layer for most
   features)
-- **Prisma + SQLite** — one small `.db` file, see the production note below
+- **Prisma 7 + SQLite** (via `@prisma/adapter-libsql`) — one small `.db`
+  file locally, or a hosted Turso database in production; see below
 - **Tailwind CSS**
 - Session auth via signed httpOnly cookies (`jose` + `bcryptjs`), no
   third-party auth provider
@@ -60,7 +61,7 @@ and approve your own test accounts' verification requests.
 
 ## Deploying, and connecting doyoulikepizza.com
 
-This app deploys cleanly to **Vercel** (or any Node host).
+### Option A — Vercel (recommended, fully working)
 
 1. Push this repo to GitHub (already done if you're reading this from the
    repo) and import it into Vercel.
@@ -73,22 +74,66 @@ This app deploys cleanly to **Vercel** (or any Node host).
    requests there. You have two good options:
    - **Turso** (recommended) — a hosted, SQLite-compatible database
      ([turso.tech](https://turso.tech)) with a free tier. Create a database,
-     then point `DATABASE_URL` at the `libsql://...` connection string it
-     gives you.
+     then set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` (from the Turso
+     dashboard/CLI) as env vars — the app prefers these over `DATABASE_URL`
+     automatically (see `src/lib/db.ts`), no code changes needed.
    - **Host with a real disk** — Render, Fly.io, or a small VPS all support
-     a persistent volume, so the SQLite file just lives on disk normally.
+     a persistent volume, so the plain SQLite file just lives on disk
+     normally; keep using `DATABASE_URL` in that case.
    Either way, run `npx prisma migrate deploy` against the production
-   `DATABASE_URL` once before first use (the `build` script already does
-   this automatically on deploy).
+   database once before first use (the `build` script already does this
+   automatically on deploy).
 4. **Point doyoulikepizza.com at it:** in the Vercel project → Settings →
    Domains, add `doyoulikepizza.com` (and `www.doyoulikepizza.com` if you
    want both). Vercel will show you the DNS records to add — usually an `A`
    record (or `ALIAS`/`ANAME`) for the apex domain and a `CNAME` for `www` —
-   at whatever registrar/DNS provider you bought the domain through. DNS
-   changes can take anywhere from a few minutes to a few hours to propagate.
+   at whatever registrar/DNS provider you bought the domain through (or at
+   Cloudflare's DNS if that's where the domain is managed — Cloudflare can
+   host your DNS and point the domain at Vercel even though the app itself
+   isn't running on Cloudflare's own servers). DNS changes can take anywhere
+   from a few minutes to a few hours to propagate.
 5. Once the domain is live, update `NEXT_PUBLIC_SITE_URL` to
    `https://doyoulikepizza.com` (already the default) and redeploy so the
    Open Graph/canonical tags match.
+6. **Redirecting an existing WordPress site to it:** if `doyoulikepizza.com`
+   currently runs WordPress and you want it to *point at* this app instead,
+   the cleanest approach is to change the domain's DNS to Vercel per step 4
+   above and retire the WordPress hosting (rather than trying to run a
+   redirect *from* WordPress, which keeps you paying for and maintaining a
+   WordPress install just to bounce visitors elsewhere). If you'd rather
+   keep WordPress on the root domain for now and only send some traffic
+   here, deploy this app and point a subdomain (e.g. `runs.doyoulikepizza.com`)
+   at it in step 4 instead, then add a link or redirect to that subdomain
+   from WordPress.
+
+### Option B — Cloudflare Workers (prepared, currently blocked)
+
+The repo already has the Cloudflare toolchain wired up (`@opennextjs/cloudflare`,
+`wrangler.jsonc`, `open-next.config.ts`, `npm run preview` / `npm run deploy`)
+and the database layer supports Turso out of the box, which is exactly what a
+Cloudflare deployment needs. **It doesn't run yet**, though: Prisma 7's client
+tries to compile its query-engine WASM module at runtime, and Cloudflare
+Workers refuses runtime WASM compilation for security reasons
+(`CompileError: WebAssembly.Module(): Wasm code generation disallowed by
+embedder`). This is a confirmed, open upstream bug —
+[prisma/prisma#28657](https://github.com/prisma/prisma/issues/28657) — not
+something fixable from application code. `opennextjs-cloudflare build`
+succeeds and the app boots fine on Workers; only the first real database
+query fails.
+
+If you want this running on Cloudflare specifically:
+- Watch that GitHub issue — once Prisma ships a fix, this should start
+  working with no code changes (the adapter/Turso wiring is already in
+  `src/lib/db.ts`), just re-run `npm run preview` to confirm, then
+  `npm run deploy`.
+- Or swap the ORM for one with solid Cloudflare support today, e.g.
+  [Drizzle ORM](https://orm.drizzle.team/) — a bigger rewrite (every query in
+  `src/app/**/actions.ts` and `page.tsx` would need converting), not
+  something done here without asking first.
+- In the meantime, Cloudflare can still front the app in a DNS-only sense:
+  use Cloudflare as your registrar/DNS provider while the app itself runs on
+  Vercel (Option A) — this is what most people actually want out of "point
+  my Cloudflare domain at my app" anyway.
 
 ## Data model
 

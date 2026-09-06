@@ -10,11 +10,20 @@ npm-debug.log*
 .env
 .env*.local
 
-# sqlite
-prisma/*.db
-prisma/*.db-journal
+# sqlite (Prisma 7 resolves the "file:./dev.db" DATABASE_URL relative to
+# the project root, not the prisma/ folder)
+*.db
+*.db-journal
 
 # misc
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

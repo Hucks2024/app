@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
@@ -11,6 +11,7 @@ export async function GET(
   if (!viewer) return new NextResponse("Unauthorized", { status: 401 });
 
   const { userId } = await params;
+  const prisma = await getPrisma();
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { profilePhoto: true, profilePhotoType: true },

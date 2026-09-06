@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { submitVerificationAction } from "@/app/verify/actions";
 
 export default async function VerifyPage({
@@ -10,6 +10,7 @@ export default async function VerifyPage({
 }) {
   const { error, submitted } = await searchParams;
   const user = await requireUser();
+  const prisma = await getPrisma();
   const verification = await prisma.verificationRequest.findUnique({
     where: { userId: user.id },
   });

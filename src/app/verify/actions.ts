@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { readImageFile, ImageValidationError } from "@/lib/images";
 
@@ -25,6 +25,7 @@ export async function submitVerificationAction(formData: FormData) {
     redirect(`/verify?error=${encodeURIComponent("Please upload both a selfie and a photo ID.")}`);
   }
 
+  const prisma = await getPrisma();
   await prisma.verificationRequest.upsert({
     where: { userId: user.id },
     create: {

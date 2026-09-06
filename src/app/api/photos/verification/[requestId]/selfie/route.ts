@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
@@ -11,6 +11,7 @@ export async function GET(
   if (viewer.role !== "ADMIN") return new NextResponse("Forbidden", { status: 403 });
 
   const { requestId } = await params;
+  const prisma = await getPrisma();
   const record = await prisma.verificationRequest.findUnique({
     where: { id: requestId },
     select: { selfiePhoto: true, selfiePhotoType: true },

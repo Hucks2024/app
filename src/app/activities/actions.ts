@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { requireUser, requireVerifiedUser } from "@/lib/auth";
 
 const createSchema = z.object({
@@ -37,6 +37,7 @@ export async function createActivityAction(formData: FormData) {
     redirect(`/activities/new?error=${encodeURIComponent("That date/time doesn't look right.")}`);
   }
 
+  const prisma = await getPrisma();
   const activity = await prisma.runActivity.create({
     data: {
       hostId: user.id,
@@ -60,6 +61,7 @@ export async function joinActivityAction(formData: FormData) {
   const user = await requireVerifiedUser();
   const activityId = String(formData.get("activityId"));
 
+  const prisma = await getPrisma();
   const activity = await prisma.runActivity.findUnique({
     where: { id: activityId },
     include: { participations: { where: { status: "JOINED" } } },
@@ -85,6 +87,7 @@ export async function leaveActivityAction(formData: FormData) {
   const user = await requireUser();
   const activityId = String(formData.get("activityId"));
 
+  const prisma = await getPrisma();
   await prisma.participation.updateMany({
     where: { activityId, userId: user.id },
     data: { status: "CANCELLED" },
@@ -122,6 +125,7 @@ export async function postCommentAction(formData: FormData) {
     redirect(`/activities/${activityId}?error=${encodeURIComponent("Message must be 1-1000 characters.")}`);
   }
 
+  const prisma = await getPrisma();
   await prisma.comment.create({
     data: { activityId, authorId: user.id, body },
   });
@@ -144,6 +148,7 @@ export async function reportUserAction(formData: FormData) {
     );
   }
 
+  const prisma = await getPrisma();
   await prisma.report.create({
     data: { reporterId: user.id, reportedUserId, activityId, reason },
   });
