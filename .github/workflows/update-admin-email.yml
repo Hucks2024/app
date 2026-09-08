@@ -1,0 +1,29 @@
+name: Update admin email
+
+# Manual-only. Actions tab → "Update admin email" → "Run workflow", change
+# the email if needed (defaults to sam@hucks.co.uk), run. Updates whichever
+# account(s) have role = 'ADMIN' on the Turso database.
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_email:
+        description: "New email for the ADMIN account"
+        required: true
+        default: "sam@hucks.co.uk"
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install @libsql/client
+      - name: Update admin email
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          NEW_EMAIL: ${{ inputs.new_email }}
+        run: node scripts/update-admin-email.mjs
