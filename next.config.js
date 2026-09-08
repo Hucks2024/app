@@ -11,4 +11,11 @@ const nextConfig = {
 
 module.exports = nextConfig;
 
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+// Local-dev-only shim so `npm run dev` can read Cloudflare bindings the
+// same way the deployed Worker does (see src/lib/db.ts). It has no
+// business running during a real build — on Vercel (or any other
+// production build, including `opennextjs-cloudflare build` itself) this
+// isn't a dev server and the call fails outright, breaking the build.
+if (process.env.NODE_ENV === "development") {
+  import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+}
