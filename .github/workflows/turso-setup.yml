@@ -1,0 +1,27 @@
+name: Turso one-time database setup
+
+# Manual-only. Run this once (Actions tab → "Turso one-time database setup"
+# → "Run workflow") after adding the TURSO_DATABASE_URL and TURSO_AUTH_TOKEN
+# repository secrets (Settings → Secrets and variables → Actions → New
+# repository secret). It creates the app's tables on your Turso database and
+# a first admin account, then can be safely ignored — it's idempotent, so
+# re-running it later is harmless (it skips the schema step if the tables
+# already exist).
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install @libsql/client
+      - name: Apply schema + create admin account
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: node scripts/apply-turso-setup.mjs
