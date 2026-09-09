@@ -12,7 +12,7 @@ export default async function HomePage() {
   // same as the login form's own redirect.
   if (user) {
     if (user.verificationStatus !== "APPROVED") redirect("/verify");
-    return <RunsScreen user={user} />;
+    return <RunsScreen />;
   }
 
   return (

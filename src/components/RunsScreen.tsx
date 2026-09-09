@@ -1,12 +1,11 @@
 import Link from "next/link";
-import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import ActivitiesMap from "@/components/ActivitiesMap";
 
-// The map of upcoming runs — the thing a logged-in member should see
-// immediately, whether they land on "/" or navigate to "/activities".
-// Both pages just render this with the already-resolved user.
-export default async function RunsScreen({ user }: { user: User }) {
+// The map of upcoming runs. Only reachable by verified members — both "/"
+// and "/activities" gate on requireVerifiedUser() before rendering this,
+// so there's no "you're not verified yet" branch to handle here.
+export default async function RunsScreen() {
   const prisma = await getPrisma();
 
   const activities = await prisma.runActivity.findMany({
@@ -16,8 +15,6 @@ export default async function RunsScreen({ user }: { user: User }) {
       participations: { where: { status: "JOINED" } },
     },
   });
-
-  const isVerified = user.verificationStatus === "APPROVED";
 
   const mapActivities = activities
     .filter((a) => a.latitude != null && a.longitude != null)
@@ -37,24 +34,10 @@ export default async function RunsScreen({ user }: { user: User }) {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Upcoming runs</h1>
-        {isVerified && (
-          <Link href="/activities/new" className="btn-primary">
-            + Post a run
-          </Link>
-        )}
+        <Link href="/activities/new" className="btn-primary">
+          + Post a run
+        </Link>
       </div>
-
-      {!isVerified && (
-        <div className="card bg-amber-50 border-amber-200 mb-6">
-          <p className="text-sm text-amber-800">
-            You can browse runs, but you&apos;ll need to{" "}
-            <Link href="/verify" className="underline font-medium">
-              get verified
-            </Link>{" "}
-            before you can join one or post your own.
-          </p>
-        </div>
-      )}
 
       <ActivitiesMap activities={mapActivities} />
     </div>
