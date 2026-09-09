@@ -1,0 +1,25 @@
+name: Seed a sample run (Fulham, London)
+
+# Manual-only test-data helper. Run this (Actions tab → "Seed a sample run
+# (Fulham, London)" → "Run workflow") to add one sample RunActivity hosted
+# by the admin account, so there's a pin to see on the map. Not idempotent —
+# each run adds another one, so only run it as many times as you actually
+# want sample runs.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install @libsql/client
+      - name: Insert sample run
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: node scripts/seed-sample-run.mjs
