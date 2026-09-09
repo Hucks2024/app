@@ -45,6 +45,11 @@ export default async function Nav() {
           )}
         </nav>
       </div>
+      {!user && (
+        <div className="mx-auto max-w-5xl px-4 pb-2 -mt-1">
+          <p className="text-xs text-slate-500">Built around runs · Easy to report</p>
+        </div>
+      )}
     </header>
   );
 }
