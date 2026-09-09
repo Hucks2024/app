@@ -1,25 +1,16 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import Avatar from "@/components/Avatar";
 import ActivitiesMap from "@/components/ActivitiesMap";
 
-export default async function ActivitiesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ view?: string }>;
-}) {
+export default async function ActivitiesPage() {
   const user = await requireUser();
   const prisma = await getPrisma();
-  const { view } = await searchParams;
-  const isMapView = view === "map";
 
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
     include: {
-      host: { select: { id: true, name: true, profilePhoto: true } },
       participations: { where: { status: "JOINED" } },
     },
   });
@@ -63,68 +54,7 @@ export default async function ActivitiesPage({
         </div>
       )}
 
-      <div className="flex gap-2 mb-6 border-b border-slate-200">
-        <Link
-          href="/activities"
-          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-            !isMapView
-              ? "border-brand-500 text-brand-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          List
-        </Link>
-        <Link
-          href="/activities?view=map"
-          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
-            isMapView
-              ? "border-brand-500 text-brand-600"
-              : "border-transparent text-slate-500 hover:text-slate-700"
-          }`}
-        >
-          Map
-        </Link>
-      </div>
-
-      {activities.length === 0 && (
-        <p className="text-slate-600">No upcoming runs yet. Be the first to post one!</p>
-      )}
-
-      {activities.length > 0 && isMapView && <ActivitiesMap activities={mapActivities} />}
-
-      {activities.length > 0 && !isMapView && (
-        <ul className="space-y-4">
-          {activities.map((a) => (
-            <li key={a.id}>
-              <Link href={`/activities/${a.id}`} className="card block hover:border-brand-300">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="font-semibold text-lg">{a.title}</h2>
-                    <p className="text-sm text-slate-600 mt-1">
-                      {format(a.startsAt, "EEE, MMM d · h:mm a")} · {a.location}
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {a.distanceKm ? `${a.distanceKm} km` : null}
-                      {a.distanceKm && a.pace ? " · " : null}
-                      {a.pace ? `${a.pace} pace` : null}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Avatar userId={a.host.id} hasPhoto={!!a.host.profilePhoto} size={6} />
-                      {a.host.name}
-                    </div>
-                    <span className="badge-slate">
-                      {a.participations.length}
-                      {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} joined
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ActivitiesMap activities={mapActivities} />
     </div>
   );
 }

@@ -1,9 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+
+  // Logged-in members skip the marketing page entirely — straight to the
+  // map of runs (or to verification, if they haven't finished that yet),
+  // same destination the login form itself redirects to.
+  if (user) {
+    redirect(user.verificationStatus === "APPROVED" ? "/activities" : "/verify");
+  }
 
   return (
     <div>
@@ -18,20 +26,12 @@ export default async function HomePage() {
           Everyone here has confirmed their identity with a photo ID before they can join.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
-          {user ? (
-            <Link href="/activities" className="btn-primary text-base px-6 py-3">
-              See upcoming runs
-            </Link>
-          ) : (
-            <>
-              <Link href="/signup" className="btn-primary text-base px-6 py-3">
-                Join {SITE.name}
-              </Link>
-              <Link href="/login" className="btn-secondary text-base px-6 py-3">
-                Log in
-              </Link>
-            </>
-          )}
+          <Link href="/signup" className="btn-primary text-base px-6 py-3">
+            Join {SITE.name}
+          </Link>
+          <Link href="/login" className="btn-secondary text-base px-6 py-3">
+            Log in
+          </Link>
         </div>
       </section>
 
