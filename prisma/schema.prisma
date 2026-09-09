@@ -77,6 +77,11 @@ model RunActivity {
   title           String
   description     String?
   location        String
+  // Best-effort geocode of `location`, filled in at creation time so the
+  // map view has something to plot. Null when geocoding failed or hasn't
+  // run yet — the map view just skips those activities.
+  latitude        Float?
+  longitude       Float?
   startsAt        DateTime
   distanceKm      Float?
   pace            String?

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireVerifiedUser } from "@/lib/auth";
+import { geocodeLocation } from "@/lib/geocode";
 
 const createSchema = z.object({
   title: z.string().trim().min(3, "Give your run a title").max(120),
@@ -37,6 +38,10 @@ export async function createActivityAction(formData: FormData) {
     redirect(`/activities/new?error=${encodeURIComponent("That date/time doesn't look right.")}`);
   }
 
+  // Best-effort: a run still gets posted even if geocoding fails, it just
+  // won't show up on the map view.
+  const geocoded = await geocodeLocation(parsed.data.location);
+
   const prisma = await getPrisma();
   const activity = await prisma.runActivity.create({
     data: {
@@ -44,6 +49,8 @@ export async function createActivityAction(formData: FormData) {
       title: parsed.data.title,
       description: parsed.data.description,
       location: parsed.data.location,
+      latitude: geocoded?.latitude,
+      longitude: geocoded?.longitude,
       startsAt,
       distanceKm: parsed.data.distanceKm,
       pace: parsed.data.pace,
