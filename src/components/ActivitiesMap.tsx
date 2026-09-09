@@ -84,9 +84,13 @@ export default function ActivitiesMap({
     <div className="h-[70vh] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer center={center} zoom={11} scrollWheelZoom className="h-full w-full">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
+          // CartoDB's "Voyager" tiles (used briefly here for a more
+          // colorful look) started stamping "API KEY REQUIRED" across
+          // every tile — their free/keyless tier apparently no longer
+          // covers this. Plain OpenStreetMap tiles genuinely require no
+          // key and no account, so that's what stays.
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
