@@ -1,0 +1,24 @@
+name: Add Strava URL to RunActivity
+
+# Manual-only. Run this once (Actions tab → "Add Strava URL to RunActivity"
+# → "Run workflow") to add the stravaUrl column the new "attach a Strava
+# route" field needs. Idempotent — safe to re-run, it skips if the column
+# already exists.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install @libsql/client
+      - name: Add stravaUrl column
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: node scripts/add-strava-url.mjs

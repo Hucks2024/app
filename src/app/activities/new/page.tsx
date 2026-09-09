@@ -96,6 +96,18 @@ export default async function NewActivityPage({
             placeholder="Anything runners should know — route, difficulty, what to bring…"
           />
         </div>
+        <div>
+          <label className="label" htmlFor="stravaUrl">
+            Strava route (optional)
+          </label>
+          <input
+            className="input"
+            id="stravaUrl"
+            name="stravaUrl"
+            type="url"
+            placeholder="https://www.strava.com/routes/..."
+          />
+        </div>
         <button type="submit" className="btn-primary w-full">
           Post run
         </button>

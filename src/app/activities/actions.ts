@@ -14,6 +14,16 @@ const createSchema = z.object({
   distanceKm: z.coerce.number().positive().max(500).optional(),
   pace: z.string().trim().max(40).optional(),
   maxParticipants: z.coerce.number().int().positive().max(500).optional(),
+  stravaUrl: z
+    .string()
+    .trim()
+    .url("That doesn't look like a valid URL")
+    .max(300)
+    // .url() alone accepts any scheme, including javascript: — this field
+    // gets rendered as a clickable <a href> to every other member, so a
+    // non-http(s) URL here would be a stored-XSS vector.
+    .refine((v) => /^https?:\/\//i.test(v), "Must be a http(s):// link")
+    .optional(),
 });
 
 export async function createActivityAction(formData: FormData) {
@@ -27,6 +37,7 @@ export async function createActivityAction(formData: FormData) {
     distanceKm: formData.get("distanceKm") || undefined,
     pace: formData.get("pace") || undefined,
     maxParticipants: formData.get("maxParticipants") || undefined,
+    stravaUrl: formData.get("stravaUrl") || undefined,
   };
   const parsed = createSchema.safeParse(raw);
   if (!parsed.success) {
@@ -55,6 +66,7 @@ export async function createActivityAction(formData: FormData) {
       distanceKm: parsed.data.distanceKm,
       pace: parsed.data.pace,
       maxParticipants: parsed.data.maxParticipants,
+      stravaUrl: parsed.data.stravaUrl,
       participations: {
         create: { userId: user.id, status: "JOINED" },
       },

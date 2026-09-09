@@ -74,6 +74,16 @@ export default async function ActivityDetailPage({
         {activity.description && (
           <p className="mt-4 whitespace-pre-wrap text-slate-700">{activity.description}</p>
         )}
+        {activity.stravaUrl && (
+          <a
+            href={activity.stravaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700"
+          >
+            🧡 View route on Strava
+          </a>
+        )}
 
         <div className="mt-4 flex items-center gap-2 text-sm">
           <span className="text-slate-500">Hosted by</span>
