@@ -50,3 +50,77 @@ body {
 .badge-slate {
   @apply badge bg-slate-100 text-slate-700;
 }
+
+/* Emoji map pins (ActivitiesMap) — a round white bubble that gently bobs,
+   instead of Leaflet's default flat teardrop marker. Plain CSS, not
+   Tailwind classes: this HTML is handed to Leaflet as a raw string and
+   mounted outside React, so it needs a real stylesheet rule to target. */
+.map-pin {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px solid #16a352;
+  border-radius: 9999px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  animation: map-pin-bob 2.2s ease-in-out infinite;
+  cursor: pointer;
+}
+.map-pin span {
+  font-size: 20px;
+  line-height: 1;
+}
+.map-pin:hover {
+  animation-play-state: paused;
+  transform: scale(1.15);
+}
+@keyframes map-pin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Nav logo emoji — sits still until you hover, then takes off. */
+.nav-runner {
+  display: inline-block;
+}
+.nav-runner:hover {
+  animation: nav-runner-dash 0.6s ease-in-out;
+}
+@keyframes nav-runner-dash {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+  30% {
+    transform: translateX(3px) scaleX(1.15);
+  }
+  60% {
+    transform: translateX(-2px) scaleX(0.95);
+  }
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* A little life on primary buttons — everything else about .btn is
+   unchanged (colors, focus states, disabled handling). */
+.btn-primary,
+.btn-secondary {
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-1px);
+}
+.btn-primary:active,
+.btn-secondary:active {
+  transform: translateY(0) scale(0.97);
+}
