@@ -52,31 +52,17 @@ export default async function HomePage() {
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
           Connect with Running
         </h1>
+        <p className="text-sm text-slate-600 mt-2">
+          Browse the map freely — approximate areas only.{" "}
+          <Link href="/login" className="underline font-medium">
+            Log in
+          </Link>{" "}
+          to see exact times, meeting points, and join a run.
+        </p>
       </section>
 
-      <div className="relative mx-auto max-w-3xl px-4 pb-10">
-        <div className="blur-sm pointer-events-none select-none">
-          <ActivitiesMap activities={previewActivities} />
-        </div>
-        <div className="absolute inset-4 flex items-center justify-center">
-          <div className="card bg-white/95 shadow-lg text-center max-w-xs">
-            <p className="text-2xl mb-2" aria-hidden>
-              🔒
-            </p>
-            <p className="font-semibold mb-1">See who&apos;s running near you</p>
-            <p className="text-sm text-slate-600 mb-4">
-              Log in to see exact times, locations, and join a run.
-            </p>
-            <div className="flex flex-col gap-2">
-              <Link href="/signup" className="btn-primary">
-                Join {SITE.name}
-              </Link>
-              <Link href="/login" className="btn-secondary">
-                Log in
-              </Link>
-            </div>
-          </div>
-        </div>
+      <div className="mx-auto max-w-3xl px-4 pb-10">
+        <ActivitiesMap activities={previewActivities} restricted />
       </div>
     </div>
   );

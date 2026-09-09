@@ -34,7 +34,17 @@ export type MapActivity = {
   maxParticipants: number | null;
 };
 
-export default function ActivitiesMap({ activities }: { activities: MapActivity[] }) {
+export default function ActivitiesMap({
+  activities,
+  restricted = false,
+}: {
+  activities: MapActivity[];
+  // When true, this is the public/logged-out view: pins sit at a jittered,
+  // approximate position (done server-side, before this ever reaches the
+  // browser — see "/"), and popups only tease a run rather than showing
+  // exactly when/where it starts.
+  restricted?: boolean;
+}) {
   useEffect(() => {
     // react-leaflet mounts the map into a fixed-size container; if that
     // container was `hidden` (e.g. toggled from a List/Map tab) at mount
@@ -64,21 +74,41 @@ export default function ActivitiesMap({ activities }: { activities: MapActivity[
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={defaultIcon}>
             <Popup>
-              <div className="space-y-1">
-                <p className="font-semibold">{a.title}</p>
-                <p className="text-sm text-slate-600">
-                  {format(new Date(a.startsAt), "EEE, MMM d · h:mm a")}
-                </p>
-                <p className="text-sm text-slate-600">{a.location}</p>
-                <p className="text-sm text-slate-500">
-                  {a.distanceKm ? `${a.distanceKm} km · ` : ""}
-                  {a.joinedCount}
-                  {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} joined
-                </p>
-                <Link href={`/activities/${a.id}`} className="text-brand-600 underline text-sm">
-                  View run
-                </Link>
-              </div>
+              {restricted ? (
+                <div className="space-y-1 max-w-[180px]">
+                  <p className="font-semibold">{a.title}</p>
+                  <p className="text-sm text-slate-500">
+                    {a.distanceKm ? `${a.distanceKm} km run` : "Group run"} · roughly this area
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Log in to see the exact time, meeting point, and join.
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    <Link href="/signup" className="text-brand-600 underline text-sm">
+                      Join
+                    </Link>
+                    <Link href="/login" className="text-brand-600 underline text-sm">
+                      Log in
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p className="font-semibold">{a.title}</p>
+                  <p className="text-sm text-slate-600">
+                    {format(new Date(a.startsAt), "EEE, MMM d · h:mm a")}
+                  </p>
+                  <p className="text-sm text-slate-600">{a.location}</p>
+                  <p className="text-sm text-slate-500">
+                    {a.distanceKm ? `${a.distanceKm} km · ` : ""}
+                    {a.joinedCount}
+                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} joined
+                  </p>
+                  <Link href={`/activities/${a.id}`} className="text-brand-600 underline text-sm">
+                    View run
+                  </Link>
+                </div>
+              )}
             </Popup>
           </Marker>
         ))}
