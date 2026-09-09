@@ -107,6 +107,10 @@ export default async function NewActivityPage({
             type="url"
             placeholder="https://www.strava.com/routes/..."
           />
+          <p className="text-xs text-amber-700 mt-1">
+            ⚠️ Make sure this route&apos;s privacy is set to <strong>Public</strong> in Strava —
+            a private route link won&apos;t open for other members.
+          </p>
         </div>
         <button type="submit" className="btn-primary w-full">
           Post run
