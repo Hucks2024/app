@@ -81,7 +81,7 @@ export default function ActivitiesMap({
   const center: [number, number] = [activities[0].latitude, activities[0].longitude];
 
   return (
-    <div className="h-[70vh] w-full overflow-hidden rounded-2xl border-2 border-brand-200 shadow-md">
+    <div className="h-[70vh] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer center={center} zoom={11} scrollWheelZoom className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'

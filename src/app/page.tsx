@@ -47,7 +47,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="bg-gradient-to-b from-brand-100 to-transparent">
+      <section className="bg-gradient-to-b from-brand-50 to-transparent">
         <div className="mx-auto max-w-xl px-4 pt-10 pb-4 text-center">
           <p className="badge-green mb-2">Photo-ID verified members only</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
@@ -62,6 +62,27 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      <div className="mx-auto max-w-xl px-4 pb-6 grid grid-cols-3 gap-2">
+        <div className="card !p-3 text-center">
+          <div className="text-xl mb-1" aria-hidden>
+            🪪
+          </div>
+          <p className="text-xs font-bold leading-tight">Real humans only</p>
+        </div>
+        <div className="card !p-3 text-center">
+          <div className="text-xl mb-1" aria-hidden>
+            🏃
+          </div>
+          <p className="text-xs font-bold leading-tight">Built for runs</p>
+        </div>
+        <div className="card !p-3 text-center">
+          <div className="text-xl mb-1" aria-hidden>
+            🚩
+          </div>
+          <p className="text-xs font-bold leading-tight">One-tap report</p>
+        </div>
+      </div>
 
       <div className="mx-auto max-w-3xl px-4 pb-10">
         <ActivitiesMap activities={previewActivities} restricted />
