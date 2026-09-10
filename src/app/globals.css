@@ -147,6 +147,20 @@ body {
   white-space: nowrap;
 }
 
+/* Leaflet map wrapper (ActivitiesMap). iOS Safari's address bar
+   auto-hides while you scroll, and 100vh is measured against the
+   "large" viewport (bar hidden), taller than what's actually on screen
+   when the bar is showing. That mismatch is what makes the map look
+   like it's sliding over the footer mid-scroll. svh is the "small"
+   viewport (bar always accounted for), a fixed height that doesn't move
+   as the bar shows/hides. vh stays first as a fallback for browsers
+   without svh support, an unknown unit only invalidates that one
+   declaration, the one above it still applies. */
+.map-shell {
+  height: 70vh;
+  height: 70svh;
+}
+
 /* Nav logo emoji, sits still until you hover, then takes off. */
 .nav-runner {
   display: inline-block;

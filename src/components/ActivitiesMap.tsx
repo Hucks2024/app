@@ -138,7 +138,7 @@ export default function ActivitiesMap({
   const center: [number, number] = [activities[0].latitude, activities[0].longitude];
 
   return (
-    <div className="h-[70vh] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+    <div className="map-shell w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer center={center} zoom={11} scrollWheelZoom className="h-full w-full">
         <TileLayer
           // CartoDB's "Voyager" tiles (used briefly here for a more
