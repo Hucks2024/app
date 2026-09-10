@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getPrisma } from "@/lib/db";
 import ActivitiesMap from "@/components/ActivitiesMap";
 
-// The map of upcoming runs. Only reachable by verified members — both "/"
+// The map of upcoming runs. Only reachable by verified members, both "/"
 // and "/activities" gate on requireVerifiedUser() before rendering this,
 // so there's no "you're not verified yet" branch to handle here.
 export default async function RunsScreen() {

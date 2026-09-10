@@ -4,7 +4,7 @@
 //
 // Nominatim's usage policy (https://operations.osmfoundation.org/policies/nominatim/)
 // requires a descriptive User-Agent and caps free use at ~1 request/second,
-// which comfortably covers "someone posts a run" traffic. Best-effort only —
+// which comfortably covers "someone posts a run" traffic. Best-effort only:
 // callers should treat a null result as "no pin", not an error.
 export async function geocodeLocation(
   query: string
@@ -37,7 +37,7 @@ export async function geocodeLocation(
 
     return { latitude, longitude };
   } catch {
-    // Network hiccup, timeout, rate limit — none of these should block
+    // Network hiccup, timeout, rate limit, none of these should block
     // someone from posting a run. They just won't get a map pin.
     return null;
   }

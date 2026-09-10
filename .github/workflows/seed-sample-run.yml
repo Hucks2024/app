@@ -2,7 +2,7 @@ name: Seed a sample run (Fulham, London)
 
 # Manual-only test-data helper. Run this (Actions tab → "Seed a sample run
 # (Fulham, London)" → "Run workflow") to add one sample RunActivity hosted
-# by the admin account, so there's a pin to see on the map. Not idempotent —
+# by the admin account, so there's a pin to see on the map. Not idempotent:
 # each run adds another one, so only run it as many times as you actually
 # want sample runs.
 

@@ -4,7 +4,7 @@ name: Turso one-time database setup
 # → "Run workflow") after adding the TURSO_DATABASE_URL and TURSO_AUTH_TOKEN
 # repository secrets (Settings → Secrets and variables → Actions → New
 # repository secret). It creates the app's tables on your Turso database and
-# a first admin account, then can be safely ignored — it's idempotent, so
+# a first admin account, then can be safely ignored, it's idempotent, so
 # re-running it later is harmless (it skips the schema step if the tables
 # already exist).
 

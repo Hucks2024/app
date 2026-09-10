@@ -56,7 +56,7 @@ export default async function ActivityDetailPage({
       )}
       {reported && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          Thanks — a moderator will look into this.
+          Thanks, a moderator will look into this.
         </p>
       )}
 

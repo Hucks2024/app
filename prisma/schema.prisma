@@ -1,4 +1,4 @@
-// Pacemates — verified running-meetup app
+// Pacemates, verified running-meetup app
 // Small, self-contained SQLite database. Photos are stored as binary blobs
 // directly in the DB (not on disk) so the app has no external file-storage
 // dependency and works the same in dev and in production.
@@ -12,7 +12,7 @@ generator client {
 }
 
 // As of Prisma 7, the client is always constructed with an explicit
-// "adapter" (see src/lib/db.ts) — there's no more implicit native-engine
+// "adapter" (see src/lib/db.ts), there's no more implicit native-engine
 // connection, so no "url" here. The CLI (migrate/generate) still needs one;
 // that lives in prisma.config.ts instead.
 datasource db {
@@ -51,7 +51,7 @@ model User {
 }
 
 // Holds the sensitive verification photos separately from the User record.
-// idPhoto is intentionally wiped once an admin makes a decision — we only
+// idPhoto is intentionally wiped once an admin makes a decision, we only
 // need to have looked at it once, not keep it forever.
 model VerificationRequest {
   id              String @id @default(cuid())
@@ -79,7 +79,7 @@ model RunActivity {
   location        String
   // Best-effort geocode of `location`, filled in at creation time so the
   // map view has something to plot. Null when geocoding failed or hasn't
-  // run yet — the map view just skips those activities.
+  // run yet, the map view just skips those activities.
   latitude        Float?
   longitude       Float?
   startsAt        DateTime

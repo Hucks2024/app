@@ -2,7 +2,7 @@ name: Add Strava URL to RunActivity
 
 # Manual-only. Run this once (Actions tab → "Add Strava URL to RunActivity"
 # → "Run workflow") to add the stravaUrl column the new "attach a Strava
-# route" field needs. Idempotent — safe to re-run, it skips if the column
+# route" field needs. Idempotent, safe to re-run, it skips if the column
 # already exists.
 
 on:

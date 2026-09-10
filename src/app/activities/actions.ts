@@ -19,7 +19,7 @@ const createSchema = z.object({
     .trim()
     .url("That doesn't look like a valid URL")
     .max(300)
-    // .url() alone accepts any scheme, including javascript: — this field
+    // .url() alone accepts any scheme, including javascript:, this field
     // gets rendered as a clickable <a href> to every other member, so a
     // non-http(s) URL here would be a stored-XSS vector.
     .refine((v) => /^https?:\/\//i.test(v), "Must be a http(s):// link")

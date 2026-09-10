@@ -13,7 +13,7 @@ const columns = await client.execute('PRAGMA table_info("RunActivity")');
 const columnNames = columns.rows.map((r) => r.name);
 
 if (columnNames.includes("stravaUrl")) {
-  console.log('"stravaUrl" already exists on RunActivity — skipping.');
+  console.log('"stravaUrl" already exists on RunActivity, skipping.');
 } else {
   console.log('Adding "stravaUrl" column to RunActivity...');
   await client.execute('ALTER TABLE "RunActivity" ADD COLUMN "stravaUrl" TEXT');

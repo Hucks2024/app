@@ -6,7 +6,7 @@ export class ImageValidationError extends Error {}
 /**
  * Reads a File from a form upload into a plain Uint8Array (not a Node
  * Buffer), enforcing type/size limits. A plain Uint8Array is what Prisma's
- * Bytes fields expect and what the Cloudflare Workers runtime supports —
+ * Bytes fields expect and what the Cloudflare Workers runtime supports.
  * Buffer-specific methods aren't needed anywhere we use these bytes.
  */
 export async function readImageFile(file: File | null): Promise<{

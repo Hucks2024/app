@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 
 // Same resolution as src/lib/db.ts, minus the Cloudflare-binding lookup
 // (this script only ever runs as a plain Node CLI, e.g. `prisma db seed` or
-// `npm run db:seed` — locally, or against a real Turso database if
+// `npm run db:seed`, locally, or against a real Turso database if
 // TURSO_DATABASE_URL is set, e.g. to seed a freshly-deployed production DB).
 function resolvedLocalFileUrl(): string {
   const url = process.env.DATABASE_URL ?? "file:./dev.db";
@@ -49,7 +49,7 @@ async function main() {
   console.log(`Created admin user: ${adminEmail}`);
   console.log(
     adminPassword === "changeme123"
-      ? "⚠️  Using default password 'changeme123' — set ADMIN_EMAIL/ADMIN_PASSWORD env vars before deploying, then change it."
+      ? "⚠️  Using default password 'changeme123', set ADMIN_EMAIL/ADMIN_PASSWORD env vars before deploying, then change it."
       : "Password set from ADMIN_PASSWORD env var."
   );
 }

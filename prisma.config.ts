@@ -8,7 +8,7 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    // Plain process.env access, not the `env()` helper — that helper
+    // Plain process.env access, not the `env()` helper, that helper
     // throws if the var isn't set at all, which broke `prisma generate`
     // on Vercel (DATABASE_URL is never set there; the real runtime
     // datasource is TURSO_DATABASE_URL, read directly in src/lib/db.ts,

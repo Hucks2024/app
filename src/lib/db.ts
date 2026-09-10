@@ -24,7 +24,7 @@ function resolvedLocalFileUrl(): string {
 /**
  * Reads TURSO_DATABASE_URL/TURSO_AUTH_TOKEN. On a normal Node host these are
  * plain env vars. On Cloudflare Workers, `vars`/secrets are NOT exposed via
- * `process.env` — they only exist on the per-request Workers `env` object,
+ * `process.env`, they only exist on the per-request Workers `env` object,
  * reachable through OpenNext's `getCloudflareContext()`. We only reach for
  * that when the plain env var isn't there, and swallow any failure (e.g.
  * running outside a Workers/OpenNext context at all), so this stays a no-op
@@ -47,7 +47,7 @@ function createPrismaClient(): PrismaClient {
   const tursoUrl = readEnv("TURSO_DATABASE_URL");
   if (tursoUrl) {
     // Cloudflare Workers (and any other environment without a real
-    // filesystem) talks to Turso over plain HTTP — the "/web" adapter has
+    // filesystem) talks to Turso over plain HTTP, the "/web" adapter has
     // no native bindings, so it's the one build that actually runs inside
     // a Workers isolate.
     const authToken = readEnv("TURSO_AUTH_TOKEN");
@@ -57,7 +57,7 @@ function createPrismaClient(): PrismaClient {
 
   // Local dev, or any host with a normal persistent disk: the same libSQL
   // adapter, just pointed at a local SQLite file instead of a remote Turso
-  // database — Prisma 7 always needs an adapter, there's no more implicit
+  // database, Prisma 7 always needs an adapter, there's no more implicit
   // native-engine connection to fall back to.
   const adapter = new PrismaLibSqlNode({ url: resolvedLocalFileUrl() });
   return new PrismaClient({ adapter, log });

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import "leaflet/dist/leaflet.css";
 
-// A little variety instead of one identical pin everywhere — which emoji a
+// A little variety instead of one identical pin everywhere, which emoji a
 // run gets is picked deterministically from its id (see emojiFor below), so
 // it stays the same run to run rather than flickering on re-render.
 const PIN_EMOJIS = ["🏃", "🏃‍♀️", "🏃‍♂️", "🎽", "⚡", "🥇"];
@@ -18,7 +18,7 @@ function emojiFor(id: string): string {
   return PIN_EMOJIS[hash % PIN_EMOJIS.length];
 }
 
-// A round, bouncing emoji bubble instead of Leaflet's default teardrop pin —
+// A round, bouncing emoji bubble instead of Leaflet's default teardrop pin,
 // built as a plain divIcon since Leaflet's icons are DOM elements it manages
 // itself, outside React. Styling lives in globals.css (.map-pin / @keyframes
 // map-pin-bob) since Tailwind can't apply arbitrary keyframe animations.
@@ -51,7 +51,7 @@ export default function ActivitiesMap({
   activities: MapActivity[];
   // When true, this is the public/logged-out view: pins sit at a jittered,
   // approximate position (done server-side, before this ever reaches the
-  // browser — see "/"), and popups only tease a run rather than showing
+  // browser, see "/"), and popups only tease a run rather than showing
   // exactly when/where it starts.
   restricted?: boolean;
 }) {
@@ -86,7 +86,7 @@ export default function ActivitiesMap({
         <TileLayer
           // CartoDB's "Voyager" tiles (used briefly here for a more
           // colorful look) started stamping "API KEY REQUIRED" across
-          // every tile — their free/keyless tier apparently no longer
+          // every tile, their free/keyless tier apparently no longer
           // covers this. Plain OpenStreetMap tiles genuinely require no
           // key and no account, so that's what stays.
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

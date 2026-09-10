@@ -11,7 +11,7 @@ export default async function SignupPage({
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2">Create your account</h1>
       <p className="text-sm text-slate-600 mb-6">
-        Every runner here verifies with a photo ID before they can join a run — that&apos;s what
+        Every runner here verifies with a photo ID before they can join a run, that&apos;s what
         keeps this different from an open message board.
       </p>
       {error && (

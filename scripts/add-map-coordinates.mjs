@@ -13,7 +13,7 @@ const columns = await client.execute('PRAGMA table_info("RunActivity")');
 const columnNames = columns.rows.map((r) => r.name);
 
 if (columnNames.includes("latitude")) {
-  console.log('"latitude"/"longitude" already exist on RunActivity — skipping.');
+  console.log('"latitude"/"longitude" already exist on RunActivity, skipping.');
 } else {
   console.log('Adding "latitude"/"longitude" columns to RunActivity...');
   await client.execute('ALTER TABLE "RunActivity" ADD COLUMN "latitude" REAL');

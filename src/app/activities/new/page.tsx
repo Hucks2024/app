@@ -93,7 +93,7 @@ export default async function NewActivityPage({
             id="description"
             name="description"
             rows={4}
-            placeholder="Anything runners should know — route, difficulty, what to bring…"
+            placeholder="Anything runners should know: route, difficulty, what to bring…"
           />
         </div>
         <div>
@@ -108,7 +108,7 @@ export default async function NewActivityPage({
             placeholder="https://www.strava.com/routes/..."
           />
           <p className="text-xs text-amber-700 mt-1">
-            ⚠️ Make sure this route&apos;s privacy is set to <strong>Public</strong> in Strava —
+            ⚠️ Make sure this route&apos;s privacy is set to <strong>Public</strong> in Strava,
             a private route link won&apos;t open for other members.
           </p>
         </div>

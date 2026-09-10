@@ -51,7 +51,7 @@ body {
   @apply badge bg-slate-100 text-slate-700;
 }
 
-/* Emoji map pins (ActivitiesMap) — a round white bubble that gently bobs,
+/* Emoji map pins (ActivitiesMap), a round white bubble that gently bobs,
    instead of Leaflet's default flat teardrop marker. Plain CSS, not
    Tailwind classes: this HTML is handed to Leaflet as a raw string and
    mounted outside React, so it needs a real stylesheet rule to target. */
@@ -86,7 +86,7 @@ body {
   }
 }
 
-/* Nav logo emoji — sits still until you hover, then takes off. */
+/* Nav logo emoji, sits still until you hover, then takes off. */
 .nav-runner {
   display: inline-block;
 }
@@ -108,7 +108,7 @@ body {
   }
 }
 
-/* A little life on primary buttons — everything else about .btn is
+/* A little life on primary buttons, everything else about .btn is
    unchanged (colors, focus states, disabled handling). */
 .btn-primary,
 .btn-secondary {

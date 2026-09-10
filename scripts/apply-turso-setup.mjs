@@ -15,7 +15,7 @@ const existing = await client
   .catch(() => ({ rows: [] }));
 
 if (existing.rows.length > 0) {
-  console.log("Tables already exist on this Turso database — skipping schema setup.");
+  console.log("Tables already exist on this Turso database, skipping schema setup.");
 } else {
   const sql = fs.readFileSync(new URL("./turso-setup.sql", import.meta.url), "utf-8");
   console.log(`Applying schema (${sql.length} bytes)...`);

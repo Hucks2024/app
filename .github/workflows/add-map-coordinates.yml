@@ -2,7 +2,7 @@ name: Add map coordinates to RunActivity
 
 # Manual-only. Run this once (Actions tab → "Add map coordinates to
 # RunActivity" → "Run workflow") to add the latitude/longitude columns the
-# map view needs. Idempotent — safe to re-run, it skips if the columns
+# map view needs. Idempotent, safe to re-run, it skips if the columns
 # already exist.
 
 on:
