@@ -11,7 +11,10 @@ export default async function NewActivityPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">Post a run</h1>
+      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a run</h1>
+      <p className="text-sm text-white/85 mb-6">
+        Three questions and you&apos;re done. Every pace welcome, walking breaks included.
+      </p>
 
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
@@ -19,10 +22,14 @@ export default async function NewActivityPage({
         </p>
       )}
 
-      <form action={createActivityAction} className="card space-y-4">
+      {/* Only three fields are actually required, so only three are shown.
+          Everything else the form supports (distance, pace, cap, notes,
+          Strava link) lives behind the expander below, folded away by
+          default, an empty value for any of them is perfectly valid. */}
+      <form action={createActivityAction} className="card space-y-5">
         <div>
           <label className="label" htmlFor="title">
-            Title
+            1. What&apos;s the run?
           </label>
           <input
             className="input"
@@ -34,84 +41,103 @@ export default async function NewActivityPage({
         </div>
         <div>
           <label className="label" htmlFor="location">
-            Meeting point
+            2. Where do you meet?
           </label>
           <input
             className="input"
             id="location"
             name="location"
-            placeholder="e.g. Riverside Park, main entrance"
+            placeholder="Riverside Park, main entrance"
             required
           />
+          <p className="text-xs text-slate-500 mt-1">
+            A landmark is plenty, we&apos;ll put it on the map for you.
+          </p>
         </div>
         <div>
           <label className="label" htmlFor="startsAt">
-            Date &amp; time
+            3. When?
           </label>
           <input className="input" id="startsAt" name="startsAt" type="datetime-local" required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label" htmlFor="distanceKm">
-              Distance (km)
-            </label>
-            <input
-              className="input"
-              id="distanceKm"
-              name="distanceKm"
-              type="number"
-              step="0.1"
-              min="0"
-              placeholder="10"
-            />
+
+        <details className="border-t border-slate-200 pt-4">
+          <summary className="cursor-pointer select-none text-sm font-medium text-brand-700 dark:text-brand-400">
+            Add more details (all optional)
+          </summary>
+
+          <div className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label" htmlFor="distanceKm">
+                  Distance (km)
+                </label>
+                <input
+                  className="input"
+                  id="distanceKm"
+                  name="distanceKm"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  placeholder="10"
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="pace">
+                  Pace
+                </label>
+                <input className="input" id="pace" name="pace" placeholder="6:00 / km" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">
+              No idea on pace? Leave it blank, or write what it feels like. Every pace is a real
+              pace.
+            </p>
+
+            <div>
+              <label className="label" htmlFor="maxParticipants">
+                Max people
+              </label>
+              <input
+                className="input"
+                id="maxParticipants"
+                name="maxParticipants"
+                type="number"
+                min="1"
+                placeholder="Leave blank for no limit"
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="description">
+                Anything else?
+              </label>
+              <textarea
+                className="input"
+                id="description"
+                name="description"
+                rows={3}
+                placeholder="Route, what to bring, coffee after…"
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="stravaUrl">
+                Strava route
+              </label>
+              <input
+                className="input"
+                id="stravaUrl"
+                name="stravaUrl"
+                type="url"
+                placeholder="https://www.strava.com/routes/..."
+              />
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                ⚠️ Set the route to <strong>Public</strong> in Strava, a private link won&apos;t
+                open for anyone else.
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="label" htmlFor="pace">
-              Pace
-            </label>
-            <input className="input" id="pace" name="pace" placeholder="e.g. 5:30 / km" />
-          </div>
-        </div>
-        <div>
-          <label className="label" htmlFor="maxParticipants">
-            Max participants (optional)
-          </label>
-          <input
-            className="input"
-            id="maxParticipants"
-            name="maxParticipants"
-            type="number"
-            min="1"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="description">
-            Details
-          </label>
-          <textarea
-            className="input"
-            id="description"
-            name="description"
-            rows={4}
-            placeholder="Anything runners should know: route, difficulty, what to bring…"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="stravaUrl">
-            Strava route (optional)
-          </label>
-          <input
-            className="input"
-            id="stravaUrl"
-            name="stravaUrl"
-            type="url"
-            placeholder="https://www.strava.com/routes/..."
-          />
-          <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-            ⚠️ Make sure this route&apos;s privacy is set to <strong>Public</strong> in Strava,
-            a private route link won&apos;t open for other members.
-          </p>
-        </div>
+        </details>
+
         <button type="submit" className="btn-primary w-full">
           Post run
         </button>
