@@ -92,9 +92,27 @@ function emojiIcon(emoji: string, label: string | null) {
 // location and drops a marker there. Leaflet's own map.locate() wraps the
 // browser geolocation API and fires locationfound/locationerror on the map,
 // so there's no need to touch navigator.geolocation directly.
+// Mirrors the standard GeolocationPositionError codes Leaflet's
+// locationerror event passes through (1 = permission denied, 2 = position
+// unavailable, 3 = timed out). Permission denied is by far the most common
+// one in practice, and it's rarely this site's fault: iOS blocks the
+// request before a prompt ever shows if Location Services is off for
+// Safari at the OS level, or if this site was denied before, so that one
+// gets a much more specific, actionable message than the rest.
+function locationErrorMessage(code: number | undefined): string {
+  if (code === 1) {
+    return "Location is blocked for this site. On iPhone: Settings → Privacy & Security → Location Services → Safari Websites should be \"While Using\", then tap the \"AA\" icon in Safari's address bar → Website Settings → Location → Allow, and try again.";
+  }
+  if (code === 3) {
+    return "Finding your location took too long, try again, ideally outdoors or near a window.";
+  }
+  return "Couldn't get your location right now, try again in a moment.";
+}
+
 function LocateControl() {
   const leafletMap = useMap();
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
 
@@ -122,8 +140,9 @@ function LocateControl() {
         .addTo(leafletMap)
         .bindPopup("You are here");
     }
-    function onError() {
+    function onError(e: L.ErrorEvent) {
       setStatus("error");
+      setErrorMessage(locationErrorMessage(e.code));
     }
     leafletMap.on("locationfound", onFound);
     leafletMap.on("locationerror", onError);
@@ -140,7 +159,15 @@ function LocateControl() {
         type="button"
         onClick={() => {
           setStatus("locating");
-          leafletMap.locate({ setView: true, maxZoom: 15, enableHighAccuracy: true });
+          leafletMap.locate({
+            setView: true,
+            maxZoom: 15,
+            enableHighAccuracy: true,
+            timeout: 20000,
+            // Reuse a fix from the last minute instead of always forcing a
+            // brand new GPS lock, cuts down on spurious timeouts.
+            maximumAge: 60000,
+          });
         }}
         aria-label="Show my location"
         title="Show my location"
@@ -148,9 +175,9 @@ function LocateControl() {
       >
         {status === "locating" ? "⏳" : "📍"}
       </button>
-      {status === "error" && (
-        <p className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs px-2 py-1 max-w-[160px] text-right">
-          Couldn&apos;t get your location, check your browser&apos;s permission for this site.
+      {status === "error" && errorMessage && (
+        <p className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs px-2 py-1 max-w-[220px] text-right">
+          {errorMessage}
         </p>
       )}
     </div>
