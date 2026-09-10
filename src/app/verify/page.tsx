@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requirePaidUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { submitVerificationAction } from "@/app/verify/actions";
 
@@ -9,7 +9,9 @@ export default async function VerifyPage({
   searchParams: Promise<{ error?: string; submitted?: string }>;
 }) {
   const { error, submitted } = await searchParams;
-  const user = await requireUser();
+  // Pay first, then verify, requirePaidUser sends anyone without a paid-up
+  // membership to /subscribe before they ever see this page.
+  const user = await requirePaidUser();
   const prisma = await getPrisma();
   const verification = await prisma.verificationRequest.findUnique({
     where: { userId: user.id },

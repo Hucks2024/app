@@ -77,9 +77,25 @@ export async function requireUser(): Promise<User> {
   return user;
 }
 
-/** Requires a logged-in user whose photo-ID verification has been approved. */
-export async function requireVerifiedUser(): Promise<User> {
+export function isPaidUp(user: Pick<User, "role" | "paidUntil">): boolean {
+  return user.role === "ADMIN" || (user.paidUntil != null && user.paidUntil > new Date());
+}
+
+/** Requires a logged-in user with an active (unexpired) £1/month
+ * membership. Admins are exempt. Used on /verify itself (pay first, then
+ * verify) as well as anywhere further down the funnel. */
+export async function requirePaidUser(): Promise<User> {
   const user = await requireUser();
+  if (!isPaidUp(user)) {
+    redirect("/subscribe");
+  }
+  return user;
+}
+
+/** Requires a logged-in, paid, photo-ID-verified user, the full bar for
+ * actually joining/hosting/commenting on runs. */
+export async function requireActiveMember(): Promise<User> {
+  const user = await requirePaidUser();
   if (user.verificationStatus !== "APPROVED") {
     redirect("/verify");
   }

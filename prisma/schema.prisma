@@ -40,6 +40,16 @@ model User {
   /// "ACTIVE" | "SUSPENDED"
   accountStatus String @default("ACTIVE")
 
+  // £1/month membership, paid in XRP. One shared wallet receives every
+  // payment; xrpDestinationTag is how we tell members apart on the ledger
+  // (the standard XRPL pattern exchanges use for shared deposit addresses).
+  // paidUntil is a rolling expiry a payment pushes forward, not a
+  // subscription object, there's no "cancel" on a push payment, it just
+  // lapses. Admins bypass this check regardless of its value (see
+  // requirePaidUser in src/lib/auth.ts).
+  xrpDestinationTag Int?      @unique
+  paidUntil         DateTime?
+
   createdAt DateTime @default(now())
 
   verification     VerificationRequest?
@@ -48,6 +58,22 @@ model User {
   comments         Comment[]
   reportsMade      Report[]             @relation("ReportsMade")
   reportsReceived  Report[]             @relation("ReportsReceived")
+  xrpPayments      XrpPayment[]
+}
+
+// One row per XRPL payment we've credited, keyed by transaction hash so the
+// poller is safe to re-run over the same ledger history without double
+// counting. Also doubles as an audit trail (see /admin).
+model XrpPayment {
+  id             String   @id @default(cuid())
+  txHash         String   @unique
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountXrp      Float
+  amountGbp      Float // converted at the live rate when the poller saw it
+  monthsCredited Int
+  ledgerCloseAt  DateTime // when the payment actually settled on XRPL
+  createdAt      DateTime @default(now()) // when our poller processed it
 }
 
 // Holds the sensitive verification photos separately from the User record.

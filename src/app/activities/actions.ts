@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
-import { requireUser, requireVerifiedUser } from "@/lib/auth";
+import { requireUser, requireActiveMember } from "@/lib/auth";
 import { geocodeLocation } from "@/lib/geocode";
 
 const createSchema = z.object({
@@ -27,7 +27,7 @@ const createSchema = z.object({
 });
 
 export async function createActivityAction(formData: FormData) {
-  const user = await requireVerifiedUser();
+  const user = await requireActiveMember();
 
   const raw = {
     title: formData.get("title"),
@@ -77,7 +77,7 @@ export async function createActivityAction(formData: FormData) {
 }
 
 export async function joinActivityAction(formData: FormData) {
-  const user = await requireVerifiedUser();
+  const user = await requireActiveMember();
   const activityId = String(formData.get("activityId"));
 
   const prisma = await getPrisma();
@@ -136,7 +136,7 @@ export async function leaveActivityAction(formData: FormData) {
 }
 
 export async function postCommentAction(formData: FormData) {
-  const user = await requireVerifiedUser();
+  const user = await requireActiveMember();
   const activityId = String(formData.get("activityId"));
   const body = String(formData.get("body") ?? "").trim();
 

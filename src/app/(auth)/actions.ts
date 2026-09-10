@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
-import { createSession, destroySession, hashPassword, verifyPassword } from "@/lib/auth";
+import { createSession, destroySession, hashPassword, isPaidUp, verifyPassword } from "@/lib/auth";
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
@@ -38,7 +38,18 @@ export async function signupAction(formData: FormData) {
   });
 
   await createSession(user.id);
-  redirect("/verify");
+  redirect("/subscribe");
+}
+
+/** Where a logged-in user should land: pay, then verify, then the app. */
+function nextStepFor(user: {
+  role: string;
+  paidUntil: Date | null;
+  verificationStatus: string;
+}) {
+  if (!isPaidUp(user)) return "/subscribe";
+  if (user.verificationStatus !== "APPROVED") return "/verify";
+  return "/activities";
 }
 
 const loginSchema = z.object({
@@ -73,7 +84,7 @@ export async function loginAction(formData: FormData) {
   }
 
   await createSession(user.id);
-  redirect(user.verificationStatus === "APPROVED" ? "/activities" : "/verify");
+  redirect(nextStepFor(user));
 }
 
 export async function logoutAction() {

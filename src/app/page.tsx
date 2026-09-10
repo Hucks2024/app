@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isPaidUp } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import RunsScreen from "@/components/RunsScreen";
@@ -18,9 +18,9 @@ export default async function HomePage() {
   const user = await getCurrentUser();
 
   // Logged-in members see the map right here on "/", no marketing copy,
-  // no extra click. Not-yet-verified members still go to /verify first,
-  // same as the login form's own redirect.
+  // no extra click. Same funnel as everywhere else: pay, then verify.
   if (user) {
+    if (!isPaidUp(user)) redirect("/subscribe");
     if (user.verificationStatus !== "APPROVED") redirect("/verify");
     return <RunsScreen />;
   }
