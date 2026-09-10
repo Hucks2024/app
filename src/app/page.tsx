@@ -52,7 +52,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
           <p className="badge-green mb-3">Photo-ID verified members only</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
-            <span aria-hidden>🏃‍♀️</span> Connect with Running
+            <span aria-hidden>🏃‍♀️</span> Connect with other runners
           </h1>
           <p className="text-sm text-white/85 mt-3 max-w-sm mx-auto">
             Real humans only, built for real runs. Pins are approximate until you{" "}
