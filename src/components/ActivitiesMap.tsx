@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -86,6 +86,77 @@ function emojiIcon(emoji: string, label: string | null) {
   });
 }
 
+// A button overlaid on the map (not a real Leaflet control, just a plain
+// positioned element, react-leaflet renders any non-Leaflet child inside
+// the map's own container div) that asks the browser for the visitor's
+// location and drops a marker there. Leaflet's own map.locate() wraps the
+// browser geolocation API and fires locationfound/locationerror on the map,
+// so there's no need to touch navigator.geolocation directly.
+function LocateControl() {
+  const leafletMap = useMap();
+  const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    // Stop clicks/scrolls on the button reaching Leaflet underneath, same
+    // trick L.Control uses internally, otherwise a tap here also pans or
+    // zooms the map.
+    if (wrapRef.current) {
+      L.DomEvent.disableClickPropagation(wrapRef.current);
+      L.DomEvent.disableScrollPropagation(wrapRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    function onFound(e: L.LocationEvent) {
+      setStatus("idle");
+      if (markerRef.current) leafletMap.removeLayer(markerRef.current);
+      markerRef.current = L.circleMarker(e.latlng, {
+        radius: 8,
+        color: "#fff",
+        weight: 3,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+      })
+        .addTo(leafletMap)
+        .bindPopup("You are here");
+    }
+    function onError() {
+      setStatus("error");
+    }
+    leafletMap.on("locationfound", onFound);
+    leafletMap.on("locationerror", onError);
+    return () => {
+      leafletMap.off("locationfound", onFound);
+      leafletMap.off("locationerror", onError);
+      if (markerRef.current) leafletMap.removeLayer(markerRef.current);
+    };
+  }, [leafletMap]);
+
+  return (
+    <div ref={wrapRef} className="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => {
+          setStatus("locating");
+          leafletMap.locate({ setView: true, maxZoom: 15, enableHighAccuracy: true });
+        }}
+        aria-label="Show my location"
+        title="Show my location"
+        className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center text-base hover:bg-slate-50 dark:hover:bg-slate-700"
+      >
+        {status === "locating" ? "⏳" : "📍"}
+      </button>
+      {status === "error" && (
+        <p className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs px-2 py-1 max-w-[160px] text-right">
+          Couldn&apos;t get your location, check your browser&apos;s permission for this site.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export type MapActivity = {
   id: string;
   title: string;
@@ -149,6 +220,7 @@ export default function ActivitiesMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <LocateControl />
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
             <Popup>
