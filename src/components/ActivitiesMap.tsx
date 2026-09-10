@@ -296,16 +296,16 @@ export default function ActivitiesMap({
             <Popup>
               {restricted ? (
                 <div className="space-y-1 max-w-[180px]">
-                  <p className="font-semibold">{a.title}</p>
+                  <p className="font-semibold">{a.title} 🏃</p>
                   <p className="text-sm text-slate-500">
-                    {a.distanceKm ? `${a.distanceKm} km run` : "Group run"} · roughly this area
+                    {a.distanceKm ? `${a.distanceKm} km` : "Group run"} · somewhere round here 👀
                   </p>
                   <p className="text-sm text-slate-600">
-                    Log in to see the exact time, meeting point, and join.
+                    The exact time and meeting point are our little secret, for members only. 🤫
                   </p>
                   <div className="flex gap-2 pt-1">
-                    <Link href="/signup" className="text-brand-600 underline text-sm">
-                      Join
+                    <Link href="/signup" className="text-brand-600 underline text-sm font-medium">
+                      I&apos;m in →
                     </Link>
                     <Link href="/login" className="text-brand-600 underline text-sm">
                       Log in
@@ -314,7 +314,7 @@ export default function ActivitiesMap({
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <p className="font-semibold">{a.title}</p>
+                  <p className="font-semibold">{a.title} 🏃</p>
                   <p className="text-sm text-slate-600">
                     {format(new Date(a.startsAt), "EEE, MMM d · h:mm a")}
                   </p>
@@ -329,10 +329,13 @@ export default function ActivitiesMap({
                   <p className="text-sm text-slate-500">
                     {a.distanceKm ? `${a.distanceKm} km · ` : ""}
                     {a.joinedCount}
-                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} joined
+                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} laced up 👟
                   </p>
-                  <Link href={`/activities/${a.id}`} className="text-brand-600 underline text-sm">
-                    View run →
+                  <Link
+                    href={`/activities/${a.id}`}
+                    className="text-brand-600 underline text-sm font-medium"
+                  >
+                    Let&apos;s go →
                   </Link>
                 </div>
               )}
