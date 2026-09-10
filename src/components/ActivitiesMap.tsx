@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
@@ -109,6 +110,48 @@ function locationErrorMessage(code: number | undefined): string {
   return "Couldn't get your location right now, try again in a moment.";
 }
 
+// A real popup dialog, not just a small note tucked next to the button, so
+// a failure is impossible to miss regardless of screen size or where on
+// the map the button happens to sit. Portaled to <body> so it always
+// covers the full screen rather than being clipped by the map's own
+// overflow: hidden.
+function LocationErrorModal({ message, onClose }: { message: string; onClose: () => void }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="location-error-title"
+        onClick={(e) => e.stopPropagation()}
+        className="card max-w-sm w-full"
+      >
+        <p id="location-error-title" className="font-semibold text-slate-900 mb-2">
+          📍 Couldn&apos;t find you
+        </p>
+        <p className="text-sm text-slate-600 mb-4">{message}</p>
+        <button ref={closeButtonRef} type="button" onClick={onClose} className="btn-primary w-full">
+          Got it
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function LocateControl() {
   const leafletMap = useMap();
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
@@ -154,33 +197,33 @@ function LocateControl() {
   }, [leafletMap]);
 
   return (
-    <div ref={wrapRef} className="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-1">
-      <button
-        type="button"
-        onClick={() => {
-          setStatus("locating");
-          leafletMap.locate({
-            setView: true,
-            maxZoom: 15,
-            enableHighAccuracy: true,
-            timeout: 20000,
-            // Reuse a fix from the last minute instead of always forcing a
-            // brand new GPS lock, cuts down on spurious timeouts.
-            maximumAge: 60000,
-          });
-        }}
-        aria-label="Show my location"
-        title="Show my location"
-        className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center text-base hover:bg-slate-50 dark:hover:bg-slate-700"
-      >
-        {status === "locating" ? "⏳" : "📍"}
-      </button>
+    <>
+      <div ref={wrapRef} className="absolute top-3 right-3 z-[1000]">
+        <button
+          type="button"
+          onClick={() => {
+            setStatus("locating");
+            leafletMap.locate({
+              setView: true,
+              maxZoom: 15,
+              enableHighAccuracy: true,
+              timeout: 20000,
+              // Reuse a fix from the last minute instead of always forcing a
+              // brand new GPS lock, cuts down on spurious timeouts.
+              maximumAge: 60000,
+            });
+          }}
+          aria-label="Show my location"
+          title="Show my location"
+          className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center text-base hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          {status === "locating" ? "⏳" : "📍"}
+        </button>
+      </div>
       {status === "error" && errorMessage && (
-        <p className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs px-2 py-1 max-w-[220px] text-right">
-          {errorMessage}
-        </p>
+        <LocationErrorModal message={errorMessage} onClose={() => setStatus("idle")} />
       )}
-    </div>
+    </>
   );
 }
 
