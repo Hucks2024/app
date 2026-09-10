@@ -65,7 +65,20 @@ export default async function ActivityDetailPage({
         <p className="text-slate-600 mt-1">
           {format(activity.startsAt, "EEEE, MMMM d, yyyy · h:mm a")}
         </p>
-        <p className="text-slate-600">{activity.location}</p>
+        <p className="text-slate-600">
+          {activity.latitude != null && activity.longitude != null ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${activity.latitude},${activity.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-brand-700"
+            >
+              {activity.location} ↗
+            </a>
+          ) : (
+            activity.location
+          )}
+        </p>
         <p className="text-slate-500 text-sm mt-1">
           {activity.distanceKm ? `${activity.distanceKm} km` : null}
           {activity.distanceKm && activity.pace ? " · " : null}

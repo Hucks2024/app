@@ -176,7 +176,14 @@ export default function ActivitiesMap({
                   <p className="text-sm text-slate-600">
                     {format(new Date(a.startsAt), "EEE, MMM d · h:mm a")}
                   </p>
-                  <p className="text-sm text-slate-600">{a.location}</p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${a.latitude},${a.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-slate-600 underline block"
+                  >
+                    {a.location} ↗
+                  </a>
                   <p className="text-sm text-slate-500">
                     {a.distanceKm ? `${a.distanceKm} km · ` : ""}
                     {a.joinedCount}
