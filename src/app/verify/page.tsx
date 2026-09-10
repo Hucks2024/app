@@ -19,8 +19,8 @@ export default async function VerifyPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2">Get verified</h1>
-      <p className="text-sm text-slate-600 mb-6">
+      <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Get verified</h1>
+      <p className="text-sm text-white/85 mb-6">
         To keep this a space for real runners, not creeps hiding behind a fake profile, we
         check a selfie against a photo ID before you can join or host a run. A person reviews
         every submission; nothing is auto-approved. Your ID photo is deleted from our database

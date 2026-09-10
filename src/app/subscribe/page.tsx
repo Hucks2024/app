@@ -23,8 +23,8 @@ export default async function SubscribePage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2">Join Pacemates</h1>
-      <p className="text-slate-600 mb-6">
+      <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Join Pacemates</h1>
+      <p className="text-white/85 mb-6">
         {XRP_PER_MONTH} XRP a month, sent to the address below with your personal destination
         tag. Send it for as many months as you like at once, e.g. {XRP_PER_MONTH * 12} XRP covers
         a year. An admin checks the ledger and unlocks access once they see it, not instant, but
@@ -71,7 +71,7 @@ export default async function SubscribePage() {
         </div>
       )}
 
-      <div className="text-xs text-slate-400 text-center mt-4 flex items-center justify-center gap-1">
+      <div className="text-xs text-white/70 text-center mt-4 flex items-center justify-center gap-1">
         <span>Signed in as {user.email}, not you?</span>
         <LogoutButton />
       </div>

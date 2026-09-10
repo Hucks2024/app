@@ -9,7 +9,7 @@ export default async function LoginPage({
   const { error } = await searchParams;
   return (
     <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="text-2xl font-bold mb-6">Log in</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">Log in</h1>
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
           {error}

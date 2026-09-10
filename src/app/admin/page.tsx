@@ -41,13 +41,13 @@ export default async function AdminPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 space-y-10">
-      <h1 className="text-2xl font-bold">Admin</h1>
+      <h1 className="text-2xl font-bold text-white drop-shadow">Admin</h1>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">
+        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
           Pending photo-ID verifications ({pending.length})
         </h2>
-        {pending.length === 0 && <p className="text-sm text-slate-500">Nothing to review.</p>}
+        {pending.length === 0 && <p className="text-sm text-white/80">Nothing to review.</p>}
         <div className="space-y-4">
           {pending.map((req) => (
             <div key={req.id} className="card">
@@ -105,8 +105,8 @@ export default async function AdminPage({
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Open reports ({openReports.length})</h2>
-        {openReports.length === 0 && <p className="text-sm text-slate-500">No open reports.</p>}
+        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Open reports ({openReports.length})</h2>
+        {openReports.length === 0 && <p className="text-sm text-white/80">No open reports.</p>}
         <div className="space-y-3">
           {openReports.map((r) => (
             <div key={r.id} className="card">
@@ -143,7 +143,7 @@ export default async function AdminPage({
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">XRP payments</h2>
+          <h2 className="text-lg font-semibold text-white drop-shadow">XRP payments</h2>
           <form action={scanXrpPaymentsAction}>
             <button type="submit" className="btn-secondary !py-1 !text-xs">
               Scan now
@@ -156,7 +156,7 @@ export default async function AdminPage({
           </p>
         )}
         {xrpPayments.length === 0 ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-white/80">
             No payments credited yet. Nothing checks the ledger on its own, use &ldquo;Scan
             now&rdquo; above whenever you want to check for new ones.
           </p>
@@ -191,7 +191,7 @@ export default async function AdminPage({
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">Members ({users.length})</h2>
+        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Members ({users.length})</h2>
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

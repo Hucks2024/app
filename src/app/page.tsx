@@ -48,15 +48,15 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="bg-gradient-to-b from-brand-50 to-transparent">
+      <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
           <p className="badge-green mb-3">Photo-ID verified members only</p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
             <span aria-hidden>🏃‍♀️</span> Connect with Running
           </h1>
-          <p className="text-sm text-slate-600 mt-3 max-w-sm mx-auto">
+          <p className="text-sm text-white/85 mt-3 max-w-sm mx-auto">
             Real humans only, built for real runs. Pins are approximate until you{" "}
-            <Link href="/login" className="underline font-medium">
+            <Link href="/login" className="underline font-medium text-white">
               log in
             </Link>{" "}
             to see exact times, meeting points, and join.

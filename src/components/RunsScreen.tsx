@@ -34,7 +34,7 @@ export default async function RunsScreen() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Upcoming runs</h1>
+        <h1 className="text-2xl font-bold text-white drop-shadow">Upcoming runs</h1>
         <Link href="/activities/new" className="btn-primary">
           + Post a run
         </Link>

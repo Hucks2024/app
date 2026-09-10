@@ -16,7 +16,7 @@ export default async function ProfilePage({
       <div className="flex items-center gap-4 mb-6">
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
         <div>
-          <h1 className="text-2xl font-bold">{user.name}</h1>
+          <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
           <VerificationBadge status={user.verificationStatus} />
         </div>
       </div>
