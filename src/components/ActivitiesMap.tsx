@@ -10,7 +10,7 @@ import "leaflet/dist/leaflet.css";
 // A little variety instead of one identical pin everywhere, which emoji a
 // run gets is picked deterministically from its id (see emojiFor below), so
 // it stays the same run to run rather than flickering on re-render.
-const PIN_EMOJIS = ["🏃", "🏃‍♀️", "🏃‍♂️", "🎽", "⚡", "🥇"];
+const PIN_EMOJIS = ["🏃", "🏃‍♀️", "🏃‍♂️", "🎽", "⚡", "🥇", "🌳", "🌲"];
 
 function emojiFor(id: string): string {
   let hash = 0;
