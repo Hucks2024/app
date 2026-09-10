@@ -2,12 +2,14 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 
 const RIPPLE_EPOCH_OFFSET = 946684800; // seconds between 1970-01-01 and 2000-01-01 (Ripple epoch)
 
-export const GBP_PER_MONTH = 1;
+// Flat price: 1 XRP buys 1 month, full stop. No live rate involved in what
+// someone actually owes, that only ever gets used for the informational
+// "≈ £x today" line on /subscribe.
+export const XRP_PER_MONTH = 1;
 
-/** Live XRP/GBP rate via CoinGecko's free, keyless price endpoint. Returns
- * null on any failure, callers should show a fallback rather than block
- * on this, it's a convenience estimate, not something payments depend on
- * (the poller fetches its own rate at credit time). */
+/** Live XRP/GBP rate via CoinGecko's free, keyless price endpoint, purely
+ * for display ("that's about £x"). Returns null on any failure, callers
+ * should show a fallback rather than block on this. */
 export async function getXrpGbpRate(): Promise<number | null> {
   try {
     const res = await fetch(
@@ -20,10 +22,6 @@ export async function getXrpGbpRate(): Promise<number | null> {
   } catch {
     return null;
   }
-}
-
-export function estimateXrpForMonths(rate: number, months: number): number {
-  return (GBP_PER_MONTH * months) / rate;
 }
 
 function randomDestinationTag(): number {
@@ -110,16 +108,15 @@ export async function processXrpPayments(
 ): Promise<XrpScanResult> {
   const result: XrpScanResult = { credited: 0, skippedNoTag: 0, skippedUnmatchedTag: [] };
 
+  // The GBP rate is purely informational (amountGbp on the record), a
+  // failure there (getXrpGbpRate swallows its own errors and returns
+  // null) doesn't block crediting, which only depends on the XRP amount.
   let rate: number | null;
   let transactions: Awaited<ReturnType<typeof fetchAccountTx>>;
   try {
     [rate, transactions] = await Promise.all([getXrpGbpRate(), fetchAccountTx(walletAddress)]);
   } catch (err) {
     result.error = err instanceof Error ? err.message : "Failed to reach the XRP Ledger.";
-    return result;
-  }
-  if (!rate) {
-    result.error = "Couldn't get a live XRP/GBP rate, try again shortly.";
     return result;
   }
 
@@ -146,8 +143,11 @@ export async function processXrpPayments(
     }
 
     const amountXrp = Number(tx.Amount) / 1_000_000; // Amount is in drops
-    const amountGbp = amountXrp * rate;
-    const monthsCredited = Math.round(amountGbp / GBP_PER_MONTH);
+    const amountGbp = rate ? amountXrp * rate : 0; // 0 means "rate unavailable", not "worthless"
+    // Floor, not round: a fixed 1 XRP = 1 month price means a partial XRP
+    // over some whole number of months is a tip, not a rounding error in
+    // the member's favor.
+    const monthsCredited = Math.floor(amountXrp / XRP_PER_MONTH);
     const ledgerCloseAt = new Date((tx.date + RIPPLE_EPOCH_OFFSET) * 1000);
 
     const base = user.paidUntil && user.paidUntil > new Date() ? user.paidUntil : new Date();

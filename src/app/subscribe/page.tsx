@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireUser, isPaidUp } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import { assignDestinationTag, estimateXrpForMonths, getXrpGbpRate } from "@/lib/xrp";
+import { assignDestinationTag, getXrpGbpRate, XRP_PER_MONTH } from "@/lib/xrp";
 import CopyableField from "@/components/CopyableField";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -25,9 +25,10 @@ export default async function SubscribePage() {
     <div className="mx-auto max-w-md px-4 py-12">
       <h1 className="text-2xl font-bold mb-2">Join Pacemates</h1>
       <p className="text-slate-600 mb-6">
-        £1/month, paid in XRP. Send any amount of XRP worth roughly £1 per month you want to the
-        address below, with your personal destination tag. Access unlocks automatically once the
-        payment is confirmed, usually within a few minutes to a few hours.
+        {XRP_PER_MONTH} XRP a month, sent to the address below with your personal destination
+        tag. Send it for as many months as you like at once, e.g. {XRP_PER_MONTH * 12} XRP covers
+        a year. Access unlocks automatically once the payment is confirmed, usually within a few
+        minutes to a few hours.
       </p>
 
       {!walletAddress ? (
@@ -58,17 +59,15 @@ export default async function SubscribePage() {
             from anyone else&apos;s, and it won&apos;t be credited automatically.
           </p>
 
-          {rate ? (
-            <p className="text-sm text-slate-600">
-              At today&apos;s rate, that&apos;s roughly{" "}
-              <strong>{estimateXrpForMonths(rate, 1).toFixed(2)} XRP</strong> for 1 month, or{" "}
-              <strong>{estimateXrpForMonths(rate, 12).toFixed(2)} XRP</strong> for 12.
-            </p>
-          ) : (
-            <p className="text-sm text-slate-500">
-              Live rate unavailable right now, roughly £1 worth of XRP per month you want.
-            </p>
-          )}
+          <p className="text-sm text-slate-600">
+            <strong>
+              {XRP_PER_MONTH} XRP = 1 month
+            </strong>
+            {rate && (
+              <span className="text-slate-500"> (≈ £{(XRP_PER_MONTH * rate).toFixed(2)} today)</span>
+            )}
+            .
+          </p>
         </div>
       )}
 

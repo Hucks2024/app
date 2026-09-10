@@ -12,7 +12,10 @@
 import { createClient } from "@libsql/client";
 
 const RIPPLE_EPOCH_OFFSET = 946684800; // seconds between 1970-01-01 and 2000-01-01 (Ripple epoch)
-const GBP_PER_MONTH = 1;
+// Flat price: 1 XRP buys 1 month, full stop. The GBP rate below is only
+// ever used for the informational amountGbp value on each XrpPayment
+// record, never for deciding how many months a payment is worth.
+const XRP_PER_MONTH = 1;
 
 const dbUrl = process.env.TURSO_DATABASE_URL;
 const dbToken = process.env.TURSO_AUTH_TOKEN;
@@ -28,15 +31,20 @@ if (!walletAddress) {
 
 const client = createClient({ url: dbUrl, authToken: dbToken });
 
+// Purely informational (amountGbp on each record), never used to decide
+// how many months a payment is worth, so a failure here just means that
+// column is 0 ("unknown"), not a reason to stop crediting anyone.
 async function getXrpGbpRate() {
-  const res = await fetch(
-    "https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=gbp"
-  );
-  if (!res.ok) throw new Error(`CoinGecko request failed: ${res.status}`);
-  const data = await res.json();
-  const rate = data?.ripple?.gbp;
-  if (!rate) throw new Error("CoinGecko response missing ripple.gbp");
-  return rate;
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=gbp"
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.ripple?.gbp ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchAccountTx(address) {
@@ -71,7 +79,7 @@ function addMonths(date, months) {
 }
 
 const rate = await getXrpGbpRate();
-console.log(`Current XRP/GBP rate: ${rate}`);
+console.log(`Current XRP/GBP rate: ${rate ?? "unavailable"}`);
 
 const transactions = await fetchAccountTx(walletAddress);
 console.log(`Fetched ${transactions.length} recent transaction(s) for ${walletAddress}`);
@@ -116,8 +124,11 @@ for (const entry of transactions) {
   }
 
   const amountXrp = Number(tx.Amount) / 1_000_000; // Amount is in drops
-  const amountGbp = amountXrp * rate;
-  const monthsCredited = Math.round(amountGbp / GBP_PER_MONTH);
+  const amountGbp = rate ? amountXrp * rate : 0; // 0 means "rate unavailable", not "worthless"
+  // Floor, not round: a fixed 1 XRP = 1 month price means a partial XRP
+  // over some whole number of months is a tip, not a rounding error in
+  // the member's favor.
+  const monthsCredited = Math.floor(amountXrp / XRP_PER_MONTH);
   const ledgerCloseAt = new Date((tx.date + RIPPLE_EPOCH_OFFSET) * 1000).toISOString();
 
   const currentPaidUntil = user.paidUntil ? new Date(user.paidUntil) : null;
