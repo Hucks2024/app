@@ -157,8 +157,8 @@ export default async function AdminPage({
         )}
         {xrpPayments.length === 0 ? (
           <p className="text-sm text-slate-500">
-            No payments credited yet. A scheduled check runs every 15 minutes, or use &ldquo;Scan
-            now&rdquo; above.
+            No payments credited yet. Nothing checks the ledger on its own, use &ldquo;Scan
+            now&rdquo; above whenever you want to check for new ones.
           </p>
         ) : (
           <div className="card overflow-x-auto">

@@ -93,9 +93,9 @@ export async function unbanUserAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
-/** On-demand version of scripts/process-xrp-payments.mjs's scheduled run,
- * an admin can trigger a check right now instead of waiting up to 15
- * minutes for the next automatic one. */
+/** Checks the XRP Ledger for new payments and credits them. The whole
+ * membership system's crediting step, run whenever an admin presses
+ * "Scan now" on /admin, nothing else triggers it. */
 export async function scanXrpPaymentsAction() {
   await requireAdmin();
   const walletAddress = process.env.XRP_WALLET_ADDRESS;

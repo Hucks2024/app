@@ -96,12 +96,10 @@ export type XrpScanResult = {
   error?: string;
 };
 
-/** The same "check the ledger, credit matching members" logic as
- * scripts/process-xrp-payments.mjs (which runs on its own 15-minute
- * schedule via GitHub Actions), just via Prisma instead of a raw libsql
- * client, so it's callable directly from the app, e.g. an admin's
- * "Scan now" button, for an on-demand check instead of waiting for the
- * next scheduled run. */
+/** Checks the XRP Ledger for payments to our wallet and credits each one
+ * to the member whose destination tag it carries. The only way this runs
+ * is an admin pressing "Scan now" on /admin, no background job, nothing
+ * scheduled, one function, one button. */
 export async function processXrpPayments(
   prisma: PrismaClient,
   walletAddress: string

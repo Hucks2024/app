@@ -27,8 +27,8 @@ export default async function SubscribePage() {
       <p className="text-slate-600 mb-6">
         {XRP_PER_MONTH} XRP a month, sent to the address below with your personal destination
         tag. Send it for as many months as you like at once, e.g. {XRP_PER_MONTH * 12} XRP covers
-        a year. Access unlocks automatically once the payment is confirmed, usually within a few
-        minutes to a few hours.
+        a year. An admin checks the ledger and unlocks access once they see it, not instant, but
+        usually not long.
       </p>
 
       {!walletAddress ? (
