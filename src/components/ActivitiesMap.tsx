@@ -18,16 +18,53 @@ function emojiFor(id: string): string {
   return PIN_EMOJIS[hash % PIN_EMOJIS.length];
 }
 
+// Pulls a "5:30"-style mm:ss out of a free-text pace field (the form just
+// takes a string, e.g. "5:30 / km", "easy", "6 min miles"), so the pin
+// label never has to show the raw "5:30 / km" clutter, just the number.
+function paceMinutesPerKm(pace: string | null): number | null {
+  if (!pace) return null;
+  const match = pace.match(/(\d+)[:.](\d{2})/);
+  if (!match) return null;
+  return Number(match[1]) + Number(match[2]) / 60;
+}
+
+// One short label combining pace and an estimated total duration, as
+// minimal as the data allows: both if both are derivable, just the pace
+// if distance is missing, or nothing at all rather than showing a raw
+// unparsed pace string.
+function pinLabel(distanceKm: number | null, pace: string | null): string | null {
+  const perKm = paceMinutesPerKm(pace);
+  if (perKm == null) return null;
+
+  const paceLabel = pace!.match(/\d+[:.]\d{2}/)![0].replace(".", ":");
+  if (!distanceKm) return paceLabel;
+
+  const totalMinutes = Math.round(distanceKm * perKm);
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return paceLabel;
+
+  const remainder = totalMinutes % 60;
+  const duration =
+    totalMinutes < 60
+      ? `${totalMinutes}m`
+      : `${Math.floor(totalMinutes / 60)}h${remainder ? `${remainder}m` : ""}`;
+
+  return `${paceLabel} · ${duration}`;
+}
+
 // A round, bouncing emoji bubble instead of Leaflet's default teardrop pin,
 // built as a plain divIcon since Leaflet's icons are DOM elements it manages
 // itself, outside React. Styling lives in globals.css (.map-pin / @keyframes
-// map-pin-bob) since Tailwind can't apply arbitrary keyframe animations.
-function emojiIcon(emoji: string) {
+// map-pin-bob) since Tailwind can't apply arbitrary keyframe animations. The
+// pace/duration label only renders when there's something short to show.
+function emojiIcon(emoji: string, label: string | null) {
+  const html = label
+    ? `<div class="map-pin-wrap"><div class="map-pin"><span>${emoji}</span></div><div class="map-pin-label">${label}</div></div>`
+    : `<div class="map-pin"><span>${emoji}</span></div>`;
   return L.divIcon({
-    html: `<div class="map-pin"><span>${emoji}</span></div>`,
+    html,
     className: "", // clear Leaflet's own default styling/background
-    iconSize: [40, 40],
-    iconAnchor: [20, 36],
+    iconSize: label ? [64, 54] : [40, 40],
+    iconAnchor: label ? [32, 36] : [20, 36],
     popupAnchor: [0, -34],
   });
 }
@@ -40,6 +77,7 @@ export type MapActivity = {
   latitude: number;
   longitude: number;
   distanceKm: number | null;
+  pace: string | null;
   joinedCount: number;
   maxParticipants: number | null;
 };
@@ -66,7 +104,9 @@ export default function ActivitiesMap({
 
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
-    for (const a of activities) map.set(a.id, emojiIcon(emojiFor(a.id)));
+    for (const a of activities) {
+      map.set(a.id, emojiIcon(emojiFor(a.id), pinLabel(a.distanceKm, a.pace)));
+    }
     return map;
   }, [activities]);
 

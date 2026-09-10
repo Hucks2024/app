@@ -41,6 +41,7 @@ export default async function HomePage() {
       latitude: jitter(a.latitude as number),
       longitude: jitter(a.longitude as number),
       distanceKm: a.distanceKm,
+      pace: a.pace,
       joinedCount: 0,
       maxParticipants: a.maxParticipants,
     }));
