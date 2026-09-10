@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+const RIPPLE_EPOCH_OFFSET = 946684800; // seconds between 1970-01-01 and 2000-01-01 (Ripple epoch)
+
 export const GBP_PER_MONTH = 1;
 
 /** Live XRP/GBP rate via CoinGecko's free, keyless price endpoint. Returns
@@ -50,4 +52,122 @@ export async function assignDestinationTag(
     }
   }
   throw new Error("Could not assign a unique XRP destination tag after 10 attempts");
+}
+
+type XrplTx = {
+  TransactionType?: string;
+  Destination?: string;
+  Amount?: unknown;
+  DestinationTag?: number;
+  hash?: string;
+  date?: number;
+};
+
+async function fetchAccountTx(address: string): Promise<
+  Array<{ tx?: XrplTx; tx_json?: XrplTx; meta?: { TransactionResult?: string } }>
+> {
+  const res = await fetch("https://xrplcluster.com", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      method: "account_tx",
+      params: [
+        { account: address, ledger_index_min: -1, ledger_index_max: -1, limit: 100, forward: false },
+      ],
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) throw new Error(`XRPL account_tx request failed: ${res.status}`);
+  const data = await res.json();
+  if (data.result?.status !== "success") {
+    throw new Error(`XRPL account_tx error: ${JSON.stringify(data.result)}`);
+  }
+  return data.result.transactions ?? [];
+}
+
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date.getTime());
+  d.setUTCMonth(d.getUTCMonth() + months);
+  return d;
+}
+
+export type XrpScanResult = {
+  credited: number;
+  skippedNoTag: number;
+  skippedUnmatchedTag: number[];
+  error?: string;
+};
+
+/** The same "check the ledger, credit matching members" logic as
+ * scripts/process-xrp-payments.mjs (which runs on its own 15-minute
+ * schedule via GitHub Actions), just via Prisma instead of a raw libsql
+ * client, so it's callable directly from the app, e.g. an admin's
+ * "Scan now" button, for an on-demand check instead of waiting for the
+ * next scheduled run. */
+export async function processXrpPayments(
+  prisma: PrismaClient,
+  walletAddress: string
+): Promise<XrpScanResult> {
+  const result: XrpScanResult = { credited: 0, skippedNoTag: 0, skippedUnmatchedTag: [] };
+
+  let rate: number | null;
+  let transactions: Awaited<ReturnType<typeof fetchAccountTx>>;
+  try {
+    [rate, transactions] = await Promise.all([getXrpGbpRate(), fetchAccountTx(walletAddress)]);
+  } catch (err) {
+    result.error = err instanceof Error ? err.message : "Failed to reach the XRP Ledger.";
+    return result;
+  }
+  if (!rate) {
+    result.error = "Couldn't get a live XRP/GBP rate, try again shortly.";
+    return result;
+  }
+
+  for (const entry of transactions) {
+    const tx = entry.tx ?? entry.tx_json;
+    const meta = entry.meta;
+    if (!tx || !meta) continue;
+    if (tx.TransactionType !== "Payment") continue;
+    if (tx.Destination !== walletAddress) continue;
+    if (meta.TransactionResult !== "tesSUCCESS") continue;
+    if (typeof tx.Amount !== "string") continue; // an object here means an issued currency, not native XRP
+    if (tx.DestinationTag == null || !tx.hash || tx.date == null) {
+      result.skippedNoTag++;
+      continue;
+    }
+
+    const existing = await prisma.xrpPayment.findUnique({ where: { txHash: tx.hash } });
+    if (existing) continue; // already processed on a previous scan
+
+    const user = await prisma.user.findUnique({ where: { xrpDestinationTag: tx.DestinationTag } });
+    if (!user) {
+      result.skippedUnmatchedTag.push(tx.DestinationTag);
+      continue;
+    }
+
+    const amountXrp = Number(tx.Amount) / 1_000_000; // Amount is in drops
+    const amountGbp = amountXrp * rate;
+    const monthsCredited = Math.round(amountGbp / GBP_PER_MONTH);
+    const ledgerCloseAt = new Date((tx.date + RIPPLE_EPOCH_OFFSET) * 1000);
+
+    const base = user.paidUntil && user.paidUntil > new Date() ? user.paidUntil : new Date();
+    const newPaidUntil = monthsCredited > 0 ? addMonths(base, monthsCredited) : null;
+
+    await prisma.xrpPayment.create({
+      data: {
+        txHash: tx.hash,
+        userId: user.id,
+        amountXrp,
+        amountGbp,
+        monthsCredited,
+        ledgerCloseAt,
+      },
+    });
+    if (newPaidUntil) {
+      await prisma.user.update({ where: { id: user.id }, data: { paidUntil: newPaidUntil } });
+    }
+    result.credited++;
+  }
+
+  return result;
 }

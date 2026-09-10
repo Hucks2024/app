@@ -8,13 +8,19 @@ import {
   resolveReportAction,
   banUserAction,
   unbanUserAction,
+  scanXrpPaymentsAction,
 } from "@/app/admin/actions";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ xrpScan?: string }>;
+}) {
   await requireAdmin();
+  const { xrpScan } = await searchParams;
   const prisma = await getPrisma();
 
-  const [pending, openReports, users] = await Promise.all([
+  const [pending, openReports, users, xrpPayments] = await Promise.all([
     prisma.verificationRequest.findMany({
       where: { status: "PENDING" },
       include: { user: true },
@@ -26,6 +32,11 @@ export default async function AdminPage() {
       orderBy: { createdAt: "asc" },
     }),
     prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.xrpPayment.findMany({
+      include: { user: true },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
   ]);
 
   return (
@@ -131,6 +142,55 @@ export default async function AdminPage() {
       </section>
 
       <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">XRP payments</h2>
+          <form action={scanXrpPaymentsAction}>
+            <button type="submit" className="btn-secondary !py-1 !text-xs">
+              Scan now
+            </button>
+          </form>
+        </div>
+        {xrpScan && (
+          <p className="mb-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
+            Scan result: {xrpScan}
+          </p>
+        )}
+        {xrpPayments.length === 0 ? (
+          <p className="text-sm text-slate-500">
+            No payments credited yet. A scheduled check runs every 15 minutes, or use &ldquo;Scan
+            now&rdquo; above.
+          </p>
+        ) : (
+          <div className="card overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500 border-b border-slate-200">
+                  <th className="py-2 pr-4">Member</th>
+                  <th className="py-2 pr-4">XRP</th>
+                  <th className="py-2 pr-4">≈ GBP</th>
+                  <th className="py-2 pr-4">Months</th>
+                  <th className="py-2 pr-4">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {xrpPayments.map((p) => (
+                  <tr key={p.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 pr-4">{p.user.name}</td>
+                    <td className="py-2 pr-4">{p.amountXrp.toFixed(2)}</td>
+                    <td className="py-2 pr-4">£{p.amountGbp.toFixed(2)}</td>
+                    <td className="py-2 pr-4">{p.monthsCredited}</td>
+                    <td className="py-2 pr-4 text-slate-500">
+                      {format(p.ledgerCloseAt, "MMM d, h:mm a")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section>
         <h2 className="text-lg font-semibold mb-3">Members ({users.length})</h2>
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
@@ -139,6 +199,7 @@ export default async function AdminPage() {
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Verification</th>
+                <th className="py-2 pr-4">Paid until</th>
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4"></th>
               </tr>
@@ -152,6 +213,15 @@ export default async function AdminPage() {
                   </td>
                   <td className="py-2 pr-4">{u.email}</td>
                   <td className="py-2 pr-4">{u.verificationStatus}</td>
+                  <td className="py-2 pr-4">
+                    {u.role === "ADMIN" ? (
+                      "n/a"
+                    ) : u.paidUntil && u.paidUntil > new Date() ? (
+                      format(u.paidUntil, "MMM d, yyyy")
+                    ) : (
+                      <span className="text-slate-400">not paid</span>
+                    )}
+                  </td>
                   <td className="py-2 pr-4">
                     {u.accountStatus === "SUSPENDED" ? (
                       <span className="badge-red">Suspended</span>

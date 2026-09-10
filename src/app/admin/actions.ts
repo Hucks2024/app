@@ -1,8 +1,10 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
+import { processXrpPayments } from "@/lib/xrp";
 
 export async function approveVerificationAction(formData: FormData) {
   await requireAdmin();
@@ -89,4 +91,24 @@ export async function unbanUserAction(formData: FormData) {
   const prisma = await getPrisma();
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "ACTIVE" } });
   revalidatePath("/admin");
+}
+
+/** On-demand version of scripts/process-xrp-payments.mjs's scheduled run,
+ * an admin can trigger a check right now instead of waiting up to 15
+ * minutes for the next automatic one. */
+export async function scanXrpPaymentsAction() {
+  await requireAdmin();
+  const walletAddress = process.env.XRP_WALLET_ADDRESS;
+  if (!walletAddress) {
+    redirect("/admin?xrpScan=" + encodeURIComponent("not configured"));
+  }
+
+  const prisma = await getPrisma();
+  const result = await processXrpPayments(prisma, walletAddress);
+
+  const summary = result.error
+    ? `error: ${result.error}`
+    : `credited ${result.credited}, ${result.skippedNoTag} with no tag, ${result.skippedUnmatchedTag.length} with an unrecognized tag${result.skippedUnmatchedTag.length ? ` (${result.skippedUnmatchedTag.join(", ")})` : ""}`;
+
+  redirect("/admin?xrpScan=" + encodeURIComponent(summary));
 }
