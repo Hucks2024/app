@@ -2,12 +2,13 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 import LogoutButton from "@/components/LogoutButton";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Nav() {
   const user = await getCurrentUser();
 
   return (
-    <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-slate-200 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg text-brand-700 flex items-center gap-2">
           <span aria-hidden className="nav-runner">
@@ -46,6 +47,7 @@ export default async function Nav() {
               </Link>
             </>
           )}
+          <ThemeToggle />
         </nav>
       </div>
     </header>

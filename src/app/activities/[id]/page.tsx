@@ -50,12 +50,12 @@ export default async function ActivityDetailPage({
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
+        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
           {error}
         </p>
       )}
       {reported && (
-        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
+        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2 dark:bg-brand-950 dark:border-brand-800 dark:text-brand-300">
           Thanks, a moderator will look into this.
         </p>
       )}
@@ -106,7 +106,7 @@ export default async function ActivityDetailPage({
 
         <div className="mt-6">
           {!isVerified && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300">
               Get verified to join this run.
             </p>
           )}

@@ -5,12 +5,49 @@
 html {
   color-scheme: light;
 }
+html.dark {
+  color-scheme: dark;
+}
+
+/* The slate scale used all over the app (text-slate-*, bg-slate-*,
+   border-slate-*) resolves through these variables instead of fixed
+   values, see the "slate" remap in tailwind.config.ts. .dark below flips
+   them (roughly mirrored: 50<->900, 100<->800, etc.) so every existing
+   slate utility becomes dark-aware from this one place, no dark: variant
+   needed on each usage. */
+:root {
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;
+  --slate-200: 226 232 240;
+  --slate-300: 203 213 225;
+  --slate-400: 148 163 184;
+  --slate-500: 100 116 139;
+  --slate-600: 71 85 105;
+  --slate-700: 51 65 85;
+  --slate-800: 30 41 59;
+  --slate-900: 15 23 42;
+}
+.dark {
+  --slate-50: 15 23 42;
+  --slate-100: 30 41 59;
+  --slate-200: 51 65 85;
+  --slate-300: 71 85 105;
+  --slate-400: 100 116 139;
+  --slate-500: 148 163 184;
+  --slate-600: 203 213 225;
+  --slate-700: 226 232 240;
+  --slate-800: 241 245 249;
+  --slate-900: 248 250 252;
+}
 
 body {
   @apply text-slate-900;
   background: linear-gradient(180deg, #6d28d9 0%, #9333ea 45%, #c026d3 75%, #db2777 100%);
   background-attachment: fixed;
   min-height: 100vh;
+}
+.dark body {
+  background: linear-gradient(180deg, #1a1033 0%, #2d1b4e 40%, #1a0f2e 100%);
 }
 
 .btn {
@@ -20,18 +57,18 @@ body {
   @apply btn bg-brand-600 text-white hover:bg-brand-700;
 }
 .btn-secondary {
-  @apply btn bg-white text-brand-700 border border-brand-200 hover:bg-brand-50;
+  @apply btn bg-white text-brand-700 border border-brand-200 hover:bg-brand-50 dark:bg-slate-800 dark:text-brand-400 dark:border-brand-800 dark:hover:bg-slate-700;
 }
 .btn-danger {
   @apply btn bg-red-600 text-white hover:bg-red-700;
 }
 
 .card {
-  @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6;
+  @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6 dark:bg-slate-800;
 }
 
 .input {
-  @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500;
+  @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 dark:bg-slate-900 dark:text-slate-100;
 }
 
 .label {
@@ -42,13 +79,13 @@ body {
   @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }
 .badge-green {
-  @apply badge bg-brand-100 text-brand-800;
+  @apply badge bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-200;
 }
 .badge-amber {
-  @apply badge bg-amber-100 text-amber-800;
+  @apply badge bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200;
 }
 .badge-red {
-  @apply badge bg-red-100 text-red-800;
+  @apply badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
 }
 .badge-slate {
   @apply badge bg-slate-100 text-slate-700;

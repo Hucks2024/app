@@ -23,11 +23,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Runs before paint/hydration so there's no flash of the wrong
+            theme: reads the saved choice (or falls back to the OS
+            preference) and stamps the "dark" class straight onto <html>,
+            the same class ThemeToggle toggles later. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
           <p>
             {SITE.name} ·{" "}
             <a

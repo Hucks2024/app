@@ -33,14 +33,14 @@ export default async function SubscribePage() {
 
       {!walletAddress ? (
         <div className="card">
-          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300">
             Membership sign-up isn&apos;t switched on yet, check back soon.
           </p>
         </div>
       ) : (
         <div className="card space-y-4">
           {lapsed && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300">
               Your membership has lapsed. Send another payment below to pick up where you left
               off.
             </p>
@@ -54,7 +54,7 @@ export default async function SubscribePage() {
             <p className="label">With destination tag</p>
             <CopyableField value={String(tag)} />
           </div>
-          <p className="text-xs text-amber-700">
+          <p className="text-xs text-amber-700 dark:text-amber-400">
             ⚠️ The destination tag is required. Without it we can&apos;t tell your payment apart
             from anyone else&apos;s, and it won&apos;t be credited automatically.
           </p>

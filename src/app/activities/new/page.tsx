@@ -14,7 +14,7 @@ export default async function NewActivityPage({
       <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">Post a run</h1>
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
+        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
           {error}
         </p>
       )}
@@ -107,7 +107,7 @@ export default async function NewActivityPage({
             type="url"
             placeholder="https://www.strava.com/routes/..."
           />
-          <p className="text-xs text-amber-700 mt-1">
+          <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
             ⚠️ Make sure this route&apos;s privacy is set to <strong>Public</strong> in Strava,
             a private route link won&apos;t open for other members.
           </p>

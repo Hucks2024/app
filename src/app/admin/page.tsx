@@ -151,7 +151,7 @@ export default async function AdminPage({
           </form>
         </div>
         {xrpScan && (
-          <p className="mb-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
+          <p className="mb-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2 dark:bg-brand-950 dark:border-brand-800 dark:text-brand-300">
             Scan result: {xrpScan}
           </p>
         )}
