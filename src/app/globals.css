@@ -24,7 +24,7 @@ body {
 }
 
 .card {
-  @apply bg-white rounded-xl border border-slate-200 shadow-sm p-6;
+  @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6;
 }
 
 .input {
