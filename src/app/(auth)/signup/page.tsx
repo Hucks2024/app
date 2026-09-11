@@ -51,12 +51,6 @@ export default async function SignupPage({
           <input className="input" id="email" name="email" type="email" required />
         </div>
         <div>
-          <label className="label" htmlFor="city">
-            City / area (optional)
-          </label>
-          <input className="input" id="city" name="city" placeholder="e.g. Austin, TX" />
-        </div>
-        <div>
           <label className="label" htmlFor="password">
             Password
           </label>

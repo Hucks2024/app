@@ -10,7 +10,6 @@ const signupSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
   email: z.string().trim().toLowerCase().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  city: z.string().trim().max(80).optional(),
   inviteCode: z.string().trim().min(1, "Enter the invite code from the member who invited you."),
 });
 
@@ -19,7 +18,6 @@ export async function signupAction(formData: FormData) {
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    city: formData.get("city") || undefined,
     inviteCode: formData.get("inviteCode"),
   });
 
@@ -27,7 +25,7 @@ export async function signupAction(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
   }
 
-  const { name, email, password, city, inviteCode } = parsed.data;
+  const { name, email, password, inviteCode } = parsed.data;
 
   const prisma = await getPrisma();
 
@@ -45,7 +43,7 @@ export async function signupAction(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, city, invitedById: invite.inviter.id },
+    data: { name, email, passwordHash, invitedById: invite.inviter.id },
   });
   await spendInvite(prisma, invite.inviter);
   // Hand out the membership number (and the code built from it) right away,
