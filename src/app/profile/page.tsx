@@ -1,7 +1,10 @@
 import { requireUser } from "@/lib/auth";
+import { getPrisma } from "@/lib/db";
+import { ensureInviteCode } from "@/lib/invite";
+import { SITE } from "@/lib/site";
 import { updateProfileAction } from "@/app/profile/actions";
-import VerificationBadge from "@/components/VerificationBadge";
 import Avatar from "@/components/Avatar";
+import CopyableField from "@/components/CopyableField";
 
 export default async function ProfilePage({
   searchParams,
@@ -11,14 +14,16 @@ export default async function ProfilePage({
   const { error, saved } = await searchParams;
   const user = await requireUser();
 
+  const prisma = await getPrisma();
+  const inviteCode = await ensureInviteCode(prisma, user.id);
+  const invitedCount = await prisma.user.count({ where: { invitedById: user.id } });
+  const unlimited = user.role === "ADMIN";
+
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex items-center gap-4 mb-6">
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
-        <div>
-          <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
-          <VerificationBadge status={user.verificationStatus} />
-        </div>
+        <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
       </div>
 
       {error && (
@@ -31,6 +36,31 @@ export default async function ProfilePage({
           Profile saved.
         </p>
       )}
+
+      <div className="card mb-4">
+        <p className="font-semibold mb-1">Invite a runner 🎟️</p>
+        <p className="text-sm text-slate-600 mb-4">
+          Pacemates is invite only. Share this with people you&apos;d actually turn up and run
+          with, whoever joins stays linked to you.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <p className="label">Your code</p>
+            <CopyableField value={inviteCode} />
+          </div>
+          <div>
+            <p className="label">Or send this link</p>
+            <CopyableField value={`${SITE.url}/signup?code=${inviteCode}`} />
+          </div>
+        </div>
+        <p className="text-xs text-slate-500 mt-3">
+          {unlimited
+            ? "Your code never runs out."
+            : `${user.invitesLeft} ${user.invitesLeft === 1 ? "invite" : "invites"} left.`}
+          {invitedCount > 0 &&
+            ` ${invitedCount} ${invitedCount === 1 ? "person has" : "people have"} joined through you.`}
+        </p>
+      </div>
 
       <form action={updateProfileAction} className="card space-y-4">
         <div>

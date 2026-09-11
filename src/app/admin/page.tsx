@@ -9,6 +9,7 @@ import {
   banUserAction,
   unbanUserAction,
   scanXrpPaymentsAction,
+  grantInvitesAction,
 } from "@/app/admin/actions";
 
 export default async function AdminPage({
@@ -31,7 +32,11 @@ export default async function AdminPage({
       include: { reporter: true, reportedUser: true },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { invitedBy: { select: { name: true } } },
+    }),
     prisma.xrpPayment.findMany({
       include: { user: true },
       orderBy: { createdAt: "desc" },
@@ -198,7 +203,8 @@ export default async function AdminPage({
               <tr className="text-left text-slate-500 border-b border-slate-200">
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Verification</th>
+                <th className="py-2 pr-4">Invited by</th>
+                <th className="py-2 pr-4">Invites left</th>
                 <th className="py-2 pr-4">Paid until</th>
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4"></th>
@@ -212,7 +218,26 @@ export default async function AdminPage({
                     {u.name}
                   </td>
                   <td className="py-2 pr-4">{u.email}</td>
-                  <td className="py-2 pr-4">{u.verificationStatus}</td>
+                  <td className="py-2 pr-4">
+                    {u.invitedBy?.name ?? <span className="text-slate-400">nobody</span>}
+                  </td>
+                  <td className="py-2 pr-4">
+                    {u.role === "ADMIN" ? (
+                      <span className="text-slate-400">unlimited</span>
+                    ) : (
+                      <form action={grantInvitesAction} className="flex items-center gap-1">
+                        <input type="hidden" name="userId" value={u.id} />
+                        <span>{u.invitesLeft}</span>
+                        <button
+                          type="submit"
+                          className="text-brand-600 hover:underline text-xs"
+                          title="Give this member 5 more invites"
+                        >
+                          +5
+                        </button>
+                      </form>
+                    )}
+                  </td>
                   <td className="py-2 pr-4">
                     {u.role === "ADMIN" ? (
                       "n/a"

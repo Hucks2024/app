@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requirePaidUser } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { submitVerificationAction } from "@/app/verify/actions";
 
@@ -9,9 +9,11 @@ export default async function VerifyPage({
   searchParams: Promise<{ error?: string; submitted?: string }>;
 }) {
   const { error, submitted } = await searchParams;
-  // Pay first, then verify, requirePaidUser sends anyone without a paid-up
-  // membership to /subscribe before they ever see this page.
-  const user = await requirePaidUser();
+  // Dormant route. Photo-ID verification is no longer part of getting in,
+  // invite codes are (see src/lib/invite.ts), so nothing links or redirects
+  // here anymore. Kept working, and reachable by URL, so the check can be
+  // switched back on without rebuilding it.
+  const user = await requireMember();
   const prisma = await getPrisma();
   const verification = await prisma.verificationRequest.findUnique({
     where: { userId: user.id },

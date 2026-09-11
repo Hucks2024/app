@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
-import VerificationBadge from "@/components/VerificationBadge";
 import {
   joinActivityAction,
   leaveActivityAction,
@@ -41,7 +40,6 @@ export default async function ActivityDetailPage({
 
   if (!activity) notFound();
 
-  const isVerified = user.verificationStatus === "APPROVED";
   const myParticipation = activity.participations.find((p) => p.userId === user.id);
   const isHost = activity.hostId === user.id;
   const joined = activity.participations.filter((p) => p.status === "JOINED");
@@ -105,15 +103,8 @@ export default async function ActivityDetailPage({
         </div>
 
         <div className="mt-6">
-          {!isVerified && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300">
-              Get verified to join this run.
-            </p>
-          )}
-          {isVerified && isHost && (
-            <p className="text-sm text-slate-500">You&apos;re hosting this run.</p>
-          )}
-          {isVerified && !isHost && !myParticipation && (
+          {isHost && <p className="text-sm text-slate-500">You&apos;re hosting this run.</p>}
+          {!isHost && !myParticipation && (
             <form action={joinActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
               <button type="submit" className="btn-primary">
@@ -121,7 +112,7 @@ export default async function ActivityDetailPage({
               </button>
             </form>
           )}
-          {isVerified && !isHost && myParticipation?.status === "JOINED" && (
+          {!isHost && myParticipation?.status === "JOINED" && (
             <form action={leaveActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
               <button type="submit" className="btn-secondary">
@@ -129,7 +120,7 @@ export default async function ActivityDetailPage({
               </button>
             </form>
           )}
-          {isVerified && !isHost && myParticipation?.status === "WAITLIST" && (
+          {!isHost && myParticipation?.status === "WAITLIST" && (
             <div className="flex items-center gap-3">
               <span className="badge-amber">You&apos;re on the waitlist</span>
               <form action={leaveActivityAction}>
@@ -195,23 +186,19 @@ export default async function ActivityDetailPage({
           )}
         </ul>
 
-        {isVerified ? (
-          <form action={postCommentAction} className="flex gap-2">
-            <input type="hidden" name="activityId" value={activity.id} />
-            <input
-              className="input"
-              name="body"
-              placeholder="Coordinate meeting details, ask a question…"
-              required
-              maxLength={1000}
-            />
-            <button type="submit" className="btn-primary shrink-0">
-              Send
-            </button>
-          </form>
-        ) : (
-          <p className="text-sm text-slate-500">Get verified to join the discussion.</p>
-        )}
+        <form action={postCommentAction} className="flex gap-2">
+          <input type="hidden" name="activityId" value={activity.id} />
+          <input
+            className="input"
+            name="body"
+            placeholder="Coordinate meeting details, ask a question…"
+            required
+            maxLength={1000}
+          />
+          <button type="submit" className="btn-primary shrink-0">
+            Send
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -222,7 +209,7 @@ function ParticipantRow({
   activityId,
   viewer,
 }: {
-  user: { id: string; name: string; profilePhoto: Uint8Array | null; verificationStatus: string };
+  user: { id: string; name: string; profilePhoto: Uint8Array | null };
   activityId: string;
   viewer: string;
 }) {
@@ -231,7 +218,6 @@ function ParticipantRow({
       <div className="flex items-center gap-3">
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={8} />
         <span className="text-sm font-medium">{user.name}</span>
-        <VerificationBadge status={user.verificationStatus} />
       </div>
       {user.id !== viewer && (
         <details className="text-sm">

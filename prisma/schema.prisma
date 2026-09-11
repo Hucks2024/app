@@ -40,13 +40,27 @@ model User {
   /// "ACTIVE" | "SUSPENDED"
   accountStatus String @default("ACTIVE")
 
-  // £1/month membership, paid in XRP. One shared wallet receives every
-  // payment; xrpDestinationTag is how we tell members apart on the ledger
-  // (the standard XRPL pattern exchanges use for shared deposit addresses).
+  // Invite-only signup. Every member has one permanent code they hand out,
+  // and invitedById records who vouched for them, so every account traces
+  // back up a chain to an admin. That chain is the moderation tool: if
+  // someone turns out to be a creep, you can see exactly who let them in
+  // and deal with that whole branch. invitesLeft caps how far one code can
+  // spread if it gets posted somewhere public (admins are exempt).
+  inviteCode  String? @unique
+  invitedById String?
+  invitedBy   User?   @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitees    User[]  @relation("Invites")
+  invitesLeft Int     @default(5)
+
+  // Membership fee, paid in XRP. Switched OFF for now (the app is free
+  // while it grows, see MEMBERSHIP_REQUIRED in src/lib/auth.ts); these
+  // columns and the whole XRP flow stay in place, dormant, ready for when
+  // charging starts. One shared wallet receives every payment;
+  // xrpDestinationTag is how we tell members apart on the ledger (the
+  // standard XRPL pattern exchanges use for shared deposit addresses).
   // paidUntil is a rolling expiry a payment pushes forward, not a
   // subscription object, there's no "cancel" on a push payment, it just
-  // lapses. Admins bypass this check regardless of its value (see
-  // requirePaidUser in src/lib/auth.ts).
+  // lapses. Admins bypass the check regardless of its value.
   xrpDestinationTag Int?      @unique
   paidUntil         DateTime?
 

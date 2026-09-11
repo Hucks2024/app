@@ -25,11 +25,6 @@ export default async function Nav() {
               <Link href="/profile" className="hover:text-brand-700">
                 Profile
               </Link>
-              {user.verificationStatus !== "APPROVED" && (
-                <Link href="/verify" className="badge-amber">
-                  Get verified
-                </Link>
-              )}
               {user.role === "ADMIN" && (
                 <Link href="/admin" className="hover:text-brand-700 font-semibold">
                   Admin

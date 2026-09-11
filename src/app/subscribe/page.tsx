@@ -8,8 +8,9 @@ import LogoutButton from "@/components/LogoutButton";
 export default async function SubscribePage() {
   const user = await requireUser();
 
-  // Nothing to do here if they're already covered.
-  if (isPaidUp(user)) redirect("/verify");
+  // Nothing to do here if they're already covered, and while the fee is
+  // switched off that's everyone (see MEMBERSHIP_REQUIRED in lib/auth).
+  if (isPaidUp(user)) redirect("/activities");
 
   let tag = user.xrpDestinationTag;
   if (tag == null) {

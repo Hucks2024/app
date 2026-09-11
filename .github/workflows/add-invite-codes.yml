@@ -1,0 +1,22 @@
+name: Add invite codes to Turso
+
+# One-time schema change for the invite-only signup (see
+# prisma/migrations/20260911090000_add_invite_codes). Turso speaks HTTP
+# rather than the wire protocol prisma migrate deploy needs, so the change
+# is applied by a small idempotent script instead. Safe to re-run.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/add-invite-codes.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}

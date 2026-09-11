@@ -77,27 +77,30 @@ export async function requireUser(): Promise<User> {
   return user;
 }
 
+/** Whether the membership fee is being charged at all.
+ *
+ * Off by default: the app is free while it grows, and gets in through
+ * invite codes rather than payment. The XRP flow underneath (/subscribe,
+ * the admin ledger scan, the payment log) is untouched and starts gating
+ * again the moment this is set to "true" in the environment. */
+function membershipRequired(): boolean {
+  return process.env.MEMBERSHIP_REQUIRED === "true";
+}
+
 export function isPaidUp(user: Pick<User, "role" | "paidUntil">): boolean {
+  if (!membershipRequired()) return true;
   return user.role === "ADMIN" || (user.paidUntil != null && user.paidUntil > new Date());
 }
 
-/** Requires a logged-in user with an active (unexpired) £1/month
- * membership. Admins are exempt. Used on /verify itself (pay first, then
- * verify) as well as anywhere further down the funnel. */
-export async function requirePaidUser(): Promise<User> {
+/** The bar for joining, hosting and commenting on runs: a logged-in,
+ * non-suspended account, plus a current membership if the fee is switched
+ * on. There's deliberately no photo-ID check here, everyone got in through
+ * someone else's invite code and stays traceable to them (see
+ * src/lib/invite.ts), which is what keeps strangers out now. */
+export async function requireMember(): Promise<User> {
   const user = await requireUser();
   if (!isPaidUp(user)) {
     redirect("/subscribe");
-  }
-  return user;
-}
-
-/** Requires a logged-in, paid, photo-ID-verified user, the full bar for
- * actually joining/hosting/commenting on runs. */
-export async function requireActiveMember(): Promise<User> {
-  const user = await requirePaidUser();
-  if (user.verificationStatus !== "APPROVED") {
-    redirect("/verify");
   }
   return user;
 }

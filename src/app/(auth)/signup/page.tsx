@@ -4,15 +4,19 @@ import { signupAction } from "@/app/(auth)/actions";
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; code?: string }>;
 }) {
-  const { error } = await searchParams;
+  // Members share a link with their code already in it
+  // (/signup?code=ABCD1234), so most people never type it by hand.
+  const { error, code } = await searchParams;
+
   return (
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Create your account</h1>
       <p className="text-sm text-white/85 mb-6">
-        Every runner here verifies with a photo ID before they can join a run, that&apos;s what
-        keeps this different from an open message board.
+        Pacemates is invite only. You need a code from someone who&apos;s already a member, which
+        is what keeps this a group of real people who vouch for each other rather than an open
+        message board.
       </p>
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
@@ -21,10 +25,24 @@ export default async function SignupPage({
       )}
       <form action={signupAction} className="space-y-4">
         <div>
+          <label className="label" htmlFor="inviteCode">
+            Invite code
+          </label>
+          <input
+            className="input uppercase tracking-widest font-mono"
+            id="inviteCode"
+            name="inviteCode"
+            defaultValue={code ?? ""}
+            placeholder="ABCD1234"
+            required
+            autoFocus={!code}
+          />
+        </div>
+        <div>
           <label className="label" htmlFor="name">
             Name
           </label>
-          <input className="input" id="name" name="name" required autoFocus />
+          <input className="input" id="name" name="name" required autoFocus={!!code} />
         </div>
         <div>
           <label className="label" htmlFor="email">
@@ -56,9 +74,9 @@ export default async function SignupPage({
           Sign up
         </button>
       </form>
-      <p className="mt-6 text-sm text-slate-600">
+      <p className="mt-6 text-sm text-white/85">
         Already have an account?{" "}
-        <Link href="/login" className="text-brand-700 font-medium hover:underline">
+        <Link href="/login" className="underline font-medium text-white">
           Log in
         </Link>
       </p>

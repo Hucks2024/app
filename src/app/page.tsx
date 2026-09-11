@@ -17,11 +17,11 @@ function jitter(value: number) {
 export default async function HomePage() {
   const user = await getCurrentUser();
 
-  // Logged-in members see the map right here on "/", no marketing copy,
-  // no extra click. Same funnel as everywhere else: pay, then verify.
+  // Logged-in members see the map right here on "/", no marketing copy, no
+  // extra click. Nothing stands between signing up and the app now except
+  // the membership fee, and that's switched off while it's free.
   if (user) {
     if (!isPaidUp(user)) redirect("/subscribe");
-    if (user.verificationStatus !== "APPROVED") redirect("/verify");
     return <RunsScreen />;
   }
 
@@ -50,12 +50,13 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <p className="badge-green mb-3">Photo-ID verified members only</p>
+          <p className="badge-green mb-3">Invite only 🎟️</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
             <span aria-hidden>🏃‍♀️</span> Connect with other runners
           </h1>
           <p className="text-sm text-white/85 mt-3 max-w-sm mx-auto">
-            Real humans, every pace welcome. Pins are approximate until you{" "}
+            Members only, invited by other members, every pace welcome. Pins are approximate
+            until you{" "}
             <Link href="/login" className="underline font-medium text-white">
               log in
             </Link>{" "}

@@ -1,4 +1,4 @@
-import { requireActiveMember } from "@/lib/auth";
+import { requireMember } from "@/lib/auth";
 import { createActivityAction } from "@/app/activities/actions";
 
 export default async function NewActivityPage({
@@ -6,7 +6,7 @@ export default async function NewActivityPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireActiveMember();
+  await requireMember();
   const { error } = await searchParams;
 
   return (

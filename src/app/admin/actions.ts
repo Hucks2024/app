@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { processXrpPayments } from "@/lib/xrp";
+import { DEFAULT_INVITES } from "@/lib/invite";
 
 export async function approveVerificationAction(formData: FormData) {
   await requireAdmin();
@@ -111,4 +112,18 @@ export async function scanXrpPaymentsAction() {
     : `credited ${result.credited}, ${result.skippedNoTag} with no tag, ${result.skippedUnmatchedTag.length} with an unrecognized tag${result.skippedUnmatchedTag.length ? ` (${result.skippedUnmatchedTag.join(", ")})` : ""}`;
 
   redirect("/admin?xrpScan=" + encodeURIComponent(summary));
+}
+
+/** Tops a member's invite allowance back up. The cap exists so one code
+ * leaking can't open the doors; this is the release valve for members who
+ * are actually bringing good people in. */
+export async function grantInvitesAction(formData: FormData) {
+  await requireAdmin();
+  const userId = String(formData.get("userId"));
+  const prisma = await getPrisma();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { invitesLeft: { increment: DEFAULT_INVITES } },
+  });
+  revalidatePath("/admin");
 }
