@@ -5,9 +5,15 @@ import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireMember } from "@/lib/auth";
 import { geocodeLocation } from "@/lib/geocode";
+import { CATEGORY_VALUES } from "@/lib/categories";
 
 const createSchema = z.object({
-  title: z.string().trim().min(3, "Give your run a title").max(120),
+  title: z.string().trim().min(3, "Give your meetup a name").max(120),
+  category: z
+    .string()
+    .refine((v) => CATEGORY_VALUES.includes(v), "Pick what kind of meetup this is")
+    .default("RUN"),
+  afterSpot: z.string().trim().max(200).optional(),
   description: z.string().trim().max(2000).optional(),
   location: z.string().trim().min(3, "Where does it start?").max(200),
   startsAt: z.string().min(1, "Pick a date and time"),
@@ -31,6 +37,8 @@ export async function createActivityAction(formData: FormData) {
 
   const raw = {
     title: formData.get("title"),
+    category: formData.get("category") || "RUN",
+    afterSpot: formData.get("afterSpot") || undefined,
     description: formData.get("description") || undefined,
     location: formData.get("location"),
     startsAt: formData.get("startsAt"),
@@ -58,6 +66,8 @@ export async function createActivityAction(formData: FormData) {
     data: {
       hostId: user.id,
       title: parsed.data.title,
+      category: parsed.data.category,
+      afterSpot: parsed.data.afterSpot,
       description: parsed.data.description,
       location: parsed.data.location,
       latitude: geocoded?.latitude,

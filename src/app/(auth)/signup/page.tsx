@@ -14,9 +14,9 @@ export default async function SignupPage({
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Create your account</h1>
       <p className="text-sm text-white/85 mb-6">
-        Pacemates is invite only. You need a code from someone who&apos;s already a member, which
-        is what keeps this a group of real people who vouch for each other rather than an open
-        message board.
+        Pacemates is invite only, and stays that way on purpose. You need a code from a member,
+        and their name stays attached to yours, which is why the people here are worth turning up
+        for.
       </p>
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">

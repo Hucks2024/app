@@ -4,7 +4,7 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
 import { createSession, destroySession, hashPassword, isPaidUp, verifyPassword } from "@/lib/auth";
-import { checkInviteCode, spendInvite } from "@/lib/invite";
+import { checkInviteCode, ensureMembership, spendInvite } from "@/lib/invite";
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
@@ -48,6 +48,9 @@ export async function signupAction(formData: FormData) {
     data: { name, email, passwordHash, city, invitedById: invite.inviter.id },
   });
   await spendInvite(prisma, invite.inviter);
+  // Hand out the membership number (and the code built from it) right away,
+  // so it's on their profile the moment they land.
+  await ensureMembership(prisma, user.id);
 
   await createSession(user.id);
   redirect(nextStepFor(user));

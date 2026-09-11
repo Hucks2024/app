@@ -1,4 +1,5 @@
 import { requireMember } from "@/lib/auth";
+import { CATEGORIES } from "@/lib/categories";
 import { createActivityAction } from "@/app/activities/actions";
 
 export default async function NewActivityPage({
@@ -11,9 +12,10 @@ export default async function NewActivityPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a run</h1>
+      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a meetup</h1>
       <p className="text-sm text-white/85 mb-6">
-        Three questions and you&apos;re done. Every pace welcome, walking breaks included.
+        Four questions and you&apos;re done. A run, a walk, or just coffee, they all count. Every
+        pace welcome, walking breaks included.
       </p>
 
       {error && (
@@ -28,8 +30,20 @@ export default async function NewActivityPage({
           default, an empty value for any of them is perfectly valid. */}
       <form action={createActivityAction} className="card space-y-5">
         <div>
+          <label className="label" htmlFor="category">
+            1. What kind of meetup?
+          </label>
+          <select className="input" id="category" name="category" defaultValue="RUN">
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.emoji}  {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
           <label className="label" htmlFor="title">
-            1. What&apos;s the run?
+            2. What&apos;s it called?
           </label>
           <input
             className="input"
@@ -41,7 +55,7 @@ export default async function NewActivityPage({
         </div>
         <div>
           <label className="label" htmlFor="location">
-            2. Where do you meet?
+            3. Where do you meet?
           </label>
           <input
             className="input"
@@ -56,7 +70,7 @@ export default async function NewActivityPage({
         </div>
         <div>
           <label className="label" htmlFor="startsAt">
-            3. When?
+            4. When?
           </label>
           <input className="input" id="startsAt" name="startsAt" type="datetime-local" required />
         </div>
@@ -67,6 +81,22 @@ export default async function NewActivityPage({
           </summary>
 
           <div className="space-y-4 pt-4">
+            <div>
+              <label className="label" htmlFor="afterSpot">
+                Going somewhere after?
+              </label>
+              <input
+                className="input"
+                id="afterSpot"
+                name="afterSpot"
+                placeholder="The Crown, 12 High Street"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                The pub, the café, wherever. Name and rough location is plenty, it shows on the
+                meetup so people can join just for that bit.
+              </p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label" htmlFor="distanceKm">
@@ -90,8 +120,8 @@ export default async function NewActivityPage({
               </div>
             </div>
             <p className="text-xs text-slate-500">
-              No idea on pace? Leave it blank, or write what it feels like. Every pace is a real
-              pace.
+              Distance and pace only matter if you&apos;re moving, skip them for a coffee. No idea
+              on pace? Leave it blank, or write what it feels like. Every pace is a real pace.
             </p>
 
             <div>
@@ -139,7 +169,7 @@ export default async function NewActivityPage({
         </details>
 
         <button type="submit" className="btn-primary w-full">
-          Post run
+          Post meetup
         </button>
       </form>
     </div>

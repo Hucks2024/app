@@ -27,6 +27,8 @@ export default async function RunsScreen() {
       longitude: a.longitude as number,
       distanceKm: a.distanceKm,
       pace: a.pace,
+      category: a.category,
+      afterSpot: a.afterSpot,
       joinedCount: a.participations.length,
       maxParticipants: a.maxParticipants,
     }));

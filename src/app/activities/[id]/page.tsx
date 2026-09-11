@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
@@ -59,6 +60,9 @@ export default async function ActivityDetailPage({
       )}
 
       <div className="card">
+        <span className="badge-slate mb-2 inline-flex">
+          {categoryFor(activity.category).emoji} {categoryFor(activity.category).label}
+        </span>
         <h1 className="text-2xl font-bold">{activity.title}</h1>
         <p className="text-slate-600 mt-1">
           {format(activity.startsAt, "EEEE, MMMM d, yyyy · h:mm a")}
@@ -77,6 +81,9 @@ export default async function ActivityDetailPage({
             activity.location
           )}
         </p>
+        {activity.afterSpot && (
+          <p className="text-slate-600 mt-1">🍻 Afterwards: {activity.afterSpot}</p>
+        )}
         <p className="text-slate-500 text-sm mt-1">
           {activity.distanceKm ? `${activity.distanceKm} km` : null}
           {activity.distanceKm && activity.pace ? " · " : null}

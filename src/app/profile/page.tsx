@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import { ensureInviteCode } from "@/lib/invite";
+import { ensureMembership, formatMemberNumber } from "@/lib/invite";
 import { SITE } from "@/lib/site";
 import { updateProfileAction } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
@@ -15,7 +15,7 @@ export default async function ProfilePage({
   const user = await requireUser();
 
   const prisma = await getPrisma();
-  const inviteCode = await ensureInviteCode(prisma, user.id);
+  const { memberNumber, inviteCode } = await ensureMembership(prisma, user.id);
   const invitedCount = await prisma.user.count({ where: { invitedById: user.id } });
   const unlimited = user.role === "ADMIN";
 
@@ -23,7 +23,10 @@ export default async function ProfilePage({
     <div className="mx-auto max-w-xl px-4 py-12">
       <div className="flex items-center gap-4 mb-6">
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
-        <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
+          <p className="text-sm text-white/80">Member #{formatMemberNumber(memberNumber)}</p>
+        </div>
       </div>
 
       {error && (

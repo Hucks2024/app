@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
+import { formatMemberNumber } from "@/lib/invite";
 import {
   approveVerificationAction,
   rejectVerificationAction,
@@ -201,6 +202,7 @@ export default async function AdminPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-200">
+                <th className="py-2 pr-4">#</th>
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Invited by</th>
@@ -213,6 +215,9 @@ export default async function AdminPage({
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-slate-100 last:border-0">
+                  <td className="py-2 pr-4 font-mono text-slate-500">
+                    {u.memberNumber == null ? "—" : formatMemberNumber(u.memberNumber)}
+                  </td>
                   <td className="py-2 pr-4 flex items-center gap-2">
                     <Avatar userId={u.id} hasPhoto={!!u.profilePhoto} size={6} />
                     {u.name}

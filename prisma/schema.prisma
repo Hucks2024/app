@@ -46,6 +46,12 @@ model User {
   // someone turns out to be a creep, you can see exactly who let them in
   // and deal with that whole branch. invitesLeft caps how far one code can
   // spread if it gets posted somewhere public (admins are exempt).
+  // Sequential membership number, #1 upwards, shown as a padded "#000042".
+  // Purely an identity/badge, never a credential: it's printed on profiles
+  // and guessable by design, so the invite code below only *starts* with it
+  // and earns its security from the random half.
+  memberNumber Int? @unique
+
   inviteCode  String? @unique
   invitedById String?
   invitedBy   User?   @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
@@ -127,6 +133,19 @@ model RunActivity {
   pace            String?
   maxParticipants Int?
   stravaUrl       String?
+
+  // What kind of meetup this is: running is the heart of it and stays the
+  // default, but the same machinery carries walks, rides, gym sessions and
+  // the entirely non-sport ones (coffee, food, pub). See CATEGORIES in
+  // src/lib/categories.ts, which is the single source of truth for the
+  // labels and map-pin emoji.
+  category String @default("RUN")
+
+  // Free text for wherever people are heading afterwards, e.g. "The Crown,
+  // 12 High Street". One field rather than a name/address pair, it's read
+  // by humans, not parsed.
+  afterSpot String?
+
   createdAt       DateTime @default(now())
 
   participations Participation[]

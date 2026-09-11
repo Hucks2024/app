@@ -42,6 +42,8 @@ export default async function HomePage() {
       longitude: jitter(a.longitude as number),
       distanceKm: a.distanceKm,
       pace: a.pace,
+      category: a.category,
+      afterSpot: a.afterSpot,
       joinedCount: 0,
       maxParticipants: a.maxParticipants,
     }));
@@ -50,13 +52,15 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <p className="badge-green mb-3">Invite only 🎟️</p>
+          <p className="badge-green mb-3">Invite only · vouched-for members 🎟️</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
-            <span aria-hidden>🏃‍♀️</span> Connect with other runners
+            <span aria-hidden>🏃‍♀️</span> Run with people worth knowing
           </h1>
           <p className="text-sm text-white/85 mt-3 max-w-sm mx-auto">
-            Members only, invited by other members, every pace welcome. Pins are approximate
-            until you{" "}
+            Nobody joins off the street. Every member was invited by another member who put their
+            own name to it, so you already know who you&apos;re turning up to meet. Runs, walks,
+            rides, and the coffee or pint after. Every pace welcome. Pins are approximate until
+            you{" "}
             <Link href="/login" className="underline font-medium text-white">
               log in
             </Link>{" "}

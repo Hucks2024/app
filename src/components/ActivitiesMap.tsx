@@ -7,34 +7,7 @@ import L from "leaflet";
 import Link from "next/link";
 import { format } from "date-fns";
 import "leaflet/dist/leaflet.css";
-
-// A little variety instead of one identical pin everywhere, which emoji a
-// run gets is picked deterministically from its id (see emojiFor below), so
-// it stays the same run to run rather than flickering on re-render.
-const PIN_EMOJIS = [
-  "🏃",
-  "🏃‍♀️",
-  "🏃‍♂️",
-  "🎽",
-  "⚡",
-  "🥇",
-  "🌳", // park
-  "🌲", // forest trail
-  "⛲", // fountain / town square
-  "🏞️", // riverside / nature park
-  "🪑", // bench
-  "☕", // café
-  "🌉", // bridge
-  "⛰️", // mountain trailhead
-  "🏖️", // beach
-  "🛝", // playground
-];
-
-function emojiFor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return PIN_EMOJIS[hash % PIN_EMOJIS.length];
-}
+import { categoryFor } from "@/lib/categories";
 
 // Pulls a "5:30"-style mm:ss out of a free-text pace field (the form just
 // takes a string, e.g. "5:30 / km", "easy", "6 min miles"), so the pin
@@ -236,6 +209,8 @@ export type MapActivity = {
   longitude: number;
   distanceKm: number | null;
   pace: string | null;
+  category: string;
+  afterSpot: string | null;
   joinedCount: number;
   maxParticipants: number | null;
 };
@@ -263,7 +238,7 @@ export default function ActivitiesMap({
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
     for (const a of activities) {
-      map.set(a.id, emojiIcon(emojiFor(a.id), pinLabel(a.distanceKm, a.pace)));
+      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace)));
     }
     return map;
   }, [activities]);
@@ -329,8 +304,11 @@ export default function ActivitiesMap({
                   <p className="text-sm text-slate-500">
                     {a.distanceKm ? `${a.distanceKm} km · ` : ""}
                     {a.joinedCount}
-                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} laced up 👟
+                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} in 🙌
                   </p>
+                  {a.afterSpot && (
+                    <p className="text-sm text-slate-600">🍻 After: {a.afterSpot}</p>
+                  )}
                   <Link
                     href={`/activities/${a.id}`}
                     className="text-brand-600 underline text-sm font-medium"

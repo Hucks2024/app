@@ -11,7 +11,7 @@ const CODE_LENGTH = 8;
 // open signup.
 export const DEFAULT_INVITES = 5;
 
-function randomCode(): string {
+function randomPart(): string {
   let out = "";
   for (let i = 0; i < CODE_LENGTH; i++) {
     out += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
@@ -19,35 +19,79 @@ function randomCode(): string {
   return out;
 }
 
-/** Whatever someone typed, in canonical form: upper case, no spaces or dashes. */
+/** "42" -> "000042". Shown on profiles as #000042. */
+export function formatMemberNumber(n: number): string {
+  return String(n).padStart(6, "0");
+}
+
+/** A member's code: their membership number, then a random half.
+ *
+ * The number on its own could never be the code. Membership numbers run
+ * 1, 2, 3... so a code that *was* the number would let anyone count their
+ * way in and invite-only would mean nothing. The random half is what makes
+ * it a credential, roughly 887 million possibilities per number, while the
+ * visible number still ties every code to the member who owns it. */
+function buildCode(memberNumber: number): string {
+  return `${formatMemberNumber(memberNumber)}-${randomPart()}`;
+}
+
+/** Whatever someone typed, in canonical form: upper case, no spaces, no dashes. */
 export function normalizeCode(input: string): string {
   return input.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
-/** The member's own code to hand out, minted on first use. */
-export async function ensureInviteCode(prisma: PrismaClient, userId: string): Promise<string> {
+export type Membership = { memberNumber: number; inviteCode: string };
+
+/** The member's number and the code they hand out, minted on first use.
+ *
+ * Both at once because the code is built from the number. Numbers are
+ * handed out by taking the highest so far and adding one; if two signups
+ * race for the same one the unique index rejects the loser and the retry
+ * picks up the next. */
+export async function ensureMembership(
+  prisma: PrismaClient,
+  userId: string
+): Promise<Membership> {
   const existing = await prisma.user.findUnique({
     where: { id: userId },
-    select: { inviteCode: true },
+    select: { memberNumber: true, inviteCode: true },
   });
-  if (existing?.inviteCode) return existing.inviteCode;
+  if (existing?.memberNumber != null && existing.inviteCode) {
+    return { memberNumber: existing.memberNumber, inviteCode: existing.inviteCode };
+  }
 
-  // Retry on the (very unlikely) collision rather than pre-checking, the
-  // unique index is the real arbiter.
   for (let attempt = 0; attempt < 10; attempt++) {
-    const code = randomCode();
+    const highest = await prisma.user.findFirst({
+      where: { memberNumber: { not: null } },
+      orderBy: { memberNumber: "desc" },
+      select: { memberNumber: true },
+    });
+    const memberNumber = existing?.memberNumber ?? (highest?.memberNumber ?? 0) + 1;
+    const inviteCode = buildCode(memberNumber);
     try {
       const updated = await prisma.user.update({
         where: { id: userId },
-        data: { inviteCode: code },
+        data: { memberNumber, inviteCode },
       });
-      return updated.inviteCode!;
+      return { memberNumber: updated.memberNumber!, inviteCode: updated.inviteCode! };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") continue;
       throw e;
     }
   }
-  throw new Error("Could not generate a unique invite code");
+  throw new Error("Could not assign a membership number");
+}
+
+/** Finds the owner of a code, ignoring the dash and any typed-in casing. */
+async function findByNormalizedCode(prisma: PrismaClient, normalized: string) {
+  const direct = await prisma.user.findUnique({ where: { inviteCode: normalized } });
+  if (direct) return direct;
+
+  // The canonical stored form is "NNNNNN-RRRRRR"; rebuild it from the
+  // normalized digits+letters rather than scanning every member.
+  if (normalized.length !== 6 + CODE_LENGTH) return null;
+  const dashed = `${normalized.slice(0, 6)}-${normalized.slice(6)}`;
+  return prisma.user.findUnique({ where: { inviteCode: dashed } });
 }
 
 export type InviteCheck = { ok: true; inviter: User } | { ok: false; reason: string };
@@ -62,7 +106,9 @@ export async function checkInviteCode(
     return { ok: false, reason: "Enter the invite code from the member who invited you." };
   }
 
-  const inviter = await prisma.user.findUnique({ where: { inviteCode: code } });
+  // Stored codes carry a dash ("000042-K7M2QX") that normalizeCode strips,
+  // so match on the normalized form rather than the raw column.
+  const inviter = await findByNormalizedCode(prisma, code);
   if (!inviter) {
     return {
       ok: false,
