@@ -24,20 +24,29 @@ export function formatMemberNumber(n: number): string {
   return String(n).padStart(6, "0");
 }
 
-/** A member's code: their membership number, then a random half.
+/** A member's code: eight random characters, e.g. "X43TPRGY".
  *
- * The number on its own could never be the code. Membership numbers run
- * 1, 2, 3... so a code that *was* the number would let anyone count their
- * way in and invite-only would mean nothing. The random half is what makes
- * it a credential, roughly 887 million possibilities per number, while the
- * visible number still ties every code to the member who owns it. */
-function buildCode(memberNumber: number): string {
-  return `${formatMemberNumber(memberNumber)}-${randomPart()}`;
+ * Deliberately not the membership number. Numbers run 1, 2, 3, so a code
+ * that was the number would let anyone count their way in. Eight characters
+ * from a 31-letter alphabet is about 853 billion possibilities, which is
+ * what makes this a credential; the number lives on the profile instead,
+ * where being guessable doesn't matter. */
+function buildCode(): string {
+  return randomPart();
 }
 
-/** Whatever someone typed, in canonical form: upper case, no spaces, no dashes. */
+/** Whatever someone typed, in canonical form: upper case, letters and
+ * digits only, and just the last CODE_LENGTH of them.
+ *
+ * Taking the tail is what lets an older code still work: codes used to be
+ * issued as "000042-X43TPRGY", and trimming to the last eight accepts that
+ * form and the current short one through the same path. */
 export function normalizeCode(input: string): string {
-  return input.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return input
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(-CODE_LENGTH);
 }
 
 export type Membership = { memberNumber: number; inviteCode: string };
@@ -67,7 +76,7 @@ export async function ensureMembership(
       select: { memberNumber: true },
     });
     const memberNumber = existing?.memberNumber ?? (highest?.memberNumber ?? 0) + 1;
-    const inviteCode = buildCode(memberNumber);
+    const inviteCode = buildCode();
     try {
       const updated = await prisma.user.update({
         where: { id: userId },
@@ -82,18 +91,6 @@ export async function ensureMembership(
   throw new Error("Could not assign a membership number");
 }
 
-/** Finds the owner of a code, ignoring the dash and any typed-in casing. */
-async function findByNormalizedCode(prisma: PrismaClient, normalized: string) {
-  const direct = await prisma.user.findUnique({ where: { inviteCode: normalized } });
-  if (direct) return direct;
-
-  // The canonical stored form is "NNNNNN-RRRRRR"; rebuild it from the
-  // normalized digits+letters rather than scanning every member.
-  if (normalized.length !== 6 + CODE_LENGTH) return null;
-  const dashed = `${normalized.slice(0, 6)}-${normalized.slice(6)}`;
-  return prisma.user.findUnique({ where: { inviteCode: dashed } });
-}
-
 export type InviteCheck = { ok: true; inviter: User } | { ok: false; reason: string };
 
 /** Looks up who a code belongs to and whether it can still be spent. */
@@ -106,9 +103,7 @@ export async function checkInviteCode(
     return { ok: false, reason: "Enter the invite code from the member who invited you." };
   }
 
-  // Stored codes carry a dash ("000042-K7M2QX") that normalizeCode strips,
-  // so match on the normalized form rather than the raw column.
-  const inviter = await findByNormalizedCode(prisma, code);
+  const inviter = await prisma.user.findUnique({ where: { inviteCode: code } });
   if (!inviter) {
     return {
       ok: false,

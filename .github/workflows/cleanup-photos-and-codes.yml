@@ -1,0 +1,21 @@
+name: Purge verification photos and shorten invite codes
+
+# One-time cleanup, see scripts/cleanup-photos-and-codes.mjs. Wipes the
+# retired photo-ID blobs out of Turso and drops the membership-number
+# prefix from invite codes. Safe to re-run.
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/cleanup-photos-and-codes.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
