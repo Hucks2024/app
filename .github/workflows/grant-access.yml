@@ -1,0 +1,27 @@
+name: Grant a member access
+
+# Unsticks one account that's caught behind the older pay/verify gates,
+# see scripts/grant-access.mjs. Takes the member's email as an input and
+# is safe to re-run.
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email address of the member to unblock"
+        required: true
+        type: string
+
+jobs:
+  grant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/grant-access.mjs
+        env:
+          MEMBER_EMAIL: ${{ inputs.email }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
