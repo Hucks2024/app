@@ -46,6 +46,13 @@ model User {
   // someone turns out to be a creep, you can see exactly who let them in
   // and deal with that whole branch. invitesLeft caps how far one code can
   // spread if it gets posted somewhere public (admins are exempt).
+  // Set once the six-digit code we emailed them has been typed back in.
+  // Null means unverified: they can log in, but nothing else, see
+  // requireMember in src/lib/auth.ts. Nobody is held up by this when email
+  // isn't configured, signups are stamped verified on the spot instead
+  // (see emailVerificationEnabled in src/lib/email.ts).
+  emailVerifiedAt DateTime?
+
   // Sequential membership number, #1 upwards, shown as a padded "#000042".
   // Purely an identity/badge, never a credential: it's printed on profiles
   // and guessable by design, so the invite code below only *starts* with it
@@ -72,7 +79,8 @@ model User {
 
   createdAt DateTime @default(now())
 
-  verification     VerificationRequest?
+  verification      VerificationRequest?
+  emailVerification EmailVerification?
   hostedActivities RunActivity[]        @relation("HostedActivities")
   participations   Participation[]
   comments         Comment[]
@@ -94,6 +102,20 @@ model XrpPayment {
   monthsCredited Int
   ledgerCloseAt  DateTime // when the payment actually settled on XRPL
   createdAt      DateTime @default(now()) // when our poller processed it
+}
+
+// The six-digit email code, one row per member, deleted the moment it's
+// used. Short-lived by design: it expires, it only takes a handful of
+// wrong guesses before it's spent, and sentAt throttles how often a new
+// one can be requested.
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  sentAt    DateTime @default(now())
 }
 
 // Holds the sensitive verification photos separately from the User record.

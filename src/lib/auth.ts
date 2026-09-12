@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/db";
+import { emailVerificationEnabled } from "@/lib/email";
 import type { User } from "@prisma/client";
 
 const SESSION_COOKIE = "pacemates_session";
@@ -92,13 +93,26 @@ export function isPaidUp(user: Pick<User, "role" | "paidUntil">): boolean {
   return user.role === "ADMIN" || (user.paidUntil != null && user.paidUntil > new Date());
 }
 
+/** Whether this account still owes us a confirmed email address.
+ *
+ * Accounts created while email was switched off are stamped verified at
+ * signup, so flipping it on later never locks existing members out, it
+ * only applies to people who sign up from then on. */
+export function needsEmailCheck(user: Pick<User, "emailVerifiedAt">): boolean {
+  return emailVerificationEnabled() && user.emailVerifiedAt == null;
+}
+
 /** The bar for joining, hosting and commenting on runs: a logged-in,
- * non-suspended account, plus a current membership if the fee is switched
- * on. There's deliberately no photo-ID check here, everyone got in through
- * someone else's invite code and stays traceable to them (see
- * src/lib/invite.ts), which is what keeps strangers out now. */
+ * non-suspended account with a confirmed email address, plus a current
+ * membership if the fee is switched on. There's deliberately no photo-ID
+ * check here, everyone got in through someone else's invite code and stays
+ * traceable to them (see src/lib/invite.ts), which is what keeps strangers
+ * out now. */
 export async function requireMember(): Promise<User> {
   const user = await requireUser();
+  if (needsEmailCheck(user)) {
+    redirect("/verify-email");
+  }
   if (!isPaidUp(user)) {
     redirect("/subscribe");
   }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser, isPaidUp } from "@/lib/auth";
+import { getCurrentUser, isPaidUp, needsEmailCheck } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import RunsScreen from "@/components/RunsScreen";
@@ -21,6 +21,7 @@ export default async function HomePage() {
   // extra click. Nothing stands between signing up and the app now except
   // the membership fee, and that's switched off while it's free.
   if (user) {
+    if (needsEmailCheck(user)) redirect("/verify-email");
     if (!isPaidUp(user)) redirect("/subscribe");
     return <RunsScreen />;
   }

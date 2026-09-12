@@ -1,0 +1,22 @@
+name: Add email verification to Turso
+
+# One-time schema change for email verification at signup (see
+# prisma/migrations/20260912090000_email_verification). Turso speaks HTTP
+# rather than the wire protocol prisma migrate deploy needs, so the change
+# is applied by a small idempotent script instead. Safe to re-run.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/add-email-verification.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}

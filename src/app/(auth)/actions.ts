@@ -3,8 +3,17 @@
 import { z } from "zod";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
-import { createSession, destroySession, hashPassword, isPaidUp, verifyPassword } from "@/lib/auth";
+import {
+  createSession,
+  destroySession,
+  hashPassword,
+  isPaidUp,
+  needsEmailCheck,
+  verifyPassword,
+} from "@/lib/auth";
 import { checkInviteCode, ensureMembership, spendInvite } from "@/lib/invite";
+import { emailVerificationEnabled } from "@/lib/email";
+import { sendVerificationCode } from "@/lib/email-verification";
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
@@ -43,7 +52,15 @@ export async function signupAction(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { name, email, passwordHash, invitedById: invite.inviter.id },
+    data: {
+      name,
+      email,
+      passwordHash,
+      invitedById: invite.inviter.id,
+      // Nobody is made to confirm an address we have no way of writing to,
+      // so with email switched off the account is verified from the start.
+      emailVerifiedAt: emailVerificationEnabled() ? null : new Date(),
+    },
   });
   await spendInvite(prisma, invite.inviter);
   // Hand out the membership number (and the code built from it) right away,
@@ -51,12 +68,24 @@ export async function signupAction(formData: FormData) {
   await ensureMembership(prisma, user.id);
 
   await createSession(user.id);
+
+  if (emailVerificationEnabled()) {
+    const sent = await sendVerificationCode(prisma, user);
+    // A send that fails still lands them on /verify-email; the page has a
+    // resend button, which beats dead-ending them on the signup form with
+    // an account that already exists.
+    const query = sent.ok ? "" : `?error=${encodeURIComponent(sent.error)}`;
+    redirect(`/verify-email${query}`);
+  }
+
   redirect(nextStepFor(user));
 }
 
-/** Where a logged-in user should land. Straight into the app, unless the
- * membership fee is switched on and theirs has lapsed. */
-function nextStepFor(user: { role: string; paidUntil: Date | null }) {
+/** Where a logged-in user should land: confirm the email if one is still
+ * owed, then the app, unless the membership fee is switched on and theirs
+ * has lapsed. */
+function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerifiedAt: Date | null }) {
+  if (needsEmailCheck(user)) return "/verify-email";
   return isPaidUp(user) ? "/activities" : "/subscribe";
 }
 
