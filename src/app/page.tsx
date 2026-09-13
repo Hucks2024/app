@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, isPaidUp, needsEmailCheck } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
+import { DEFAULT_INVITES } from "@/lib/invite";
 import RunsScreen from "@/components/RunsScreen";
 import MapPanel from "@/components/MapPanel";
 import Logo from "@/components/Logo";
@@ -67,8 +68,15 @@ export default async function HomePage() {
               sentence drops the "Packmates is" opening it carries in the
               meta description, where it has to stand on its own. */}
           <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
-            A private, members-only community for people all over the world to train, travel and
-            meet up. Access is by referral.
+            A highly exclusive club for people all over the world to train,
+            travel and meet up. Membership is by referral only.
+          </p>
+          {/* The allowance comes from the constant the invite system
+              actually spends, so the number on the front page can't drift
+              away from the number members really get. */}
+          <p className="text-xs text-white/70 mt-3 max-w-md mx-auto">
+            Every member is invited by someone already here, and their name
+            stays attached to yours. {DEFAULT_INVITES} invitations each.
           </p>
         </div>
       </section>
