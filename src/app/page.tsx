@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import RunsScreen from "@/components/RunsScreen";
 import MapPanel from "@/components/MapPanel";
+import Logo from "@/components/Logo";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
 // Anonymous visitors get a real map (so there's something to see, and a
@@ -54,12 +55,18 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
-            <span aria-hidden>📍</span> People worth knowing, wherever you land
+          <div className="flex justify-center mb-4">
+            <Logo size={64} />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
+            {SITE.name}
           </h1>
+          {/* The name is the headline and the sentence explains it, so the
+              sentence drops the "Packmates is" opening it carries in the
+              meta description, where it has to stand on its own. */}
           <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
-            {SITE.name} is a private, members-only community for people all over the world to
-            train, travel and meet up. Access is by referral.
+            A private, members-only community for people all over the world to train, travel and
+            meet up. Access is by referral.
           </p>
         </div>
       </section>
