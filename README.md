@@ -1,4 +1,4 @@
-# Pacemates
+# Packmates
 
 A small, verified community for organizing group runs, built because open
 "anyone can join" meetup boards are an easy place for creeps to hide behind a

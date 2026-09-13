@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
+// Keeps the old name through the rename to Packmates: it's an invisible
+// implementation detail, and changing it would sign every member out for
+// no visible gain.
 const SESSION_COOKIE = "pacemates_session";
 
 // Lightweight edge-safe gate: just confirms a valid signed session exists.

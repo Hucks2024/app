@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SITE } from "@/lib/site";
 
 const DISMISSED_KEY = "installHintDismissed";
 
@@ -54,7 +55,7 @@ export default function InstallHint() {
         🏃
       </span>
       <p className="text-sm text-slate-700 flex-1">
-        Add Pacemates to your home screen: tap{" "}
+        Add {SITE.name} to your home screen: tap{" "}
         <span aria-hidden>⬆️</span> <strong>Share</strong>, then{" "}
         <strong>Add to Home Screen</strong>.
       </p>

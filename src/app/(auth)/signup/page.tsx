@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signupAction } from "@/app/(auth)/actions";
+import { SITE } from "@/lib/site";
 
 export default async function SignupPage({
   searchParams,
@@ -14,7 +15,7 @@ export default async function SignupPage({
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Create your account</h1>
       <p className="text-sm text-white/85 mb-6">
-        Pacemates is invite only, and stays that way on purpose. You need a code from a member,
+        {SITE.name} is invite only, and stays that way on purpose. You need a code from a member,
         and their name stays attached to yours, which is why the people here are worth turning up
         for.
       </p>

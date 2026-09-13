@@ -21,7 +21,7 @@ export async function geocodeLocation(
     const res = await fetch(url, {
       headers: {
         // Nominatim rejects requests with no identifying User-Agent.
-        "User-Agent": "Pacemates/1.0 (doyoulikepizza.com)",
+        "User-Agent": "Packmates/1.0 (doyoulikepizza.com)",
       },
       signal: AbortSignal.timeout(5000),
     });

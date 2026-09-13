@@ -4,7 +4,8 @@ import { getCurrentUser, isPaidUp, needsEmailCheck } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import RunsScreen from "@/components/RunsScreen";
-import ActivitiesMap, { type MapActivity } from "@/components/ActivitiesMap";
+import MapPanel from "@/components/MapPanel";
+import type { MapActivity } from "@/components/ActivitiesMap";
 
 // Anonymous visitors get a real map (so there's something to see, and a
 // reason to sign up) but not real precision: jitter each pin by up to
@@ -53,25 +54,27 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <p className="badge-green mb-3">Invite only · vouched-for members 🎟️</p>
+          <p className="badge-green mb-3">Invite only 🎟️</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
-            <span aria-hidden>🏃‍♀️</span> Run with people worth knowing
+            <span aria-hidden>🎒</span> People worth knowing, wherever you land
           </h1>
-          <p className="text-sm text-white/85 mt-3 max-w-sm mx-auto">
-            Nobody joins off the street. Every member was invited by another member who put their
-            own name to it, so you already know who you&apos;re turning up to meet. Runs, walks,
-            rides, and the coffee or pint after. Every pace welcome. Pins are approximate until
-            you{" "}
-            <Link href="/login" className="underline font-medium text-white">
-              log in
-            </Link>{" "}
-            to see exact times, meeting points, and join.
+          <p className="text-sm text-white/85 mt-3 max-w-md mx-auto">
+            Nobody joins off the street. Every member was invited by someone who put their own
+            name to it, so you know who you&apos;re turning up to meet. Runs, hikes, rides and the
+            pint after, in whatever city you&apos;re in this week.
           </p>
         </div>
       </section>
 
       <div className="mx-auto max-w-3xl px-4 pb-10">
-        <ActivitiesMap activities={previewActivities} restricted />
+        <MapPanel activities={previewActivities} restricted />
+        <p className="text-xs text-white/75 text-center mt-3">
+          Pins are approximate.{" "}
+          <Link href="/login" className="underline font-medium text-white">
+            Log in
+          </Link>{" "}
+          for exact times and meeting points, and to join.
+        </p>
       </div>
     </div>
   );

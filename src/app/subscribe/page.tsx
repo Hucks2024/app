@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { assignDestinationTag, getXrpGbpRate, XRP_PER_MONTH } from "@/lib/xrp";
 import CopyableField from "@/components/CopyableField";
 import LogoutButton from "@/components/LogoutButton";
+import { SITE } from "@/lib/site";
 
 export default async function SubscribePage() {
   const user = await requireUser();
@@ -24,7 +25,7 @@ export default async function SubscribePage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-12">
-      <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Join Pacemates</h1>
+      <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Join {SITE.name}</h1>
       <p className="text-white/85 mb-6">
         {XRP_PER_MONTH} XRP a month, sent to the address below with your personal destination
         tag. Send it for as many months as you like at once, e.g. {XRP_PER_MONTH * 12} XRP covers

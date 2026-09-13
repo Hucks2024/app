@@ -1,4 +1,4 @@
-// Pacemates, verified running-meetup app
+// Packmates, invite-only meetup app
 // Small, self-contained SQLite database. Photos are stored as binary blobs
 // directly in the DB (not on disk) so the app has no external file-storage
 // dependency and works the same in dev and in production.

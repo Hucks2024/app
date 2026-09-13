@@ -43,8 +43,8 @@ export default async function ProfilePage({
       <div className="card mb-4">
         <p className="font-semibold mb-1">Invite a runner 🎟️</p>
         <p className="text-sm text-slate-600 mb-4">
-          Pacemates is invite only. Share this with people you&apos;d actually turn up and run
-          with, whoever joins stays linked to you.
+          {SITE.name} is invite only. Share this with people you&apos;d actually turn up and
+          meet, whoever joins stays linked to you.
         </p>
         <div className="space-y-3">
           <div>

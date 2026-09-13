@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getPrisma } from "@/lib/db";
-import ActivitiesMap from "@/components/ActivitiesMap";
+import MapPanel from "@/components/MapPanel";
 
 // The map of upcoming runs. Only reachable by members, both "/" and
 // "/activities" gate on requireMember() before rendering this, so there's
@@ -42,7 +42,7 @@ export default async function RunsScreen() {
         </Link>
       </div>
 
-      <ActivitiesMap activities={mapActivities} />
+      <MapPanel activities={mapActivities} />
     </div>
   );
 }
