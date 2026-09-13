@@ -54,7 +54,7 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <p className="badge-green mb-3">Invite only 🎟️</p>
+          <p className="badge-green mb-3">Members only · access by referral 🎟️</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
             <span aria-hidden>📍</span> People worth knowing, wherever you land
           </h1>
