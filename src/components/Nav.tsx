@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 import LogoutButton from "@/components/LogoutButton";
+import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Nav() {
@@ -11,9 +12,9 @@ export default async function Nav() {
     <header className="border-b border-slate-200 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg text-brand-700 flex items-center gap-2">
-          <span aria-hidden className="nav-runner">
-            🏃
-          </span>{" "}
+          <span className="nav-mark">
+            <Logo />
+          </span>
           {SITE.name}
         </Link>
         <nav className="flex items-center gap-4 text-sm">

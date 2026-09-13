@@ -1,87 +1,65 @@
 import sharp from "sharp";
 import { mkdir } from "fs/promises";
 
-// Builds the home-screen icons from the same runner the nav uses, so the
-// installed app and the site share a mark.
+// Builds the app icons: a map pin with a pack of three inside it. The app
+// is a map first, so the mark says both what it does and who it's for.
 //
 // Run with `node scripts/generate-icons.mjs`; the PNGs it writes are
-// committed. Deliberately not a build step: it needs a colour emoji font
-// installed locally, which a deploy image can't be relied on to have.
+// committed. Pure SVG with no font dependency, so it's reproducible
+// anywhere.
 //
-// Noto Color Emoji renders here as a flat silhouette rather than the full
-// colour glyph, which is lucky, a solid shape is exactly what an icon
-// wants. It gets recoloured white and set on the app's purple-to-magenta
-// gradient.
+// The same shape is drawn in src/components/Logo.tsx for the nav. If you
+// change the geometry here, change it there too.
 
 const GRADIENT_STOPS = [
-  { offset: "0%", color: "#6d28d9" },
-  { offset: "45%", color: "#9333ea" },
-  { offset: "75%", color: "#c026d3" },
-  { offset: "100%", color: "#db2777" },
+  ["0%", "#6d28d9"],
+  ["45%", "#9333ea"],
+  ["75%", "#c026d3"],
+  ["100%", "#db2777"],
 ];
 
-function backgroundSvg(size) {
-  const stops = GRADIENT_STOPS.map(
-    (s) => `<stop offset="${s.offset}" stop-color="${s.color}"/>`
-  ).join("");
+export const PIN_PATH =
+  "M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z";
+
+/** One figure: circle head over a rounded torso. */
+const person = (x, y, s, fill) => `
+  <g transform="translate(${x} ${y}) scale(${s})" fill="${fill}">
+    <circle cx="0" cy="-78" r="32"/>
+    <path d="M0 -34 Q40 -34 44 12 Q48 52 38 66 Q20 74 0 74 Q-20 74 -38 66 Q-48 52 -44 12 Q-40 -34 0 -34 Z"/>
+  </g>`;
+
+/** @param inset 0 fills the tile; higher values pull the mark in, which is
+ *  what a maskable icon needs so a circular crop can't clip it. */
+function markSvg(size, inset) {
+  const stops = GRADIENT_STOPS.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("");
+  const scale = 1 - inset;
+  const shift = (512 * inset) / 2;
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
        <defs><linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">${stops}</linearGradient></defs>
-       <rect width="${size}" height="${size}" fill="url(#g)"/>
+       <rect width="512" height="512" fill="url(#g)"/>
+       <g transform="translate(${shift} ${shift}) scale(${scale})">
+         <path d="${PIN_PATH}" fill="#fff"/>
+         ${person(256, 236, 0.62, "#9333ea")}
+         ${person(186, 250, 0.48, "#9333ea")}
+         ${person(326, 250, 0.48, "#9333ea")}
+       </g>
      </svg>`
   );
 }
 
-/** The runner glyph, trimmed to its own bounds and recoloured white. */
-async function whiteRunner() {
-  const drawn = await sharp(
-    Buffer.from(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800">
-         <text x="400" y="620" font-size="620" text-anchor="middle"
-               font-family="Noto Color Emoji">🏃</text>
-       </svg>`
-    )
-  )
-    .png()
-    .trim()
-    .toBuffer();
-
-  const { width, height } = await sharp(drawn).metadata();
-  if (!width || !height) throw new Error("Runner glyph did not render");
-
-  // Keep the glyph's alpha (its shape) and throw away its colour, so the
-  // silhouette becomes solid white.
-  const alpha = await sharp(drawn).ensureAlpha().extractChannel("alpha").toBuffer();
-  return sharp({ create: { width, height, channels: 3, background: "#ffffff" } })
-    .joinChannel(alpha)
-    .png()
-    .toBuffer();
-}
-
-/** One icon: white runner centred on the gradient, at `coverage` of the width. */
-async function icon(size, coverage, out) {
-  const runner = await whiteRunner();
-  const target = Math.round(size * coverage);
-  const resized = await sharp(runner)
-    .resize(target, target, { fit: "inside", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .toBuffer();
-
-  await sharp(backgroundSvg(size))
-    .composite([{ input: resized, gravity: "centre" }])
-    .png()
-    .toFile(out);
+async function write(size, inset, out) {
+  await sharp(markSvg(size, inset)).png().toFile(out);
   console.log(`  ${out}`);
 }
 
 await mkdir("public", { recursive: true });
 
 console.log("Generating icons...");
-// Plain icons fill the tile; iOS and Android round the corners themselves.
-await icon(192, 0.62, "public/icon-192.png");
-await icon(512, 0.62, "public/icon-512.png");
-await icon(180, 0.62, "src/app/apple-icon.png");
-await icon(96, 0.66, "src/app/icon.png");
-// Maskable gets a smaller runner: Android can crop this to a circle, and
-// only the middle 80% is guaranteed to survive.
-await icon(512, 0.45, "public/icon-maskable-512.png");
+await write(192, 0.04, "public/icon-192.png");
+await write(512, 0.04, "public/icon-512.png");
+await write(180, 0.04, "src/app/apple-icon.png");
+await write(96, 0.02, "src/app/icon.png");
+// Android can crop this to a circle, so the pin sits well inside.
+await write(512, 0.3, "public/icon-maskable-512.png");
 console.log("Done.");
