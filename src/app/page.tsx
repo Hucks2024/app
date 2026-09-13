@@ -54,11 +54,11 @@ export default async function HomePage() {
   return (
     <div>
       <section>
-        <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <div className="flex justify-center mb-5">
-            {/* Sized in classes rather than the size prop so it scales up on
-                wider screens; the prop is the no-CSS fallback. */}
-            <Logo size={120} variant="white" className="w-28 h-28 sm:w-36 sm:h-36" />
+        <div className="mx-auto max-w-xl px-4 pt-6 pb-6 text-center">
+          <div className="flex justify-center mb-4">
+            {/* Sized by height in classes so it scales up on wider screens;
+                the size prop is the no-CSS fallback. */}
+            <Logo size={112} variant="white" className="h-24 sm:h-28 w-auto" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
             {SITE.name}

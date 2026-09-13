@@ -25,9 +25,9 @@ export default function Logo({
   const figureFill = white ? "#9333ea" : "#fff";
   return (
     <svg
-      width={size}
+      width={size * (240 / 344)}
       height={size}
-      viewBox="0 0 512 512"
+      viewBox="136 74 240 344"
       role="img"
       aria-label="Packmates"
       className={`shrink-0 ${className}`}
