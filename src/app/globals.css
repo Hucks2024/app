@@ -91,30 +91,41 @@ body {
   @apply badge bg-slate-100 text-slate-700;
 }
 
-/* Emoji map pins (ActivitiesMap), a round white bubble that gently bobs,
-   instead of Leaflet's default flat teardrop marker. Plain CSS, not
+/* Map markers (ActivitiesMap): the app's own logo drop, in the brand
+   gradient, with the meetup's emoji in the white disc. Plain CSS, not
    Tailwind classes: this HTML is handed to Leaflet as a raw string and
    mounted outside React, so it needs a real stylesheet rule to target. */
 .map-pin {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  border: 2px solid #16a352;
-  border-radius: 9999px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  position: relative;
+  width: 44px;
+  height: 63px;
+  /* drop-shadow, not box-shadow: it follows the teardrop outline instead
+     of casting a rectangle behind it. */
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
   animation: map-pin-bob 2.2s ease-in-out infinite;
   cursor: pointer;
+  transform-origin: 50% 100%; /* grow from the tip, which is the bit pinned
+                                 to the actual location */
 }
-.map-pin span {
-  font-size: 20px;
+.map-pin-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.map-pin-emoji {
+  position: absolute;
+  /* Centre of the white disc: cx 256, cy 196 inside the 136 74 240 344
+     viewBox, i.e. halfway across and 35.5% down. */
+  left: 50%;
+  top: 35.5%;
+  transform: translate(-50%, -50%);
+  font-size: 19px;
   line-height: 1;
+  pointer-events: none;
 }
 .map-pin:hover {
   animation-play-state: paused;
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 @keyframes map-pin-bob {
   0%,

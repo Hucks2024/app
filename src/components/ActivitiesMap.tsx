@@ -42,21 +42,49 @@ function pinLabel(distanceKm: number | null, pace: string | null): string | null
   return `${paceLabel} · ${duration}`;
 }
 
-// A round, bouncing emoji bubble instead of Leaflet's default teardrop pin,
-// built as a plain divIcon since Leaflet's icons are DOM elements it manages
-// itself, outside React. Styling lives in globals.css (.map-pin / @keyframes
-// map-pin-bob) since Tailwind can't apply arbitrary keyframe animations. The
-// pace/duration label only renders when there's something short to show.
-function emojiIcon(emoji: string, label: string | null) {
+// The app's own logo as the map marker: the same teardrop from
+// src/components/Logo.tsx, in the brand gradient, with the category emoji
+// sitting in a white disc where the logo's three figures go.
+//
+// Built as a plain divIcon since Leaflet manages its icons as DOM outside
+// React. Styling lives in globals.css (.map-pin and friends) because
+// Tailwind can't reach markup handed over as a raw string, and can't do
+// the keyframes either. The pace/duration label only renders when there's
+// something short to show.
+const PIN_W = 44;
+const PIN_H = 63;
+
+function emojiIcon(emoji: string, label: string | null, uid: string) {
+  // Every marker carries its own copy of the gradient, so the id has to be
+  // unique: with a shared one, whichever marker Leaflet happens to unmount
+  // first would take the definition down and leave the rest unpainted.
+  const gradientId = `map-pin-grad-${uid}`;
+  const svg = `
+    <svg class="map-pin-svg" viewBox="136 74 240 344" aria-hidden="true">
+      <defs>
+        <linearGradient id="${gradientId}" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stop-color="#6d28d9"/>
+          <stop offset="45%" stop-color="#9333ea"/>
+          <stop offset="75%" stop-color="#c026d3"/>
+          <stop offset="100%" stop-color="#db2777"/>
+        </linearGradient>
+      </defs>
+      <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="url(#${gradientId})"/>
+      <circle cx="256" cy="196" r="80" fill="#fff"/>
+    </svg>`;
+  const pin = `<div class="map-pin">${svg}<span class="map-pin-emoji">${emoji}</span></div>`;
   const html = label
-    ? `<div class="map-pin-wrap"><div class="map-pin"><span>${emoji}</span></div><div class="map-pin-label">${label}</div></div>`
-    : `<div class="map-pin"><span>${emoji}</span></div>`;
+    ? `<div class="map-pin-wrap">${pin}<div class="map-pin-label">${label}</div></div>`
+    : pin;
+
   return L.divIcon({
     html,
     className: "", // clear Leaflet's own default styling/background
-    iconSize: label ? [64, 54] : [40, 40],
-    iconAnchor: label ? [32, 36] : [20, 36],
-    popupAnchor: [0, -34],
+    iconSize: label ? [72, PIN_H + 18] : [PIN_W, PIN_H],
+    // The tip of the drop is what points at the location, so the anchor
+    // sits at the bottom centre of the pin rather than its middle.
+    iconAnchor: label ? [36, PIN_H] : [PIN_W / 2, PIN_H],
+    popupAnchor: [0, -PIN_H + 4],
   });
 }
 
@@ -238,7 +266,10 @@ export default function ActivitiesMap({
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
     for (const a of activities) {
-      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace)));
+      map.set(
+        a.id,
+        emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace), a.id)
+      );
     }
     return map;
   }, [activities]);
