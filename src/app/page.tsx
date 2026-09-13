@@ -59,9 +59,9 @@ export default async function HomePage() {
             <span aria-hidden>📍</span> People worth knowing, wherever you land
           </h1>
           <p className="text-sm text-white/85 mt-3 max-w-md mx-auto">
-            Nobody joins off the street. Every member was invited by someone who put their own
-            name to it, so you know who you&apos;re turning up to meet. Runs, hikes, rides and the
-            pint after, in whatever city you&apos;re in this week.
+            Every member was invited by someone who put their own name to it, so you know who
+            you&apos;re turning up to meet. Runs, hikes, rides and the pint after, in whatever
+            city you&apos;re in this week.
           </p>
         </div>
       </section>
