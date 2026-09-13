@@ -58,7 +58,7 @@ export default async function HomePage() {
           <div className="flex justify-center mb-5">
             {/* Sized in classes rather than the size prop so it scales up on
                 wider screens; the prop is the no-CSS fallback. */}
-            <Logo size={120} className="w-28 h-28 sm:w-36 sm:h-36" />
+            <Logo size={120} variant="white" className="w-28 h-28 sm:w-36 sm:h-36" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
             {SITE.name}
