@@ -54,14 +54,12 @@ export default async function HomePage() {
     <div>
       <section>
         <div className="mx-auto max-w-xl px-4 pt-12 pb-6 text-center">
-          <p className="badge-green mb-3">Members only · access by referral 🎟️</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow">
             <span aria-hidden>📍</span> People worth knowing, wherever you land
           </h1>
-          <p className="text-sm text-white/85 mt-3 max-w-md mx-auto">
-            Every member was invited by someone who put their own name to it, so you know who
-            you&apos;re turning up to meet. Runs, hikes, rides and the pint after, in whatever
-            city you&apos;re in this week.
+          <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
+            {SITE.name} is a private, members-only community for people all over the world to
+            train, travel and meet up. Access is by referral.
           </p>
         </div>
       </section>
