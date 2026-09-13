@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import InstallHint from "@/components/InstallHint";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -19,6 +20,32 @@ export const metadata: Metadata = {
     title: SITE.name,
     description: SITE.description,
   },
+  // Installable to the home screen, see src/app/manifest.ts. iOS ignores
+  // the manifest's display mode and wants its own meta tags, which is what
+  // appleWebApp emits, that's what strips the address bar once the icon is
+  // launched.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: SITE.name,
+    statusBarStyle: "default",
+  },
+  other: {
+    // Next.js emits the standardised "mobile-web-app-capable" for
+    // appleWebApp.capable. Recent iOS opens home-screen sites full screen
+    // regardless, but older versions only honour Apple's original spelling,
+    // and without it the icon just reopens Safari, address bar and all.
+    "apple-mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  // Tints the bar above the page when installed. Matched to the nav rather
+  // than the body gradient, so the two read as one surface.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#e9ddfb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>
+        <InstallHint />
         <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
           <p>
             {SITE.name} ·{" "}

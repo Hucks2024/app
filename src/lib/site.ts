@@ -3,7 +3,7 @@ export const SITE = {
   name: "Pacemates",
   domain: "doyoulikepizza.com",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://doyoulikepizza.com",
-  tagline: "Verified running meetups. No creeps, just miles.",
+  tagline: "Invite-only running meetups. No creeps, just miles.",
   description:
-    "Pacemates connects real, photo-ID-verified people for group runs, training partners, and race-day meetups.",
+    "Pacemates is an invite-only club for group runs, walks, rides and the coffee or pint after. Every member is vouched for by another member.",
 };
