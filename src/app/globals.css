@@ -92,7 +92,7 @@ body {
 }
 
 /* Map markers (ActivitiesMap): the app's own logo drop, in the brand
-   gradient, with the meetup's emoji in the white disc. Plain CSS, not
+   violet, with the meetup's emoji in the white disc. Plain CSS, not
    Tailwind classes: this HTML is handed to Leaflet as a raw string and
    mounted outside React, so it needs a real stylesheet rule to target. */
 .map-pin {

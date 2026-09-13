@@ -8,6 +8,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import "leaflet/dist/leaflet.css";
 import { categoryFor } from "@/lib/categories";
+import { BRAND } from "@/components/Logo";
 
 // Pulls a "5:30"-style mm:ss out of a free-text pace field (the form just
 // takes a string, e.g. "5:30 / km", "easy", "6 min miles"), so the pin
@@ -43,8 +44,8 @@ function pinLabel(distanceKm: number | null, pace: string | null): string | null
 }
 
 // The app's own logo as the map marker: the same teardrop from
-// src/components/Logo.tsx, in the brand gradient, with the category emoji
-// sitting in a white disc where the logo's three figures go.
+// src/components/Logo.tsx, in the same brand violet, with the category
+// emoji sitting in a white disc where the logo's three figures go.
 //
 // Built as a plain divIcon since Leaflet manages its icons as DOM outside
 // React. Styling lives in globals.css (.map-pin and friends) because
@@ -54,22 +55,14 @@ function pinLabel(distanceKm: number | null, pace: string | null): string | null
 const PIN_W = 44;
 const PIN_H = 63;
 
-function emojiIcon(emoji: string, label: string | null, uid: string) {
-  // Every marker carries its own copy of the gradient, so the id has to be
-  // unique: with a shared one, whichever marker Leaflet happens to unmount
-  // first would take the definition down and leave the rest unpainted.
-  const gradientId = `map-pin-grad-${uid}`;
+function emojiIcon(emoji: string, label: string | null) {
+  // A flat fill, so nothing here depends on a <defs> id. The gradient this
+  // replaced needed one copy per marker with a unique id, or whichever
+  // marker Leaflet unmounted first took the definition down and left the
+  // rest unpainted.
   const svg = `
     <svg class="map-pin-svg" viewBox="136 74 240 344" aria-hidden="true">
-      <defs>
-        <linearGradient id="${gradientId}" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stop-color="#6d28d9"/>
-          <stop offset="45%" stop-color="#9333ea"/>
-          <stop offset="75%" stop-color="#c026d3"/>
-          <stop offset="100%" stop-color="#db2777"/>
-        </linearGradient>
-      </defs>
-      <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="url(#${gradientId})"/>
+      <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="${BRAND}"/>
       <circle cx="256" cy="196" r="80" fill="#fff"/>
     </svg>`;
   const pin = `<div class="map-pin">${svg}<span class="map-pin-emoji">${emoji}</span></div>`;
@@ -268,7 +261,7 @@ export default function ActivitiesMap({
     for (const a of activities) {
       map.set(
         a.id,
-        emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace), a.id)
+        emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace))
       );
     }
     return map;

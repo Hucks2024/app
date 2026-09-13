@@ -11,12 +11,9 @@ import { mkdir } from "fs/promises";
 // The same shape is drawn in src/components/Logo.tsx for the nav. If you
 // change the geometry here, change it there too.
 
-const GRADIENT_STOPS = [
-  ["0%", "#6d28d9"],
-  ["45%", "#9333ea"],
-  ["75%", "#c026d3"],
-  ["100%", "#db2777"],
-];
+// Must match BRAND in src/components/Logo.tsx: the icon, the nav mark and
+// the map pins are all the one violet.
+const BRAND = "#6d28d9";
 
 export const PIN_PATH =
   "M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z";
@@ -31,18 +28,16 @@ const person = (x, y, s, fill) => `
 /** @param inset 0 fills the tile; higher values pull the mark in, which is
  *  what a maskable icon needs so a circular crop can't clip it. */
 function markSvg(size, inset) {
-  const stops = GRADIENT_STOPS.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("");
   const scale = 1 - inset;
   const shift = (512 * inset) / 2;
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
-       <defs><linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">${stops}</linearGradient></defs>
-       <rect width="512" height="512" fill="url(#g)"/>
+       <rect width="512" height="512" fill="${BRAND}"/>
        <g transform="translate(${shift} ${shift}) scale(${scale})">
          <path d="${PIN_PATH}" fill="#fff"/>
-         ${person(256, 236, 0.62, "#9333ea")}
-         ${person(186, 250, 0.48, "#9333ea")}
-         ${person(326, 250, 0.48, "#9333ea")}
+         ${person(256, 236, 0.62, BRAND)}
+         ${person(186, 250, 0.48, BRAND)}
+         ${person(326, 250, 0.48, BRAND)}
        </g>
      </svg>`
   );

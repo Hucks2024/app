@@ -4,25 +4,32 @@
 // instead of whatever 🏃 happens to be on that platform. The same geometry
 // builds the home-screen icons in scripts/generate-icons.mjs; change one,
 // change the other.
+
+/** The one brand colour. The nav bar, the map pins and the app icon are
+ *  all this violet, and it's the top stop of the page gradient in
+ *  globals.css, so the mark never disagrees with what's behind it.
+ *  Exported so the map markers, which are built as raw SVG strings for
+ *  Leaflet, can't quietly drift away from it. */
+export const BRAND = "#6d28d9";
+
 /** Which way round the mark is drawn.
  *
- * "gradient" (default) is a gradient drop with white figures, for light
- * surfaces like the nav. "white" inverts it, which is what the purple page
- * background needs: the gradient version shares its colours with that
- * background, so the top of the drop dissolves into it and only the
- * magenta half stays visible. The app icon is the white version too. */
+ * "brand" (default) is a violet drop with white figures, for light
+ * surfaces. "white" inverts it, a white drop with violet figures, which
+ * is what the violet nav and the purple page background need: violet on
+ * violet has nothing to stand against. */
 export default function Logo({
   size = 26,
   className = "",
-  variant = "gradient",
+  variant = "brand",
 }: {
   size?: number;
   className?: string;
-  variant?: "gradient" | "white";
+  variant?: "brand" | "white";
 }) {
   const white = variant === "white";
-  const dropFill = white ? "#fff" : "url(#packmates-mark)";
-  const figureFill = white ? "#9333ea" : "#fff";
+  const dropFill = white ? "#fff" : BRAND;
+  const figureFill = white ? BRAND : "#fff";
   return (
     <svg
       width={size * (240 / 344)}
@@ -32,14 +39,6 @@ export default function Logo({
       aria-label="Packmates"
       className={`shrink-0 ${className}`}
     >
-      <defs>
-        <linearGradient id="packmates-mark" x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#6d28d9" />
-          <stop offset="45%" stopColor="#9333ea" />
-          <stop offset="75%" stopColor="#c026d3" />
-          <stop offset="100%" stopColor="#db2777" />
-        </linearGradient>
-      </defs>
       <path
         d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z"
         fill={dropFill}
