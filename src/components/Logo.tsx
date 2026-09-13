@@ -4,7 +4,13 @@
 // instead of whatever 🏃 happens to be on that platform. The same geometry
 // builds the home-screen icons in scripts/generate-icons.mjs; change one,
 // change the other.
-export default function Logo({ size = 26 }: { size?: number }) {
+export default function Logo({
+  size = 26,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
@@ -12,7 +18,7 @@ export default function Logo({ size = 26 }: { size?: number }) {
       viewBox="0 0 512 512"
       role="img"
       aria-label="Packmates"
-      className="shrink-0"
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="packmates-mark" x1="0" y1="0" x2="0.4" y2="1">
