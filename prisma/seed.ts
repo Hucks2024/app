@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import bcrypt from "bcryptjs";
 import { ensureMembership, formatMemberNumber } from "../src/lib/invite";
+import { CLUBS } from "../src/lib/clubs";
 
 // Same resolution as src/lib/db.ts, minus the Cloudflare-binding lookup
 // (this script only ever runs as a plain Node CLI, e.g. `prisma db seed` or
@@ -28,33 +29,38 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || "admin@doyoulikepizza.com";
   const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
-
-  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (existing) {
-    const { memberNumber, inviteCode } = await ensureMembership(prisma, existing.id);
-    console.log(`Admin already exists: ${adminEmail} (member #${formatMemberNumber(memberNumber)})`);
-    console.log(`Their invite code: ${inviteCode}`);
-    return;
-  }
-
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
-  const admin = await prisma.user.create({
-    data: {
-      name: "Admin",
-      email: adminEmail,
-      passwordHash,
-      role: "ADMIN",
-      verificationStatus: "APPROVED",
-    },
-  });
+  // One founding admin per club. Signup is invite-only, so a club with
+  // nobody in it can never be joined: somebody has to hold the first code.
+  // The same address is used for both, which is exactly what the club-
+  // scoped unique index on User exists to allow.
+  for (const club of CLUBS) {
+    const existing = await prisma.user.findUnique({
+      where: { club_email: { club: club.key, email: adminEmail } },
+    });
 
-  // Signup is invite-only, so the very first account needs a code or
-  // nobody can ever join. Admin codes never run out.
-  const { memberNumber, inviteCode } = await ensureMembership(prisma, admin.id);
+    const admin =
+      existing ??
+      (await prisma.user.create({
+        data: {
+          club: club.key,
+          name: "Admin",
+          email: adminEmail,
+          passwordHash,
+          role: "ADMIN",
+          verificationStatus: "APPROVED",
+        },
+      }));
 
-  console.log(`Created admin user: ${adminEmail} (member #${formatMemberNumber(memberNumber)})`);
-  console.log(`Their invite code (hand this out to let the first people in): ${inviteCode}`);
+    // Admin codes never run out, so this is the one that lets the first
+    // people in.
+    const { memberNumber, inviteCode } = await ensureMembership(prisma, admin.id);
+    const verb = existing ? "already exists" : "created";
+    console.log(`${club.name} admin ${verb}: ${adminEmail} (#${formatMemberNumber(memberNumber)})`);
+    console.log(`  invite code: ${inviteCode}`);
+  }
+
   console.log(
     adminPassword === "changeme123"
       ? "⚠️  Using default password 'changeme123', set ADMIN_EMAIL/ADMIN_PASSWORD env vars before deploying, then change it."

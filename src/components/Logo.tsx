@@ -1,4 +1,7 @@
-// The Packmates mark: a map pin with a pack of three inside it.
+import { SITE } from "@/lib/site";
+
+// The mark, shared by the site and both clubs: a map pin with a pack of
+// three inside it.
 //
 // Inline SVG rather than an emoji, so it looks the same on every device
 // instead of whatever 🏃 happens to be on that platform. The same geometry
@@ -36,7 +39,7 @@ export default function Logo({
       height={size}
       viewBox="136 74 240 344"
       role="img"
-      aria-label="Packmates"
+      aria-label={SITE.name}
       className={`shrink-0 ${className}`}
     >
       <path

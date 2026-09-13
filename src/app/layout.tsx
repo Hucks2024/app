@@ -66,14 +66,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main className="flex-1">{children}</main>
         <InstallHint />
-        <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+        {/* White rather than slate: the footer sits on the page gradient,
+            not on a card, and slate-on-magenta is close to invisible. */}
+        <footer className="border-t border-white/15 py-6 text-center text-xs text-white/70">
           <p>
             {SITE.name} ·{" "}
-            <a
-              href={SITE.url}
-              className="hover:text-brand-700 hover:underline"
-              rel="noopener"
-            >
+            <a href={SITE.url} className="hover:text-white hover:underline" rel="noopener">
               {SITE.domain}
             </a>
           </p>

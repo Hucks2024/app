@@ -16,12 +16,12 @@ export default function manifest(): MetadataRoute.Manifest {
     // page gradient rather than flashing white.
     background_color: "#6d28d9",
     theme_color: "#6d28d9",
-    categories: ["sports", "social", "lifestyle"],
+    categories: ["sports", "social", "lifestyle", "travel"],
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       // Android crops this to whatever shape the launcher uses, so the
-      // runner sits well inside the safe area.
+      // pin sits well inside the safe area.
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };

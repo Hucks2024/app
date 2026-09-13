@@ -5,7 +5,8 @@ import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireMember } from "@/lib/auth";
 import { geocodeLocation } from "@/lib/geocode";
-import { CATEGORY_VALUES } from "@/lib/categories";
+import { CATEGORY_VALUES, categoriesForClub, defaultCategoryFor } from "@/lib/categories";
+import { clubFor } from "@/lib/clubs";
 
 const createSchema = z.object({
   title: z.string().trim().min(3, "Give your meetup a name").max(120),
@@ -34,10 +35,11 @@ const createSchema = z.object({
 
 export async function createActivityAction(formData: FormData) {
   const user = await requireMember();
+  const club = clubFor(user.club);
 
   const raw = {
     title: formData.get("title"),
-    category: formData.get("category") || "RUN",
+    category: formData.get("category") || defaultCategoryFor(club.key),
     afterSpot: formData.get("afterSpot") || undefined,
     description: formData.get("description") || undefined,
     location: formData.get("location"),
@@ -52,6 +54,16 @@ export async function createActivityAction(formData: FormData) {
     redirect(`/activities/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
   }
 
+  // The form only offers this club's categories, so anything else was
+  // hand-posted. Checked here rather than trusted, or a Packmate could file
+  // a gym session and a Pacemate a hostel night.
+  const offered = categoriesForClub(club.key).map((c) => c.value as string);
+  if (!offered.includes(parsed.data.category)) {
+    redirect(
+      `/activities/new?error=${encodeURIComponent(`That isn't something ${club.name} posts.`)}`
+    );
+  }
+
   const startsAt = new Date(parsed.data.startsAt);
   if (Number.isNaN(startsAt.getTime())) {
     redirect(`/activities/new?error=${encodeURIComponent("That date/time doesn't look right.")}`);
@@ -64,6 +76,9 @@ export async function createActivityAction(formData: FormData) {
   const prisma = await getPrisma();
   const activity = await prisma.runActivity.create({
     data: {
+      // Copied from the host rather than taken from the form: which club a
+      // meetup belongs to is never the poster's choice, it's who they are.
+      club: user.club,
       hostId: user.id,
       title: parsed.data.title,
       category: parsed.data.category,
@@ -95,7 +110,9 @@ export async function joinActivityAction(formData: FormData) {
     where: { id: activityId },
     include: { participations: { where: { status: "JOINED" } } },
   });
-  if (!activity) redirect("/activities");
+  // Same boundary as the detail page: nothing in the other club is
+  // joinable, whatever id gets posted here.
+  if (!activity || activity.club !== user.club) redirect("/activities");
 
   const alreadyIn = activity!.participations.some((p) => p.userId === user.id);
   const isFull =
@@ -155,6 +172,14 @@ export async function postCommentAction(formData: FormData) {
   }
 
   const prisma = await getPrisma();
+  // The activity is looked up rather than trusted from the form: without
+  // this, a posted id was enough to write into any meetup in either club.
+  const activity = await prisma.runActivity.findUnique({
+    where: { id: activityId },
+    select: { club: true },
+  });
+  if (!activity || activity.club !== user.club) redirect("/activities");
+
   await prisma.comment.create({
     data: { activityId, authorId: user.id, body },
   });

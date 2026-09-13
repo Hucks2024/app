@@ -1,5 +1,6 @@
 import { requireMember } from "@/lib/auth";
-import { CATEGORIES } from "@/lib/categories";
+import { categoriesForClub, defaultCategoryFor } from "@/lib/categories";
+import { clubFor } from "@/lib/clubs";
 import { createActivityAction } from "@/app/activities/actions";
 
 export default async function NewActivityPage({
@@ -7,15 +8,19 @@ export default async function NewActivityPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireMember();
+  const user = await requireMember();
+  const club = clubFor(user.club);
+  const categories = categoriesForClub(club.key);
   const { error } = await searchParams;
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a meetup</h1>
+      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">
+        Post a {club.noun.one}
+      </h1>
       <p className="text-sm text-white/85 mb-6">
-        Four questions and you&apos;re done. A run, a walk, or just coffee, they all count. Every
-        pace welcome, walking breaks included.
+        Four questions and you&apos;re done. {club.blurb} Everyone welcome, whatever shape
+        you&apos;re in.
       </p>
 
       {error && (
@@ -33,8 +38,13 @@ export default async function NewActivityPage({
           <label className="label" htmlFor="category">
             1. What kind of meetup?
           </label>
-          <select className="input" id="category" name="category" defaultValue="RUN">
-            {CATEGORIES.map((c) => (
+          <select
+            className="input"
+            id="category"
+            name="category"
+            defaultValue={defaultCategoryFor(club.key)}
+          >
+            {categories.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.emoji}  {c.label}
               </option>
@@ -169,7 +179,7 @@ export default async function NewActivityPage({
         </details>
 
         <button type="submit" className="btn-primary w-full">
-          Post meetup
+          Post {club.noun.one}
         </button>
       </form>
     </div>

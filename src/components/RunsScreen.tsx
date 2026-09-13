@@ -1,15 +1,21 @@
 import Link from "next/link";
+import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
+import { clubFor } from "@/lib/clubs";
 import MapPanel from "@/components/MapPanel";
 
-// The map of upcoming runs. Only reachable by members, both "/" and
-// "/activities" gate on requireMember() before rendering this, so there's
-// no "you're not a member yet" branch to handle here.
-export default async function RunsScreen() {
+// The map of upcoming meetups in the member's own club. Only reachable by
+// members, both "/" and "/activities" gate on requireMember() before
+// rendering this, so there's no "you're not a member yet" branch to handle
+// here.
+export default async function RunsScreen({ user }: { user: User }) {
   const prisma = await getPrisma();
+  const club = clubFor(user.club);
 
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() } },
+    // Scoped to the member's club. The two clubs are separate memberships,
+    // so a Pacemate never sees a Packmates meetup and vice versa.
+    where: { club: club.key, startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
     include: {
       participations: { where: { status: "JOINED" } },
@@ -36,9 +42,9 @@ export default async function RunsScreen() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white drop-shadow">Upcoming runs</h1>
+        <h1 className="text-2xl font-bold text-white drop-shadow">Upcoming {club.noun.many}</h1>
         <Link href="/activities/new" className="btn-primary">
-          + Post a run
+          + Post a {club.noun.one}
         </Link>
       </div>
 

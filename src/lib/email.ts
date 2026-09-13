@@ -16,7 +16,7 @@ export function emailVerificationEnabled(): boolean {
 function fromAddress(): string {
   // Resend only accepts a from-address on a domain you've verified with
   // them, with onboarding@resend.dev as the exception for testing.
-  return process.env.EMAIL_FROM ?? "Packmates <onboarding@resend.dev>";
+  return process.env.EMAIL_FROM ?? "Pacemates <onboarding@resend.dev>";
 }
 
 export type SendResult = { ok: true } | { ok: false; error: string };

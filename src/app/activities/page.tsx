@@ -2,6 +2,6 @@ import { requireMember } from "@/lib/auth";
 import RunsScreen from "@/components/RunsScreen";
 
 export default async function ActivitiesPage() {
-  await requireMember();
-  return <RunsScreen />;
+  const user = await requireMember();
+  return <RunsScreen user={user} />;
 }

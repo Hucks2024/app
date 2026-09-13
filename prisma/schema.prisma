@@ -20,9 +20,21 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(cuid())
-  name         String
-  email        String  @unique
+  id   String @id @default(cuid())
+  name String
+
+  // Which club this membership belongs to: "PACE" (Pacemates, running and
+  // sport) or "PACK" (Packmates, backpacking and travel). See
+  // src/lib/clubs.ts. The two are separate memberships, so this is not a
+  // preference or a filter, it decides which member list, which numbering
+  // and which invite chain the account lives in.
+  //
+  // That's also why email is unique per club rather than globally (see
+  // @@unique below): one person can hold a membership in each, and holding
+  // both means two accounts, exactly as it would if they were two sites.
+  club String @default("PACE")
+
+  email        String
   passwordHash String
   bio          String?
   city         String?
@@ -54,10 +66,13 @@ model User {
   emailVerifiedAt DateTime?
 
   // Sequential membership number, #1 upwards, shown as a padded "#000042".
+  // Numbered within the club, so each club has its own #1 and neither's
+  // count is inflated by the other's.
+  //
   // Purely an identity/badge, never a credential: it's printed on profiles
-  // and guessable by design, so the invite code below only *starts* with it
-  // and earns its security from the random half.
-  memberNumber Int? @unique
+  // and guessable by design, which is why the invite code below is random
+  // rather than derived from it.
+  memberNumber Int?
 
   inviteCode  String? @unique
   invitedById String?
@@ -81,12 +96,17 @@ model User {
 
   verification      VerificationRequest?
   emailVerification EmailVerification?
-  hostedActivities RunActivity[]        @relation("HostedActivities")
-  participations   Participation[]
-  comments         Comment[]
-  reportsMade      Report[]             @relation("ReportsMade")
-  reportsReceived  Report[]             @relation("ReportsReceived")
-  xrpPayments      XrpPayment[]
+  hostedActivities  RunActivity[]        @relation("HostedActivities")
+  participations    Participation[]
+  comments          Comment[]
+  reportsMade       Report[]             @relation("ReportsMade")
+  reportsReceived   Report[]             @relation("ReportsReceived")
+  xrpPayments       XrpPayment[]
+
+  // Both scoped to the club rather than global. An address can hold one
+  // membership in each club, and the numbering restarts per club.
+  @@unique([club, email])
+  @@unique([club, memberNumber])
 }
 
 // One row per XRPL payment we've credited, keyed by transaction hash so the
@@ -122,9 +142,9 @@ model EmailVerification {
 // idPhoto is intentionally wiped once an admin makes a decision, we only
 // need to have looked at it once, not keep it forever.
 model VerificationRequest {
-  id              String @id @default(cuid())
-  userId          String @unique
-  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   selfiePhoto     Bytes
   selfiePhotoType String
   idPhoto         Bytes?
@@ -139,7 +159,15 @@ model VerificationRequest {
 }
 
 model RunActivity {
-  id              String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  // Copied from the host's club when the meetup is created. Denormalised
+  // on purpose: every map and list query filters by it, and going through
+  // the host row for that would put a join on the hottest read in the app.
+  // Nothing moves a meetup between clubs, so there's nothing to keep in
+  // sync afterwards.
+  club String @default("PACE")
+
   hostId          String
   host            User     @relation("HostedActivities", fields: [hostId], references: [id], onDelete: Cascade)
   title           String
@@ -168,7 +196,7 @@ model RunActivity {
   // by humans, not parsed.
   afterSpot String?
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   participations Participation[]
   comments       Comment[]
@@ -200,11 +228,11 @@ model Comment {
 }
 
 model Report {
-  id             String @id @default(cuid())
+  id             String  @id @default(cuid())
   reporterId     String
-  reporter       User   @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter       User    @relation("ReportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
   reportedUserId String
-  reportedUser   User   @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reportedUser   User    @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
   activityId     String?
   reason         String
 

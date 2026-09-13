@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { checkInviteCode, ensureMembership, spendInvite } from "@/lib/invite";
 import { emailVerificationEnabled } from "@/lib/email";
+import { CLUB_KEYS, DEFAULT_CLUB, clubFor, type ClubKey } from "@/lib/clubs";
 import { sendVerificationCode } from "@/lib/email-verification";
 
 const signupSchema = z.object({
@@ -45,14 +46,25 @@ export async function signupAction(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(invite.reason)}`);
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  // Which club you join isn't a choice on the form, it's whose code you
+  // were given: an invite is issued by a member of one club and admits you
+  // to theirs. That's what keeps the two memberships genuinely separate.
+  const club = invite.inviter.club as ClubKey;
+
+  const existing = await prisma.user.findUnique({
+    where: { club_email: { club, email } },
+  });
   if (existing) {
-    redirect(`/signup?error=${encodeURIComponent("An account with that email already exists.")}`);
+    const clubName = clubFor(club).name;
+    redirect(
+      `/signup?error=${encodeURIComponent(`You already have a ${clubName} account with that email.`)}`
+    );
   }
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
     data: {
+      club,
       name,
       email,
       passwordHash,
@@ -92,24 +104,38 @@ function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerified
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email"),
   password: z.string().min(1, "Enter your password"),
+  // An address can hold a membership in each club, so an email on its own
+  // no longer identifies an account. The form always sends this.
+  club: z
+    .string()
+    .refine((v) => CLUB_KEYS.includes(v), "Pick which club you're logging in to")
+    .default(DEFAULT_CLUB),
 });
 
 export async function loginAction(formData: FormData) {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    club: formData.get("club") || DEFAULT_CLUB,
   });
 
   if (!parsed.success) {
     redirect(`/login?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
   }
 
-  const { email, password } = parsed.data;
+  const { email, password, club } = parsed.data;
   const prisma = await getPrisma();
-  const user = await prisma.user.findUnique({ where: { email } });
-  const genericError = encodeURIComponent("Incorrect email or password.");
+  const user = await prisma.user.findUnique({
+    where: { club_email: { club, email } },
+  });
+  // Names the club, because "incorrect email or password" is baffling when
+  // the real answer is that the account is on the other side. It gives away
+  // nothing: which club a door belongs to is written on the door.
+  const genericError = encodeURIComponent(
+    `Incorrect email or password for ${clubFor(club).name}.`
+  );
   if (!user) {
-    redirect(`/login?error=${genericError}`);
+    redirect(`/login?club=${clubFor(club).slug}&error=${genericError}`);
   }
   if (user.accountStatus === "SUSPENDED") {
     redirect(`/login?error=${encodeURIComponent("This account has been suspended.")}`);
@@ -117,7 +143,7 @@ export async function loginAction(formData: FormData) {
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
-    redirect(`/login?error=${genericError}`);
+    redirect(`/login?club=${clubFor(club).slug}&error=${genericError}`);
   }
 
   await createSession(user.id);

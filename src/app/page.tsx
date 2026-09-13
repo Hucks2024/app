@@ -1,96 +1,60 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser, isPaidUp, needsEmailCheck } from "@/lib/auth";
-import { getPrisma } from "@/lib/db";
+import { CLUBS } from "@/lib/clubs";
 import { SITE } from "@/lib/site";
-import { DEFAULT_INVITES } from "@/lib/invite";
 import RunsScreen from "@/components/RunsScreen";
-import MapPanel from "@/components/MapPanel";
 import Logo from "@/components/Logo";
-import type { MapActivity } from "@/components/ActivitiesMap";
-
-// Anonymous visitors get a real map (so there's something to see, and a
-// reason to sign up) but not real precision: jitter each pin by up to
-// roughly 1-2km so the preview can't be used to find an exact meeting
-// point without an account. This runs fresh per request, not stored.
-function jitter(value: number) {
-  return value + (Math.random() - 0.5) * 0.02;
-}
 
 export default async function HomePage() {
   const user = await getCurrentUser();
 
-  // Logged-in members see the map right here on "/", no marketing copy, no
-  // extra click. Nothing stands between signing up and the app now except
-  // the membership fee, and that's switched off while it's free.
+  // Logged-in members see their own club's map right here on "/", no
+  // marketing copy, no extra click, and no chooser: their account already
+  // decides which club they're in.
   if (user) {
     if (needsEmailCheck(user)) redirect("/verify-email");
     if (!isPaidUp(user)) redirect("/subscribe");
-    return <RunsScreen />;
+    return <RunsScreen user={user} />;
   }
 
-  const prisma = await getPrisma();
-  const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() } },
-    orderBy: { startsAt: "asc" },
-  });
-
-  const previewActivities: MapActivity[] = activities
-    .filter((a) => a.latitude != null && a.longitude != null)
-    .map((a) => ({
-      id: a.id,
-      title: a.title,
-      location: a.location,
-      startsAt: a.startsAt.toISOString(),
-      latitude: jitter(a.latitude as number),
-      longitude: jitter(a.longitude as number),
-      distanceKm: a.distanceKm,
-      pace: a.pace,
-      category: a.category,
-      afterSpot: a.afterSpot,
-      joinedCount: 0,
-      maxParticipants: a.maxParticipants,
-    }));
-
+  // Logged out, the root is the doorway rather than a club: two clubs share
+  // this address, and which one you want decides everything that follows,
+  // including which invite code will work.
   return (
-    <div>
-      <section>
-        <div className="mx-auto max-w-xl px-4 pt-6 pb-6 text-center">
-          <div className="flex justify-center mb-4">
-            {/* Sized by height in classes so it scales up on wider screens;
-                the size prop is the no-CSS fallback. */}
-            <Logo size={112} variant="white" className="h-24 sm:h-28 w-auto" />
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
-            {SITE.name}
-          </h1>
-          {/* The name is the headline and the sentence explains it, so the
-              sentence drops the "Packmates is" opening it carries in the
-              meta description, where it has to stand on its own. */}
-          <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
-            A highly exclusive club for people all over the world to train,
-            travel and meet up. Membership is by referral only.
-          </p>
-          {/* The allowance comes from the constant the invite system
-              actually spends, so the number on the front page can't drift
-              away from the number members really get. */}
-          <p className="text-xs text-white/70 mt-3 max-w-md mx-auto">
-            Every member is invited by someone already here, and their name
-            stays attached to yours. {DEFAULT_INVITES} invitations each.
-          </p>
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-3xl px-4 pb-10">
-        <MapPanel activities={previewActivities} restricted />
-        <p className="text-xs text-white/75 text-center mt-3">
-          Pins are approximate.{" "}
-          <Link href="/login" className="underline font-medium text-white">
-            Log in
-          </Link>{" "}
-          for exact times and meeting points, and to join.
-        </p>
+    <div className="mx-auto max-w-xl px-4 pt-6 pb-12 text-center">
+      <div className="flex justify-center mb-4">
+        <Logo size={112} variant="white" className="h-20 sm:h-24 w-auto" />
       </div>
+      <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
+        {SITE.name}
+      </h1>
+      <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
+        Two highly exclusive clubs, one map. Both are members only, and both are by referral.
+      </p>
+
+      <div className="mt-8 space-y-4 text-left">
+        {CLUBS.map((club) => (
+          <Link
+            key={club.key}
+            href={`/${club.slug}`}
+            className="card block hover:border-brand-400 transition-colors"
+          >
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl leading-none" aria-hidden="true">
+                {club.emoji}
+              </span>
+              <h2 className="text-lg font-bold text-slate-900">{club.name}</h2>
+              <span className="text-xs text-slate-500">{club.purpose}</span>
+            </div>
+            <p className="text-sm text-slate-600 mt-2">{club.blurb}</p>
+          </Link>
+        ))}
+      </div>
+
+      <p className="text-xs text-white/70 mt-8">
+        Separate clubs, separate memberships. An invite code only opens the club it came from.
+      </p>
     </div>
   );
 }
