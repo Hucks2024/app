@@ -43,7 +43,7 @@ export const viewport: Viewport = {
   // Tints the bar above the page when installed. Matched to the nav rather
   // than the body gradient, so the two read as one surface.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#e9ddfb" },
+    { media: "(prefers-color-scheme: light)", color: "#6d28d9" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };
