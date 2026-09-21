@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getPrisma } from "@/lib/db";
 import { DEFAULT_INVITES } from "@/lib/invite";
 import type { Club } from "@/lib/clubs";
-import MapPanel from "@/components/MapPanel";
+import MeetupBoard from "@/components/MeetupBoard";
 import Logo from "@/components/Logo";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
@@ -38,6 +38,9 @@ export default async function ClubLanding({ club }: { club: Club }) {
       category: a.category,
       afterSpot: a.afterSpot,
       joinedCount: 0,
+      // Deliberately empty out here: who's going is members-only, and a
+      // face is a person. The logged-out map shows meetups, never people.
+      faces: [],
       maxParticipants: a.maxParticipants,
     }));
 
@@ -62,7 +65,8 @@ export default async function ClubLanding({ club }: { club: Club }) {
               away from the number members really get. */}
           <p className="text-xs text-white/70 mt-3 max-w-md mx-auto">
             Every member is invited by someone already here, and their name stays attached to yours.{" "}
-            {DEFAULT_INVITES} invitations each.
+            {DEFAULT_INVITES} invitations each. No private messages, no browsing people, no inbox
+            to be pestered through.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link href="/signup" className="btn-primary">
@@ -76,7 +80,7 @@ export default async function ClubLanding({ club }: { club: Club }) {
       </section>
 
       <div className="mx-auto max-w-3xl px-4 pb-10">
-        <MapPanel activities={previewActivities} restricted />
+        <MeetupBoard activities={previewActivities} restricted />
         <p className="text-xs text-white/75 text-center mt-3">
           Pins are approximate.{" "}
           <Link href={`/login?club=${club.slug}`} className="underline font-medium text-white">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { clubFor } from "@/lib/clubs";
-import MapPanel from "@/components/MapPanel";
+import MeetupBoard from "@/components/MeetupBoard";
 
 // The map of upcoming meetups in the member's own club. Only reachable by
 // members, both "/" and "/activities" gate on requireMember() before
@@ -18,7 +18,14 @@ export default async function RunsScreen({ user }: { user: User }) {
     where: { club: club.key, startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
     include: {
-      participations: { where: { status: "JOINED" } },
+      // The people, not just the count: the pins show a face, which is
+      // what makes a meetup read as somebody going rather than a category
+      // sitting on a map.
+      participations: {
+        where: { status: "JOINED" },
+        include: { user: { select: { id: true, profilePhoto: true } } },
+        orderBy: { joinedAt: "asc" },
+      },
     },
   });
 
@@ -37,6 +44,10 @@ export default async function RunsScreen({ user }: { user: User }) {
       afterSpot: a.afterSpot,
       joinedCount: a.participations.length,
       maxParticipants: a.maxParticipants,
+      faces: a.participations.slice(0, 3).map((p) => ({
+        userId: p.user.id,
+        hasPhoto: p.user.profilePhoto != null,
+      })),
     }));
 
   return (
@@ -48,7 +59,7 @@ export default async function RunsScreen({ user }: { user: User }) {
         </Link>
       </div>
 
-      <MapPanel activities={mapActivities} />
+      <MeetupBoard activities={mapActivities} />
     </div>
   );
 }

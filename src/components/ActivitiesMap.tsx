@@ -10,39 +10,6 @@ import "leaflet/dist/leaflet.css";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 
-// Pulls a "5:30"-style mm:ss out of a free-text pace field (the form just
-// takes a string, e.g. "5:30 / km", "easy", "6 min miles"), so the pin
-// label never has to show the raw "5:30 / km" clutter, just the number.
-function paceMinutesPerKm(pace: string | null): number | null {
-  if (!pace) return null;
-  const match = pace.match(/(\d+)[:.](\d{2})/);
-  if (!match) return null;
-  return Number(match[1]) + Number(match[2]) / 60;
-}
-
-// One short label combining pace and an estimated total duration, as
-// minimal as the data allows: both if both are derivable, just the pace
-// if distance is missing, or nothing at all rather than showing a raw
-// unparsed pace string.
-function pinLabel(distanceKm: number | null, pace: string | null): string | null {
-  const perKm = paceMinutesPerKm(pace);
-  if (perKm == null) return null;
-
-  const paceLabel = pace!.match(/\d+[:.]\d{2}/)![0].replace(".", ":");
-  if (!distanceKm) return paceLabel;
-
-  const totalMinutes = Math.round(distanceKm * perKm);
-  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return paceLabel;
-
-  const remainder = totalMinutes % 60;
-  const duration =
-    totalMinutes < 60
-      ? `${totalMinutes}m`
-      : `${Math.floor(totalMinutes / 60)}h${remainder ? `${remainder}m` : ""}`;
-
-  return `${paceLabel} · ${duration}`;
-}
-
 // The app's own logo as the map marker: the same teardrop from
 // src/components/Logo.tsx, in the same brand violet, with the category
 // emoji sitting in a white disc where the logo's three figures go.
@@ -50,12 +17,30 @@ function pinLabel(distanceKm: number | null, pace: string | null): string | null
 // Built as a plain divIcon since Leaflet manages its icons as DOM outside
 // React. Styling lives in globals.css (.map-pin and friends) because
 // Tailwind can't reach markup handed over as a raw string, and can't do
-// the keyframes either. The pace/duration label only renders when there's
-// something short to show.
+// the keyframes either.
+//
+// The pin says what it is, how many are going and one face. Pace and
+// duration used to hang underneath every pin as well; they belong in the
+// list, where there's room to read them, rather than on a map where eight
+// of them at once is just noise.
 const PIN_W = 44;
 const PIN_H = 63;
 
-function emojiIcon(emoji: string, label: string | null) {
+/** Who's going, for the faces on the pin. */
+export type Face = { userId: string; hasPhoto: boolean };
+
+function faceBubble(face: Face | undefined): string {
+  if (!face) return "";
+  // No photo is the common case early on, so the fallback is a real part
+  // of the design rather than a broken image: the same disc, with the
+  // club's own emoji in it.
+  const inner = face.hasPhoto
+    ? `<img src="/api/photos/profile/${face.userId}" alt="" loading="lazy">`
+    : `<span>🙂</span>`;
+  return `<span class="map-pin-face">${inner}</span>`;
+}
+
+function emojiIcon(emoji: string, going: number, face?: Face) {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this
   // replaced needed one copy per marker with a unique id, or whichever
   // marker Leaflet unmounted first took the definition down and left the
@@ -65,18 +50,21 @@ function emojiIcon(emoji: string, label: string | null) {
       <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="${BRAND}"/>
       <circle cx="256" cy="196" r="80" fill="#fff"/>
     </svg>`;
-  const pin = `<div class="map-pin">${svg}<span class="map-pin-emoji">${emoji}</span></div>`;
-  const html = label
-    ? `<div class="map-pin-wrap">${pin}<div class="map-pin-label">${label}</div></div>`
-    : pin;
+  // The count only earns its space once there's a group to speak of: a "1"
+  // on every pin is noise, and an empty meetup advertising that it's empty
+  // is worse than saying nothing.
+  const count = going > 1 ? `<span class="map-pin-count">${going}</span>` : "";
+  const html =
+    `<div class="map-pin">${svg}<span class="map-pin-emoji">${emoji}</span>` +
+    `${count}${faceBubble(face)}</div>`;
 
   return L.divIcon({
     html,
     className: "", // clear Leaflet's own default styling/background
-    iconSize: label ? [72, PIN_H + 18] : [PIN_W, PIN_H],
+    iconSize: [PIN_W, PIN_H],
     // The tip of the drop is what points at the location, so the anchor
     // sits at the bottom centre of the pin rather than its middle.
-    iconAnchor: label ? [36, PIN_H] : [PIN_W / 2, PIN_H],
+    iconAnchor: [PIN_W / 2, PIN_H],
     popupAnchor: [0, -PIN_H + 4],
   });
 }
@@ -234,6 +222,10 @@ export type MapActivity = {
   afterSpot: string | null;
   joinedCount: number;
   maxParticipants: number | null;
+  // Up to a couple of people who've said they're going, for the faces on
+  // the pin. Empty on the logged-out map: who is going is members-only,
+  // and a face is a person.
+  faces: Face[];
 };
 
 export default function ActivitiesMap({
@@ -261,7 +253,7 @@ export default function ActivitiesMap({
     for (const a of activities) {
       map.set(
         a.id,
-        emojiIcon(categoryFor(a.category).emoji, pinLabel(a.distanceKm, a.pace))
+        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces[0])
       );
     }
     return map;

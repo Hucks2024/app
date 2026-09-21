@@ -177,7 +177,15 @@ export default async function ActivityDetailPage({
       </div>
 
       <div className="card mt-6">
-        <h2 className="font-semibold mb-3">Discussion</h2>
+        <h2 className="font-semibold mb-1">Group chat</h2>
+        {/* The one place on the site where a member can write to another
+            member, and everyone going can see it. Worth saying plainly:
+            it's the reason there's no inbox to be pestered through, and
+            people choose an app like this for exactly that. */}
+        <p className="text-xs text-slate-500 mb-3">
+          Everyone going sees this. There are no private messages here, so nobody can message you
+          on your own.
+        </p>
         <ul className="space-y-3 mb-4">
           {activity.comments.map((c) => (
             <li key={c.id} className="flex items-start gap-3">
@@ -203,7 +211,7 @@ export default async function ActivityDetailPage({
           <input
             className="input"
             name="body"
-            placeholder="Coordinate meeting details, ask a question…"
+            placeholder="Ask a question, sort out where to meet…"
             required
             maxLength={1000}
           />
