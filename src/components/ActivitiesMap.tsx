@@ -40,7 +40,23 @@ function faceBubble(face: Face | undefined): string {
   return `<span class="map-pin-face">${inner}</span>`;
 }
 
-function emojiIcon(emoji: string, going: number, face?: Face) {
+/** A stable 0-2s offset for this pin's bob, derived from its id.
+ *
+ * Without it every pin on the map rises and falls in perfect lockstep,
+ * which reads as one mechanism rather than a map full of separate things
+ * going on. Derived from the id rather than the render order so a pin
+ * doesn't change its rhythm when a filter reorders the list. */
+function bobDelay(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 2000;
+  // Negative, so the bob starts already in progress rather than every pin
+  // waiting its turn to begin. Handed over as a custom property, not
+  // animation-delay: the pin runs two animations and a plain delay would
+  // apply to both, fast-forwarding the drop past its own end.
+  return `-${hash}ms`;
+}
+
+function emojiIcon(emoji: string, going: number, face?: Face, id = "") {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this
   // replaced needed one copy per marker with a unique id, or whichever
   // marker Leaflet unmounted first took the definition down and left the
@@ -55,7 +71,8 @@ function emojiIcon(emoji: string, going: number, face?: Face) {
   // is worse than saying nothing.
   const count = going > 1 ? `<span class="map-pin-count">${going}</span>` : "";
   const html =
-    `<div class="map-pin">${svg}<span class="map-pin-emoji">${emoji}</span>` +
+    `<div class="map-pin" style="--bob:${bobDelay(id)}">` +
+    `${svg}<span class="map-pin-emoji">${emoji}</span>` +
     `${count}${faceBubble(face)}</div>`;
 
   return L.divIcon({
@@ -253,7 +270,7 @@ export default function ActivitiesMap({
     for (const a of activities) {
       map.set(
         a.id,
-        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces[0])
+        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces[0], a.id)
       );
     }
     return map;
@@ -262,7 +279,7 @@ export default function ActivitiesMap({
   if (activities.length === 0) {
     return (
       <div className="card text-sm text-slate-600">
-        None of the upcoming runs have a mappable location yet. 🗺️
+        Nothing on the map yet. Somebody has to go first. 🗺️
       </div>
     );
   }

@@ -4,6 +4,7 @@ import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
+import JoinedBurst from "@/components/JoinedBurst";
 import {
   joinActivityAction,
   leaveActivityAction,
@@ -16,11 +17,11 @@ export default async function ActivityDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; reported?: string }>;
+  searchParams: Promise<{ error?: string; reported?: string; joined?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { error, reported } = await searchParams;
+  const { error, reported, joined: justJoined } = await searchParams;
   const prisma = await getPrisma();
 
   const activity = await prisma.runActivity.findUnique({
@@ -58,6 +59,7 @@ export default async function ActivityDetailPage({
           {error}
         </p>
       )}
+      {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
       {reported && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2 dark:bg-brand-950 dark:border-brand-800 dark:text-brand-300">
           Thanks, a moderator will look into this.
@@ -120,7 +122,7 @@ export default async function ActivityDetailPage({
             <form action={joinActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
               <button type="submit" className="btn-primary">
-                Join this run
+                I&apos;m in 🙌
               </button>
             </form>
           )}
@@ -148,7 +150,7 @@ export default async function ActivityDetailPage({
 
       <div className="card mt-6">
         <h2 className="font-semibold mb-3">
-          Runners joined ({joined.length}
+          Who&apos;s coming ({joined.length}
           {activity.maxParticipants ? ` / ${activity.maxParticipants}` : ""})
         </h2>
         <ul className="space-y-3">
@@ -202,7 +204,7 @@ export default async function ActivityDetailPage({
             </li>
           ))}
           {activity.comments.length === 0 && (
-            <p className="text-sm text-slate-500">No messages yet.</p>
+            <p className="text-sm text-slate-500">Quiet in here. Say hello 👋</p>
           )}
         </ul>
 

@@ -20,7 +20,7 @@ const ActivitiesMap = dynamic(() => import("@/components/ActivitiesMap"), {
   ssr: false,
   loading: () => (
     <div className="map-shell w-full rounded-2xl border border-slate-200 bg-slate-100 shadow-sm flex items-center justify-center">
-      <p className="text-sm text-slate-500">Loading the map…</p>
+      <p className="text-sm text-slate-500">Rounding everyone up… 🗺️</p>
     </div>
   ),
 });
@@ -136,7 +136,7 @@ export default function MeetupBoard({
 
       {filtered.length === 0 ? (
         <div className="card text-sm text-slate-600">
-          Nothing matches that yet. Try another day, or clear the filter.
+          Nothing doing on that one. Try another day, or clear the filter. 🤷
         </div>
       ) : view === "map" ? (
         <ActivitiesMap activities={filtered} restricted={restricted} />

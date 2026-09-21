@@ -126,7 +126,10 @@ export async function joinActivityAction(formData: FormData) {
     });
   }
 
-  redirect(`/activities/${activityId}`);
+  // Only flagged on the join that actually did something, so tapping a
+  // page you're already on doesn't throw confetti at you.
+  const celebrate = !alreadyIn && !isFull ? "?joined=1" : "";
+  redirect(`/activities/${activityId}${celebrate}`);
 }
 
 export async function leaveActivityAction(formData: FormData) {

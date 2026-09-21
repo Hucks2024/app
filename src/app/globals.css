@@ -102,7 +102,6 @@ body {
   /* drop-shadow, not box-shadow: it follows the teardrop outline instead
      of casting a rectangle behind it. */
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
-  animation: map-pin-bob 2.2s ease-in-out infinite;
   cursor: pointer;
   transform-origin: 50% 100%; /* grow from the tip, which is the bit pinned
                                  to the actual location */
@@ -277,6 +276,175 @@ body {
   }
   100% {
     transform: translateY(0) scale(1);
+  }
+}
+
+/* "in 20m" next to a meetup that's about to start. Warm rather than the
+   surrounding slate, and it pulses, because the whole point is that this
+   one is different from the six below it. */
+.soon-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fde68a;
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  animation: soon-pulse 2.4s ease-in-out infinite;
+}
+.dark .soon-badge {
+  background: #78350f;
+  color: #fde68a;
+}
+@keyframes soon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* Rows lean in when you point at them, and give a little when pressed. */
+.meetup-row {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+a:hover > .meetup-row {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgb(15 23 42 / 0.14);
+}
+a:active > .meetup-row {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Chips are the most-tapped thing on the map screen, so they get the
+   springiest press in the app. */
+.chip:active {
+  transform: scale(0.94);
+}
+.chip {
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chip-on {
+  animation: chip-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes chip-pop {
+  0% {
+    transform: scale(0.9);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The map's pins land rather than appear, then breathe. Two animations on
+   one element: the drop runs once from the top, the bob loops forever, and
+   --bob (set per pin in ActivitiesMap) offsets only the second so they
+   don't all rise and fall together. */
+.map-pin {
+  animation:
+    map-pin-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
+    map-pin-bob 2.2s ease-in-out infinite;
+  animation-delay: 0s, var(--bob, 0s);
+}
+@keyframes map-pin-drop {
+  0% {
+    transform: translateY(-28px) scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* The burst under "You're in": each bit flies out on its own angle, set
+   from --i so twelve spans need one keyframe rather than twelve.
+   Deliberately large and fully opaque for most of its flight — a first
+   attempt at 15px starting from scale(0.4) was technically animating and
+   entirely invisible, which is the same as not having it. */
+.burst {
+  position: relative;
+  height: 34px;
+  pointer-events: none;
+}
+.burst span {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  font-size: 19px;
+  line-height: 1;
+  opacity: 0;
+  animation: burst-out 1.5s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  animation-delay: calc(var(--i) * 45ms);
+  --angle: calc(var(--i) * 30deg);
+}
+@keyframes burst-out {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-4px) rotate(calc(var(--angle) * -1)) scale(0.7);
+  }
+  12% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(-72px) rotate(calc(var(--angle) * -1)) scale(1.15);
+  }
+}
+
+/* The mark on the 404, gently lost. */
+.lost-pin {
+  animation: lost-pin-sway 3.2s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+@keyframes lost-pin-sway {
+  0%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+
+/* Everything above is decoration. Anyone who's asked their device to stop
+   moving things gets the app without any of it. */
+@media (prefers-reduced-motion: reduce) {
+  .map-pin,
+  .soon-badge,
+  .chip-on,
+  .burst span,
+  .lost-pin,
+  .nav-mark:hover {
+    animation: none;
+  }
+  .burst {
+    display: none;
+  }
+  .meetup-row,
+  .chip,
+  .btn-primary,
+  .btn-secondary {
+    transition: none;
+  }
+  a:hover > .meetup-row {
+    transform: none;
   }
 }
 
