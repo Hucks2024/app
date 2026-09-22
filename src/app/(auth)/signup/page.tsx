@@ -17,7 +17,7 @@ export default async function SignupPage({
       <p className="text-sm text-white/85 mb-6">
         Both clubs are invite only, and stay that way on purpose. You need a code from a member,
         and their name stays attached to yours, which is why the people here are worth turning up
-        for.
+        for. Free to join, and free to stay while we&apos;re small.
       </p>
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">

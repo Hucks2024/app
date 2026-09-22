@@ -82,10 +82,14 @@ export async function requireUser(): Promise<User> {
 
 /** Whether the membership fee is being charged at all.
  *
- * Off by default: the app is free while it grows, and gets in through
- * invite codes rather than payment. The XRP flow underneath (/subscribe,
- * the admin ledger scan, the payment log) is untouched and starts gating
- * again the moment this is set to "true" in the environment. */
+ * Off by default, and meant to stay off for now: the app is free while it
+ * grows, and gets in through invite codes rather than payment. The XRP
+ * flow underneath (/subscribe, the admin ledger scan, the payment log) is
+ * untouched and starts gating again the moment this is set to "true" in
+ * the environment.
+ *
+ * Note that setting it also means taking money, which the Vercel Hobby
+ * plan doesn't allow: that switch and a paid Vercel plan go together. */
 function membershipRequired(): boolean {
   return process.env.MEMBERSHIP_REQUIRED === "true";
 }

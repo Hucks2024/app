@@ -276,19 +276,36 @@ export default function ActivitiesMap({
     return map;
   }, [activities]);
 
-  if (activities.length === 0) {
-    return (
-      <div className="card text-sm text-slate-600">
-        Nothing on the map yet. Somebody has to go first. 🗺️
-      </div>
-    );
-  }
+  // An empty map is still a map. It used to be replaced wholesale by a
+  // card saying there was nothing on, which made a quiet week look like a
+  // broken app: no map, no zoom, nothing to pan. Now the map is always
+  // there and the message sits on top of it.
+  const empty = activities.length === 0;
 
-  const center: [number, number] = [activities[0].latitude, activities[0].longitude];
+  // With one pin, centre on it. With several, frame them all: centring on
+  // whichever happened to sort first could leave the rest off screen.
+  // With none, a wide view of the city the club started in, which is at
+  // least somewhere rather than the middle of the Atlantic, and the locate
+  // button is right there to jump to wherever you actually are.
+  const center: [number, number] = empty
+    ? [51.5074, -0.1278]
+    : [activities[0].latitude, activities[0].longitude];
+  const bounds =
+    activities.length > 1
+      ? L.latLngBounds(activities.map((a) => [a.latitude, a.longitude] as [number, number])).pad(
+          0.2
+        )
+      : undefined;
 
   return (
-    <div className="map-shell w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-      <MapContainer center={center} zoom={11} scrollWheelZoom className="h-full w-full">
+    <div className="map-shell relative w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+      <MapContainer
+        center={center}
+        zoom={empty ? 10 : 11}
+        bounds={bounds}
+        scrollWheelZoom
+        className="h-full w-full"
+      >
         <TileLayer
           // CartoDB's "Voyager" tiles (used briefly here for a more
           // colorful look) started stamping "API KEY REQUIRED" across
@@ -354,6 +371,15 @@ export default function ActivitiesMap({
           </Marker>
         ))}
       </MapContainer>
+      {empty && (
+        <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
+          <p className="pointer-events-auto rounded-2xl bg-white/95 px-4 py-3 text-center text-sm text-slate-600 shadow-lg dark:bg-slate-800/95">
+            {restricted
+              ? "Nothing on right now. Members see them the moment they're posted. 🗺️"
+              : "Nothing on right now. Somebody has to go first 🤞"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

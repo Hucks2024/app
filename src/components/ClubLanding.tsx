@@ -68,6 +68,7 @@ export default async function ClubLanding({ club }: { club: Club }) {
             {DEFAULT_INVITES} invitations each. No private messages, no browsing people, no inbox
             to be pestered through.
           </p>
+          <p className="text-xs font-semibold text-white/90 mt-3">Free while we&apos;re small 🎉</p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link href="/signup" className="btn-primary">
               I have a code

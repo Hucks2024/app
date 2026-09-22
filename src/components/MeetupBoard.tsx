@@ -134,12 +134,15 @@ export default function MeetupBoard({
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {view === "map" ? (
+        // Never swapped out for a card. The map handles having nothing on
+        // it, and taking it away because a filter matched nothing makes
+        // the app look broken rather than quiet.
+        <ActivitiesMap activities={filtered} restricted={restricted} />
+      ) : filtered.length === 0 ? (
         <div className="card text-sm text-slate-600">
           Nothing doing on that one. Try another day, or clear the filter. 🤷
         </div>
-      ) : view === "map" ? (
-        <ActivitiesMap activities={filtered} restricted={restricted} />
       ) : (
         <MeetupList activities={filtered} restricted={restricted} />
       )}
