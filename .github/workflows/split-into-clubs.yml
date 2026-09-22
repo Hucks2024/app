@@ -1,0 +1,29 @@
+name: Split into clubs (Pacemates / Packmates)
+
+# One-time schema change for the two-club split (see
+# prisma/migrations/20260913120000_split_into_clubs). Turso speaks HTTP
+# rather than the wire protocol prisma migrate deploy needs, so the change
+# is applied by a small idempotent script instead. Safe to re-run.
+#
+# Run this BEFORE the deploy that contains the split reaches production:
+# every query the new code makes filters on "club", and that column has to
+# exist first.
+#
+# It prints the founding Packmates admin's invite code. That code is the
+# only way into the Packmates side, so keep the run log.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/split-into-clubs.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
