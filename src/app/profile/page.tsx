@@ -1,7 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ensureMembership, formatMemberNumber } from "@/lib/invite";
-import { clubFor } from "@/lib/clubs";
 import { SITE } from "@/lib/site";
 import { updateProfileAction } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
@@ -19,7 +18,6 @@ export default async function ProfilePage({
   const { memberNumber, inviteCode } = await ensureMembership(prisma, user.id);
   const invitedCount = await prisma.user.count({ where: { invitedById: user.id } });
   const unlimited = user.role === "ADMIN";
-  const club = clubFor(user.club);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
@@ -27,12 +25,7 @@ export default async function ProfilePage({
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
         <div>
           <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
-          {/* The number is only meaningful next to the club it was issued
-              by: each club counts from #1, so there are two of every
-              number across the site. */}
-          <p className="text-sm text-white/80">
-            {club.name} member #{formatMemberNumber(memberNumber)}
-          </p>
+          <p className="text-sm text-white/80">Member #{formatMemberNumber(memberNumber)}</p>
         </div>
       </div>
 
@@ -50,9 +43,8 @@ export default async function ProfilePage({
       <div className="card mb-4">
         <p className="font-semibold mb-1">Invite someone 🎟️</p>
         <p className="text-sm text-slate-600 mb-4">
-          {club.name} is invite only. Share this with people you&apos;d actually turn up and meet,
-          whoever joins stays linked to you. Your code brings them into {club.name}, not the other
-          club.
+          {SITE.name} is invite only. Share this with people you&apos;d actually turn up and
+          meet, whoever joins stays linked to you.
         </p>
         <div className="space-y-3">
           <div>

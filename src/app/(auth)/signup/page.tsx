@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { signupAction } from "@/app/(auth)/actions";
-import { CLUBS } from "@/lib/clubs";
 
 export default async function SignupPage({
   searchParams,
@@ -15,7 +14,7 @@ export default async function SignupPage({
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Create your account</h1>
       <p className="text-sm text-white/85 mb-6">
-        Both clubs are invite only, and stay that way on purpose. You need a code from a member,
+        Packmates is invite only, and stays that way on purpose. You need a code from a member,
         and their name stays attached to yours, which is why the people here are worth turning up
         for. Free to join, and free to stay while we&apos;re small.
       </p>
@@ -40,13 +39,6 @@ export default async function SignupPage({
             required
             autoFocus={!code}
           />
-          {/* There's no club picker on this form on purpose: the code
-              already decides, and asking as well would invite people to
-              pick the side their code doesn't open. */}
-          <p className="text-xs text-slate-500 mt-1">
-            Your code decides which club you join, {CLUBS.map((c) => c.name).join(" or ")}. A code
-            only opens the one it came from.
-          </p>
         </div>
         <div>
           <label className="label" htmlFor="name">

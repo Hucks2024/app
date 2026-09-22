@@ -14,16 +14,10 @@ export async function GET(
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { club: true, profilePhoto: true, profilePhotoType: true },
+    select: { profilePhoto: true, profilePhotoType: true },
   });
 
-  // And only to members of the same club. The two clubs are separate
-  // memberships; a Pacemate holding a Packmate's user id shouldn't be able
-  // to pull their face out of it.
-  if (!user || user.club !== viewer.club) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-  if (!user.profilePhoto || !user.profilePhotoType) {
+  if (!user?.profilePhoto || !user.profilePhotoType) {
     return new NextResponse("Not found", { status: 404 });
   }
 

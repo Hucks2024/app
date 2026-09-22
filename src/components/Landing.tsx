@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getPrisma } from "@/lib/db";
-import type { Club } from "@/lib/clubs";
+import { SITE } from "@/lib/site";
 import MeetupBoard from "@/components/MeetupBoard";
 import Logo from "@/components/Logo";
 import type { MapActivity } from "@/components/ActivitiesMap";
@@ -13,13 +13,11 @@ function jitter(value: number) {
   return value + (Math.random() - 0.5) * 0.02;
 }
 
-/** One club's front door: what it is, and a blurred look at its map. */
-export default async function ClubLanding({ club }: { club: Club }) {
+/** The front door: what this is, and a blurred look at the map. */
+export default async function Landing() {
   const prisma = await getPrisma();
   const activities = await prisma.runActivity.findMany({
-    // Only this club's meetups. The two maps never bleed into each other,
-    // which is the whole point of them being separate clubs.
-    where: { club: club.key, startsAt: { gte: new Date() } },
+    where: { startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
   });
 
@@ -55,16 +53,17 @@ export default async function ClubLanding({ club }: { club: Club }) {
             <Logo size={80} variant="white" className="h-16 sm:h-20 w-auto" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white drop-shadow">
-            {club.name}
+            {SITE.name}
           </h1>
           <p className="text-sm text-white/85 mt-3 max-w-md mx-auto">
-            {club.blurb} Members only, by referral, and free while we&apos;re small.
+            A private club for people all over the world to train, travel and meet up. Members
+            only, by referral, and free while we&apos;re small.
           </p>
           <div className="mt-5 flex items-center justify-center gap-3">
             <Link href="/signup" className="btn-primary">
               I have a code
             </Link>
-            <Link href={`/login?club=${club.slug}`} className="btn-secondary">
+            <Link href="/login" className="btn-secondary">
               Log in
             </Link>
           </div>
@@ -75,7 +74,7 @@ export default async function ClubLanding({ club }: { club: Club }) {
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
         <p className="text-xs text-white/75 text-center mt-3">
           Pins are approximate.{" "}
-          <Link href={`/login?club=${club.slug}`} className="underline font-medium text-white">
+          <Link href="/login" className="underline font-medium text-white">
             Log in
           </Link>{" "}
           for exact times and meeting points, and to join.

@@ -1,0 +1,30 @@
+name: Merge back into one club
+
+# One-time schema change undoing the Pacemates/Packmates split (see
+# prisma/migrations/20260922100000_merge_into_one_club). Turso speaks HTTP
+# rather than the wire protocol prisma migrate deploy needs, so the change
+# is applied by a small idempotent script instead. Safe to re-run.
+#
+# Run this BEFORE the deploy that contains the merge: the new code has no
+# idea the club column exists, and the unique indexes have to be global
+# again before a second account can be refused the same address.
+#
+# Where one address is held twice, the older account wins and everything
+# owned by the newer one is moved across before it's deleted. The run log
+# says exactly what moved.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/merge-into-one-club.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}

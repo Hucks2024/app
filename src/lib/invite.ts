@@ -1,5 +1,4 @@
 import { Prisma, type PrismaClient, type User } from "@prisma/client";
-import { DEFAULT_CLUB } from "@/lib/clubs";
 
 // No 0/O/1/I/L in the alphabet: these codes get read out loud, typed off a
 // screenshot and scribbled on paper, so the ambiguous characters simply
@@ -31,11 +30,7 @@ export function formatMemberNumber(n: number): string {
  * that was the number would let anyone count their way in. Eight characters
  * from a 31-letter alphabet is about 853 billion possibilities, which is
  * what makes this a credential; the number lives on the profile instead,
- * where being guessable doesn't matter.
- *
- * Codes are unique across both clubs, not per club: a code has to identify
- * its owner (and so which club it admits you to) on its own, typed in by
- * somebody who isn't logged in and hasn't picked a side yet. */
+ * where being guessable doesn't matter. */
 function buildCode(): string {
   return randomPart();
 }
@@ -58,18 +53,16 @@ export type Membership = { memberNumber: number; inviteCode: string };
 
 /** The member's number and the code they hand out, minted on first use.
  *
- * Numbers are counted within the member's own club, so each club has its
- * own #1 and neither's roll is padded by the other's. They're handed out by
- * taking the highest so far and adding one; if two signups race for the
- * same one the unique index rejects the loser and the retry picks up the
- * next. */
+ * Numbers are handed out by taking the highest so far and adding one; if
+ * two signups race for the same one the unique index rejects the loser and
+ * the retry picks up the next. */
 export async function ensureMembership(
   prisma: PrismaClient,
   userId: string
 ): Promise<Membership> {
   const existing = await prisma.user.findUnique({
     where: { id: userId },
-    select: { club: true, memberNumber: true, inviteCode: true },
+    select: { memberNumber: true, inviteCode: true },
   });
   if (existing?.memberNumber != null && existing.inviteCode) {
     return { memberNumber: existing.memberNumber, inviteCode: existing.inviteCode };
@@ -77,7 +70,7 @@ export async function ensureMembership(
 
   for (let attempt = 0; attempt < 10; attempt++) {
     const highest = await prisma.user.findFirst({
-      where: { club: existing?.club ?? DEFAULT_CLUB, memberNumber: { not: null } },
+      where: { memberNumber: { not: null } },
       orderBy: { memberNumber: "desc" },
       select: { memberNumber: true },
     });

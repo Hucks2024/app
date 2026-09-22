@@ -6,8 +6,8 @@ import { getPrisma } from "@/lib/db";
 import { emailVerificationEnabled } from "@/lib/email";
 import type { User } from "@prisma/client";
 
-// One cookie for the whole site, not one per club: it names a User row,
-// and that row already says which club the account belongs to.
+// Kept through the renames: it's an invisible implementation detail, and
+// changing it would sign every member out for no visible gain.
 const SESSION_COOKIE = "pacemates_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30; // 30 days
 

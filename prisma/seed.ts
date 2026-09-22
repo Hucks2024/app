@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import bcrypt from "bcryptjs";
 import { ensureMembership, formatMemberNumber } from "../src/lib/invite";
-import { CLUBS } from "../src/lib/clubs";
 
 // Same resolution as src/lib/db.ts, minus the Cloudflare-binding lookup
 // (this script only ever runs as a plain Node CLI, e.g. `prisma db seed` or
@@ -31,35 +30,26 @@ async function main() {
   const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
-  // One founding admin per club. Signup is invite-only, so a club with
-  // nobody in it can never be joined: somebody has to hold the first code.
-  // The same address is used for both, which is exactly what the club-
-  // scoped unique index on User exists to allow.
-  for (const club of CLUBS) {
-    const existing = await prisma.user.findUnique({
-      where: { club_email: { club: club.key, email: adminEmail } },
-    });
+  // Signup is invite-only, so the very first account needs a code or
+  // nobody can ever join. Admin codes never run out.
+  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const admin =
+    existing ??
+    (await prisma.user.create({
+      data: {
+        name: "Admin",
+        email: adminEmail,
+        passwordHash,
+        role: "ADMIN",
+        verificationStatus: "APPROVED",
+      },
+    }));
 
-    const admin =
-      existing ??
-      (await prisma.user.create({
-        data: {
-          club: club.key,
-          name: "Admin",
-          email: adminEmail,
-          passwordHash,
-          role: "ADMIN",
-          verificationStatus: "APPROVED",
-        },
-      }));
-
-    // Admin codes never run out, so this is the one that lets the first
-    // people in.
-    const { memberNumber, inviteCode } = await ensureMembership(prisma, admin.id);
-    const verb = existing ? "already exists" : "created";
-    console.log(`${club.name} admin ${verb}: ${adminEmail} (#${formatMemberNumber(memberNumber)})`);
-    console.log(`  invite code: ${inviteCode}`);
-  }
+  const { memberNumber, inviteCode } = await ensureMembership(prisma, admin.id);
+  console.log(
+    `Admin ${existing ? "already exists" : "created"}: ${adminEmail} (#${formatMemberNumber(memberNumber)})`
+  );
+  console.log(`  invite code: ${inviteCode}`);
 
   console.log(
     adminPassword === "changeme123"

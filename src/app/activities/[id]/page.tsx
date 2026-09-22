@@ -40,12 +40,7 @@ export default async function ActivityDetailPage({
     },
   });
 
-  // Not found rather than forbidden when it belongs to the other club: a
-  // member of one club has no business reading the other's exact meeting
-  // points, times and attendee list, and shouldn't even learn that the
-  // meetup exists. Guessing an id is the only way to get here, so the
-  // honest answer and the safe answer are the same one.
-  if (!activity || activity.club !== user.club) notFound();
+  if (!activity) notFound();
 
   const myParticipation = activity.participations.find((p) => p.userId === user.id);
   const isHost = activity.hostId === user.id;

@@ -3,7 +3,6 @@ import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import { formatMemberNumber } from "@/lib/invite";
-import { CLUBS, clubFor } from "@/lib/clubs";
 import {
   approveVerificationAction,
   rejectVerificationAction,
@@ -199,19 +198,13 @@ export default async function AdminPage({
 
       <section>
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
-          Members ({users.length}){" "}
-          <span className="text-sm font-normal text-white/75">
-            {CLUBS.map((c) => `${c.name} ${users.filter((u) => u.club === c.key).length}`).join(
-              " · "
-            )}
-          </span>
+          Members ({users.length})
         </h2>
         <div className="card overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-200">
                 <th className="py-2 pr-4">#</th>
-                <th className="py-2 pr-4">Club</th>
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">Invited by</th>
@@ -226,12 +219,6 @@ export default async function AdminPage({
                 <tr key={u.id} className="border-b border-slate-100 last:border-0">
                   <td className="py-2 pr-4 font-mono text-slate-500">
                     {u.memberNumber == null ? "—" : formatMemberNumber(u.memberNumber)}
-                  </td>
-                  {/* Without this the # column is ambiguous: each club
-                      numbers from #1, so every number exists twice. */}
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    <span aria-hidden="true">{clubFor(u.club).emoji}</span>{" "}
-                    {clubFor(u.club).name}
                   </td>
                   <td className="py-2 pr-4 flex items-center gap-2">
                     <Avatar userId={u.id} hasPhoto={!!u.profilePhoto} size={6} />
