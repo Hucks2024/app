@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getPrisma } from "@/lib/db";
-import { DEFAULT_INVITES } from "@/lib/invite";
 import type { Club } from "@/lib/clubs";
 import MeetupBoard from "@/components/MeetupBoard";
 import Logo from "@/components/Logo";
@@ -91,9 +90,8 @@ export default async function ClubLanding({ club }: { club: Club }) {
             trial, nothing to cancel.
           </p>
           <p>
-            <strong className="text-slate-900">Referral only.</strong> Every member is invited by
-            someone already here, and their name stays attached to yours. {DEFAULT_INVITES}{" "}
-            invitations each. No code? Ask whoever told you about us.
+            <strong className="text-slate-900">Referral only.</strong> No code? Ask whoever told
+            you about us.
           </p>
           <p>
             <strong className="text-slate-900">Nobody can message you on your own.</strong> Chat
