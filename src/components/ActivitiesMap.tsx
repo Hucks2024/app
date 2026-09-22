@@ -248,8 +248,12 @@ export type MapActivity = {
 export default function ActivitiesMap({
   activities,
   restricted = false,
+  post,
 }: {
   activities: MapActivity[];
+  // Passed through so the empty map can offer the one thing worth doing
+  // on an empty map.
+  post?: { href: string; label: string };
   // When true, this is the public/logged-out view: pins sit at a jittered,
   // approximate position (done server-side, before this ever reaches the
   // browser, see "/"), and popups only tease a run rather than showing
@@ -298,7 +302,7 @@ export default function ActivitiesMap({
       : undefined;
 
   return (
-    <div className="map-shell relative w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+    <div className="map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer
         center={center}
         zoom={empty ? 10 : 11}
@@ -373,11 +377,21 @@ export default function ActivitiesMap({
       </MapContainer>
       {empty && (
         <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
-          <p className="pointer-events-auto rounded-2xl bg-white/95 px-4 py-3 text-center text-sm text-slate-600 shadow-lg dark:bg-slate-800/95">
-            {restricted
-              ? "Nothing on right now. Members see them the moment they're posted. 🗺️"
-              : "Nothing on right now. Somebody has to go first 🤞"}
-          </p>
+          <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg dark:bg-slate-800/95">
+            <p className="text-sm text-slate-600">
+              {restricted
+                ? "Nothing on right now. Members see them the moment they're posted. 🗺️"
+                : "Nothing on right now. Somebody has to go first 🤞"}
+            </p>
+            {/* An empty map is the moment a new member most needs telling
+                what to do next, so the one useful action is right here
+                rather than only behind a "+" in the corner. */}
+            {post && (
+              <Link href={post.href} className="btn-primary mt-3 inline-flex text-sm">
+                {post.label}
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

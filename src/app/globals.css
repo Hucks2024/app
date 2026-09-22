@@ -198,6 +198,94 @@ body {
   height: 70svh;
 }
 
+/* The members' map screen: the map is the app, so it gets everything the
+   viewport has left rather than a fixed slice of it.
+   
+   The subtraction is the nav, the filter row and this page's own padding.
+   svh rather than vh because iOS measures vh against the viewport with
+   the address bar hidden, which is taller than what's actually on screen
+   and would push the bottom of the map under the toolbar. */
+/* An explicit height, not flex: 1. Both together collapsed the stage to
+   nothing — flex-basis 0 wins over height, and the parent was sizing to
+   its content, so the map had no height to fill and disappeared.
+   
+   185px is the chrome around it: the nav, this page's padding, the filter
+   row and the footer. svh rather than vh because iOS measures vh against
+   the viewport with the address bar hidden, which is taller than what's
+   on screen, and the bottom of the map would sit under the toolbar. */
+.board-stage {
+  position: relative;
+  height: calc(100vh - 185px);
+  height: calc(100svh - 185px);
+  min-height: 300px;
+}
+/* The front door's map sits under a hero, so it takes a fixed slice
+   instead of the whole remaining viewport, which would have pushed it off
+   the bottom of the screen entirely. */
+.board-stage-preview {
+  height: 58vh;
+  height: 58svh;
+  min-height: 280px;
+}
+/* The map stretches to the stage; the fixed height above is only for the
+   pages that use a map outside one (the club front doors). */
+.board-stage .map-shell {
+  height: 100%;
+}
+
+/* The two things you do on the map screen, floating over it rather than
+   each taking a row underneath. Above Leaflet's own panes (z 400-700) and
+   its controls (z 800), below the location-error dialog (z 2000). */
+.board-toggle {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background: rgb(15 23 42 / 0.82);
+  border-color: rgb(255 255 255 / 0.2);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.3);
+}
+.board-toggle:hover {
+  background: rgb(15 23 42 / 0.92);
+}
+.board-toggle:active {
+  transform: translateX(-50%) scale(0.94);
+}
+
+/* Big, round, thumb-reachable, and the only pink thing on the screen, so
+   the one action a member is here to take can't be missed. */
+.board-fab {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 1001;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1;
+  color: #fff;
+  background: #db2777;
+  box-shadow: 0 6px 18px rgb(219 39 119 / 0.5);
+  transition:
+    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.15s ease;
+}
+.board-fab:hover {
+  background: #be185d;
+  transform: scale(1.07);
+}
+.board-fab:active {
+  transform: scale(0.94);
+}
+
 /* Dark mode gets a dark map. OpenStreetMap only publishes light tiles, and
    every keyless dark provider this app tried started demanding an API key
    mid-flight, so the tiles are inverted in the browser instead: invert
@@ -439,6 +527,7 @@ a:active > .meetup-row {
   }
   .meetup-row,
   .chip,
+  .board-fab,
   .btn-primary,
   .btn-secondary {
     transition: none;

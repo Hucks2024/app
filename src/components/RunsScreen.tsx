@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { clubFor } from "@/lib/clubs";
@@ -51,15 +50,15 @@ export default async function RunsScreen({ user }: { user: User }) {
     }));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white drop-shadow">Upcoming {club.noun.many}</h1>
-        <Link href="/activities/new" className="btn-primary">
-          + Post a {club.noun.one}
-        </Link>
-      </div>
-
-      <MeetupBoard activities={mapActivities} />
+    // No heading row. The chips below already say what you're looking at,
+    // and on a phone that row was costing the map about 90px to tell
+    // members something they knew. Posting moved to the floating button,
+    // where it's bigger and always within thumb reach.
+    <div className="mx-auto max-w-3xl px-4 pt-2 pb-2">
+      <MeetupBoard
+        activities={mapActivities}
+        post={{ href: "/activities/new", label: `Post a ${club.noun.one}` }}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -49,9 +50,19 @@ function matchesDay(iso: string, day: Day): boolean {
 export default function MeetupBoard({
   activities,
   restricted = false,
+  post,
+  stage = "fill",
 }: {
   activities: MapActivity[];
   restricted?: boolean;
+  // "fill" gives the map everything the viewport has left, which is what
+  // the members' screen wants. "preview" is a fixed slice, for the front
+  // door, where the map is the hook rather than the whole app and the
+  // page is meant to keep scrolling past it.
+  stage?: "fill" | "preview";
+  // Where "post a meetup" goes, and what this club calls one. Absent on
+  // the logged-out map, where there's nothing to post yet.
+  post?: { href: string; label: string };
 }) {
   const [category, setCategory] = useState<string>("ALL");
   const [day, setDay] = useState<Day>("ANY");
@@ -96,7 +107,7 @@ export default function MeetupBoard({
 
   return (
     <div>
-      <div className="chip-row mb-3">
+      <div className="chip-row mb-2">
         <button
           type="button"
           onClick={() => setCategory("ALL")}
@@ -134,27 +145,39 @@ export default function MeetupBoard({
         ))}
       </div>
 
-      {view === "map" ? (
-        // Never swapped out for a card. The map handles having nothing on
-        // it, and taking it away because a filter matched nothing makes
-        // the app look broken rather than quiet.
-        <ActivitiesMap activities={filtered} restricted={restricted} />
-      ) : filtered.length === 0 ? (
-        <div className="card text-sm text-slate-600">
-          Nothing doing on that one. Try another day, or clear the filter. 🤷
-        </div>
-      ) : (
-        <MeetupList activities={filtered} restricted={restricted} />
-      )}
+      {/* The map fills whatever's left of the screen, and the two controls
+          float on top of it rather than taking a row each underneath. On a
+          phone those rows were the difference between a map you can read
+          and a letterbox. */}
+      <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
+        {view === "map" ? (
+          // Never swapped out for a card. The map handles having nothing
+          // on it, and taking it away because a filter matched nothing
+          // makes the app look broken rather than quiet.
+          <ActivitiesMap activities={filtered} restricted={restricted} post={post} />
+        ) : filtered.length === 0 ? (
+          <div className="card text-sm text-slate-600">
+            Nothing doing on that one. Try another day, or clear the filter. 🤷
+          </div>
+        ) : (
+          <div className="h-full overflow-y-auto pb-20">
+            <MeetupList activities={filtered} restricted={restricted} />
+          </div>
+        )}
 
-      <div className="flex justify-center mt-3">
         <button
           type="button"
           onClick={() => setView(view === "map" ? "list" : "map")}
-          className="chip"
+          className="chip board-toggle"
         >
           {view === "map" ? "☰ List" : "🗺️ Map"}
         </button>
+
+        {post && (
+          <Link href={post.href} className="board-fab" aria-label={post.label} title={post.label}>
+            +
+          </Link>
+        )}
       </div>
     </div>
   );

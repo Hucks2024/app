@@ -25,15 +25,21 @@ export default async function Nav() {
     // sitting on it, and white text/marks have something to sit on.
     <header className="border-b border-white/15 dark:border-slate-200 bg-violet-700/85 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
-        <Link href={home} className="font-bold text-lg text-white flex items-center gap-2">
+        <Link
+          href={home}
+          className="font-bold text-lg text-white flex items-center gap-2 min-w-0 shrink"
+        >
           <span className="nav-mark">
             {/* White variant, same reason as the hero: the gradient mark
                 dissolves into a purple background. */}
             <Logo variant="white" />
           </span>
-          {name}
+          <span className="truncate">{name}</span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm text-white/90">
+        {/* Tighter gaps on a phone: an admin's row (club name + four links
+            + the theme toggle) is wider than a 390px screen at the
+            roomier desktop spacing. */}
+        <nav className="flex items-center gap-3 sm:gap-4 text-sm text-white/90 shrink-0">
           {user ? (
             <>
               <Link href="/activities" className="hover:text-white capitalize">

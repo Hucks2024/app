@@ -46,30 +46,22 @@ export default async function ClubLanding({ club }: { club: Club }) {
 
   return (
     <div>
+      {/* Short on purpose. Everything above the map is what somebody has
+          to read before they get to the thing that actually sells this,
+          which is other people's meetups on a map, so the pitch is one
+          line and the detail moved below. */}
       <section>
-        <div className="mx-auto max-w-xl px-4 pt-6 pb-6 text-center">
-          <div className="flex justify-center mb-4">
-            {/* Sized by height in classes so it scales up on wider screens;
-                the size prop is the no-CSS fallback. */}
-            <Logo size={112} variant="white" className="h-24 sm:h-28 w-auto" />
+        <div className="mx-auto max-w-xl px-4 pt-5 pb-4 text-center">
+          <div className="flex justify-center mb-3">
+            <Logo size={80} variant="white" className="h-16 sm:h-20 w-auto" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white drop-shadow">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white drop-shadow">
             {club.name}
           </h1>
-          <p className="text-sm text-white/85 mt-4 max-w-md mx-auto">
-            A highly exclusive club for {club.purpose.toLowerCase()}. {club.blurb} Membership is by
-            referral only.
+          <p className="text-sm text-white/85 mt-3 max-w-md mx-auto">
+            {club.blurb} Members only, by referral, and free while we&apos;re small.
           </p>
-          {/* The allowance comes from the constant the invite system
-              actually spends, so the number on the front page can't drift
-              away from the number members really get. */}
-          <p className="text-xs text-white/70 mt-3 max-w-md mx-auto">
-            Every member is invited by someone already here, and their name stays attached to yours.{" "}
-            {DEFAULT_INVITES} invitations each. No private messages, no browsing people, no inbox
-            to be pestered through.
-          </p>
-          <p className="text-xs font-semibold text-white/90 mt-3">Free while we&apos;re small 🎉</p>
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-5 flex items-center justify-center gap-3">
             <Link href="/signup" className="btn-primary">
               I have a code
             </Link>
@@ -81,7 +73,7 @@ export default async function ClubLanding({ club }: { club: Club }) {
       </section>
 
       <div className="mx-auto max-w-3xl px-4 pb-10">
-        <MeetupBoard activities={previewActivities} restricted />
+        <MeetupBoard activities={previewActivities} restricted stage="preview" />
         <p className="text-xs text-white/75 text-center mt-3">
           Pins are approximate.{" "}
           <Link href={`/login?club=${club.slug}`} className="underline font-medium text-white">
@@ -89,6 +81,26 @@ export default async function ClubLanding({ club }: { club: Club }) {
           </Link>{" "}
           for exact times and meeting points, and to join.
         </p>
+
+        {/* The detail that used to sit between the name and the map. It
+            answers the questions somebody asks after they're interested,
+            so it waits until after the map has made them interested. */}
+        <div className="card mt-6 text-sm text-slate-600 space-y-2">
+          <p>
+            <strong className="text-slate-900">Free while we&apos;re small.</strong> No card, no
+            trial, nothing to cancel.
+          </p>
+          <p>
+            <strong className="text-slate-900">Referral only.</strong> Every member is invited by
+            someone already here, and their name stays attached to yours. {DEFAULT_INVITES}{" "}
+            invitations each. No code? Ask whoever told you about us.
+          </p>
+          <p>
+            <strong className="text-slate-900">Nobody can message you on your own.</strong> Chat
+            happens on a meetup, where everyone going can see it. There&apos;s no inbox and no way
+            to browse people.
+          </p>
+        </div>
       </div>
     </div>
   );
