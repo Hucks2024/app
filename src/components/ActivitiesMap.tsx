@@ -302,11 +302,7 @@ export default function ActivitiesMap({
       : undefined;
 
   return (
-    <div
-      className={`map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm ${
-        restricted ? "map-teaser" : ""
-      }`}
-    >
+    <div className="map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer
         center={center}
         zoom={empty ? 10 : 11}
@@ -325,28 +321,24 @@ export default function ActivitiesMap({
         />
         <LocateControl />
         {activities.map((a) => (
-          <Marker
-            key={a.id}
-            position={[a.latitude, a.longitude]}
-            icon={icons.get(a.id)}
-            // Nothing to open logged out: a popup naming the meetup would
-            // hand back exactly what the blur is there to withhold.
-            interactive={!restricted}
-          >
-            {!restricted && (
+          <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
             <Popup>
               {restricted ? (
-                <div className="space-y-1 max-w-[180px]">
-                  <p className="font-semibold">{a.title} 🏃</p>
-                  <p className="text-sm text-slate-500">
-                    {a.distanceKm ? `${a.distanceKm} km` : "Group run"} · somewhere round here 👀
+                // Everything a visitor is allowed to know: what kind of
+                // thing it is, which the pin already showed them. The
+                // title, time and meeting point were never sent to this
+                // page at all, so there's nothing here to withhold badly.
+                <div className="space-y-1 max-w-[190px]">
+                  <p className="font-semibold">
+                    {categoryFor(a.category).emoji} {categoryFor(a.category).label}
                   </p>
+                  <p className="text-sm text-slate-500">Somewhere round here 👀</p>
                   <p className="text-sm text-slate-600">
-                    The exact time and meeting point are our little secret, for members only. 🤫
+                    Members see the time, the meeting point and who&apos;s going.
                   </p>
                   <div className="flex gap-2 pt-1">
                     <Link href="/signup" className="text-brand-600 underline text-sm font-medium">
-                      I&apos;m in →
+                      I have a code →
                     </Link>
                     <Link href="/login" className="text-brand-600 underline text-sm">
                       Log in
@@ -384,7 +376,6 @@ export default function ActivitiesMap({
                 </div>
               )}
             </Popup>
-            )}
           </Marker>
         ))}
       </MapContainer>

@@ -21,7 +21,7 @@ export default async function Nav() {
           <span className="nav-mark">
             {/* White variant, same reason as the hero: the gradient mark
                 dissolves into a purple background. */}
-            <Logo variant="white" />
+            <Logo variant="white" size={32} />
           </span>
           <span className="truncate">{SITE.name}</span>
         </Link>

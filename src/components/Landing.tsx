@@ -19,14 +19,13 @@ export default async function Landing() {
     orderBy: { startsAt: "asc" },
   });
 
-  // Only what a blurred pin needs to exist: a rough position and a
+  // Only what a public pin needs to exist: a rough position and a
   // category. Everything else is left behind on the server.
   //
-  // Blurring in CSS is presentation, and presentation is not privacy: the
-  // props of a client component are serialised into the page, so sending
-  // the real titles and times and then blurring them would put all of it
-  // one View Source away. The blur only means anything because there's
-  // nothing underneath it to find.
+  // This is what actually makes the details members-only. A client
+  // component's props are serialised into the page, so sending the real
+  // titles and times and merely declining to render them would put all of
+  // it one View Source away. The popup can't leak what was never sent.
   //
   // The id is synthetic for the same reason. React needs a stable key and
   // the pin animation needs something to derive its rhythm from, and
@@ -59,7 +58,7 @@ export default async function Landing() {
       <div className="mx-auto max-w-3xl px-4 pt-2 pb-10">
         <MeetupBoard activities={previewActivities} restricted />
         <p className="text-xs text-white/75 text-center mt-3">
-          Blurred until you&apos;re in.{" "}
+          Pins are approximate. Tap one to see what it is.{" "}
           <Link href="/login" className="underline font-medium text-white">
             Log in
           </Link>{" "}
