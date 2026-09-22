@@ -302,7 +302,11 @@ export default function ActivitiesMap({
       : undefined;
 
   return (
-    <div className="map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+    <div
+      className={`map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm ${
+        restricted ? "map-teaser" : ""
+      }`}
+    >
       <MapContainer
         center={center}
         zoom={empty ? 10 : 11}
@@ -321,7 +325,15 @@ export default function ActivitiesMap({
         />
         <LocateControl />
         {activities.map((a) => (
-          <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
+          <Marker
+            key={a.id}
+            position={[a.latitude, a.longitude]}
+            icon={icons.get(a.id)}
+            // Nothing to open logged out: a popup naming the meetup would
+            // hand back exactly what the blur is there to withhold.
+            interactive={!restricted}
+          >
+            {!restricted && (
             <Popup>
               {restricted ? (
                 <div className="space-y-1 max-w-[180px]">
@@ -372,9 +384,24 @@ export default function ActivitiesMap({
                 </div>
               )}
             </Popup>
+            )}
           </Marker>
         ))}
       </MapContainer>
+      {/* Logged out, the pins are blurred rather than hidden: you can see
+          where things are happening and how many, which is the honest
+          pitch, but not which is which or exactly where. Clicking one
+          still opens its teaser popup. */}
+      {restricted && !empty && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1001] flex justify-center p-3">
+          <Link
+            href="/login"
+            className="pointer-events-auto rounded-full bg-slate-900/85 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur"
+          >
+            {activities.length} on right now · log in to see
+          </Link>
+        </div>
+      )}
       {empty && (
         <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg dark:bg-slate-800/95">

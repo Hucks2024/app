@@ -49,8 +49,11 @@ export default async function Nav() {
               <Link href="/login" className="hover:text-white">
                 Log in
               </Link>
+              {/* Not "Sign up": there is no open signup, and a button
+                  promising one sends people to a form they can't finish.
+                  This says the price of entry up front. */}
               <Link href="/signup" className="btn-primary !px-3 !py-1.5">
-                Sign up
+                I have a code
               </Link>
             </>
           )}

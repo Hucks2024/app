@@ -107,6 +107,10 @@ export default function MeetupBoard({
 
   return (
     <div>
+      {/* Not rendered at all for a visitor who can't read the pins
+          anyway. Hiding it with a class doesn't work: .chip-row sets its
+          own display, and filtering a blur is busywork regardless. */}
+      {!restricted && (
       <div className="chip-row mb-2">
         <button
           type="button"
@@ -144,12 +148,17 @@ export default function MeetupBoard({
           </button>
         ))}
       </div>
+      )}
 
       {/* The map fills whatever's left of the screen, and the two controls
           float on top of it rather than taking a row each underneath. On a
           phone those rows were the difference between a map you can read
           and a letterbox. */}
-      <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
+      <div
+        className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""} ${
+          restricted ? "board-stage-open" : ""
+        }`}
+      >
         {view === "map" ? (
           // Never swapped out for a card. The map handles having nothing
           // on it, and taking it away because a filter matched nothing
@@ -165,13 +174,15 @@ export default function MeetupBoard({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => setView(view === "map" ? "list" : "map")}
-          className="chip board-toggle"
-        >
-          {view === "map" ? "☰ List" : "🗺️ Map"}
-        </button>
+        {!restricted && (
+          <button
+            type="button"
+            onClick={() => setView(view === "map" ? "list" : "map")}
+            className="chip board-toggle"
+          >
+            {view === "map" ? "☰ List" : "🗺️ Map"}
+          </button>
+        )}
 
         {post && (
           <Link href={post.href} className="board-fab" aria-label={post.label} title={post.label}>

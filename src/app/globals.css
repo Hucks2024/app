@@ -219,6 +219,11 @@ body {
   height: calc(100svh - 185px);
   min-height: 300px;
 }
+/* The public map has no filter row above it, so it gets that height back. */
+.board-stage-open {
+  height: calc(100vh - 145px);
+  height: calc(100svh - 145px);
+}
 /* The front door's map sits under a hero, so it takes a fixed slice
    instead of the whole remaining viewport, which would have pushed it off
    the bottom of the screen entirely. */
@@ -284,6 +289,24 @@ body {
 }
 .board-fab:active {
   transform: scale(0.94);
+}
+
+/* The logged-out map. Tiles stay sharp, so it still reads as a real place
+   you might recognise; the pins are blurred, so you can see that things
+   are happening and roughly where without being able to read which is
+   which. Blurring the markers only, not the whole pane, is what keeps the
+   map legible and the content withheld.
+   
+   This is a presentation layer on top of a real one: the positions behind
+   it are already jittered by 1-2km server-side before they ever reach the
+   browser (see Landing), so lifting the blur in devtools gives away
+   nothing exact. */
+.map-teaser .leaflet-marker-pane {
+  filter: blur(5px) saturate(1.1);
+  opacity: 0.92;
+}
+.map-teaser .leaflet-popup-pane {
+  filter: none;
 }
 
 /* Dark mode gets a dark map. OpenStreetMap only publishes light tiles, and
