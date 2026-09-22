@@ -25,15 +25,24 @@ const person = (x, y, s, fill) => `
     <path d="M0 -34 Q40 -34 44 12 Q48 52 38 66 Q20 74 0 74 Q-20 74 -38 66 Q-48 52 -44 12 Q-40 -34 0 -34 Z"/>
   </g>`;
 
-/** @param inset 0 fills the tile; higher values pull the mark in, which is
- *  what a maskable icon needs so a circular crop can't clip it. */
-function markSvg(size, inset) {
-  const scale = 1 - inset;
-  const shift = (512 * inset) / 2;
+// Where the drop actually sits inside the 512 canvas. It's a tall, narrow
+// shape in a square box: 240 wide and 344 high, centred at (256, 246),
+// and the rest of the box is empty.
+//
+// That emptiness is why scaling the canvas never made the icon look
+// bigger. The mark was only ever 47% of the tile's width, so next to
+// other apps on a home screen it read as small however the box was
+// scaled. Scaling the mark about its own centre is what actually fills
+// the tile.
+const PIN = { width: 240, height: 344, cx: 256, cy: 246 };
+
+/** @param fill how much of the tile's height the drop should take, 0-1. */
+function markSvg(size, fill) {
+  const scale = (512 * fill) / PIN.height;
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
        <rect width="512" height="512" fill="${BRAND}"/>
-       <g transform="translate(${shift} ${shift}) scale(${scale})">
+       <g transform="translate(256 256) scale(${scale}) translate(${-PIN.cx} ${-PIN.cy})">
          <path d="${PIN_PATH}" fill="#fff"/>
          ${person(256, 236, 0.62, BRAND)}
          ${person(186, 250, 0.48, BRAND)}
@@ -43,18 +52,21 @@ function markSvg(size, inset) {
   );
 }
 
-async function write(size, inset, out) {
-  await sharp(markSvg(size, inset)).png().toFile(out);
+async function write(size, fill, out) {
+  await sharp(markSvg(size, fill)).png().toFile(out);
   console.log(`  ${out}`);
 }
 
 await mkdir("public", { recursive: true });
 
 console.log("Generating icons...");
-await write(192, 0.04, "public/icon-192.png");
-await write(512, 0.04, "public/icon-512.png");
-await write(180, 0.04, "src/app/apple-icon.png");
-await write(96, 0.02, "src/app/icon.png");
-// Android can crop this to a circle, so the pin sits well inside.
-await write(512, 0.3, "public/icon-maskable-512.png");
+await write(192, 0.82, "public/icon-192.png");
+await write(512, 0.82, "public/icon-512.png");
+await write(180, 0.82, "src/app/apple-icon.png");
+await write(96, 0.82, "src/app/icon.png");
+// Android crops this to whatever shape the launcher uses, and the safe
+// zone is the middle 80% as a circle. A drop this tall is 1.22x as wide
+// across its diagonal, so 0.58 is what keeps the corners of it inside a
+// circular crop; anything near the 0.82 above would lose the tip.
+await write(512, 0.58, "public/icon-maskable-512.png");
 console.log("Done.");
