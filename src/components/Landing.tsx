@@ -64,25 +64,6 @@ export default async function Landing() {
           </Link>{" "}
           for exact times, meeting points, and who&apos;s going.
         </p>
-
-        {/* The detail that used to sit between the name and the map. It
-            answers the questions somebody asks after they're interested,
-            so it waits until after the map has made them interested. */}
-        <div className="card mt-6 text-sm text-slate-600 space-y-2">
-          <p>
-            <strong className="text-slate-900">Free while we&apos;re small.</strong> No card, no
-            trial, nothing to cancel.
-          </p>
-          <p>
-            <strong className="text-slate-900">Referral only.</strong> There&apos;s no open
-            signup: you need an invite code from a member. No code? Ask whoever told you about us.
-          </p>
-          <p>
-            <strong className="text-slate-900">Nobody can message you on your own.</strong> Chat
-            happens on a meetup, where everyone going can see it. There&apos;s no inbox and no way
-            to browse people.
-          </p>
-        </div>
       </div>
     </div>
   );
