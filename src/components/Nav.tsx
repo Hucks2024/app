@@ -3,7 +3,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 import LogoutButton from "@/components/LogoutButton";
 import Logo from "@/components/Logo";
-import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Nav() {
   const user = await getCurrentUser();
@@ -12,7 +11,7 @@ export default async function Nav() {
     // Violet-700 is the exact top stop of the body gradient (globals.css),
     // so the bar reads as the top of the page rather than a separate strip
     // sitting on it, and white text/marks have something to sit on.
-    <header className="border-b border-white/15 dark:border-slate-200 bg-violet-700/85 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-10">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <Link
           href="/"
@@ -25,9 +24,9 @@ export default async function Nav() {
           </span>
           <span className="truncate">{SITE.name}</span>
         </Link>
-        {/* Tighter gaps on a phone: an admin's row (the name + four links
-            + the theme toggle) is wider than a 390px screen at the
-            roomier desktop spacing. */}
+        {/* Tighter gaps on a phone: an admin's row (the name + four
+            links) is wider than a 390px screen at the roomier desktop
+            spacing. */}
         <nav className="flex items-center gap-3 sm:gap-4 text-sm text-white/90 shrink-0">
           {user ? (
             <>
@@ -57,7 +56,6 @@ export default async function Nav() {
               </Link>
             </>
           )}
-          <ThemeToggle />
         </nav>
       </div>
     </header>

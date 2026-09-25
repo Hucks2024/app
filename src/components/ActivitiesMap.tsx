@@ -214,7 +214,7 @@ function LocateControl() {
           }}
           aria-label="Show my location"
           title="Show my location"
-          className="w-9 h-9 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center text-base hover:bg-slate-50 dark:hover:bg-slate-700"
+          className="w-9 h-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-base hover:bg-slate-50"
         >
           {status === "locating" ? "⏳" : "📍"}
         </button>
@@ -304,9 +304,11 @@ export default function ActivitiesMap({
   return (
     <div className="map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
       <MapContainer
-        center={center}
-        zoom={empty ? 10 : 11}
-        bounds={bounds}
+        // One or the other, never both: react-leaflet uses center + zoom
+        // whenever it's given them and silently ignores bounds, which is
+        // how "frame them all" used to open on the first meetup at a fixed
+        // zoom with the rest of the week off the edges.
+        {...(bounds ? { bounds } : { center, zoom: empty ? 10 : 11 })}
         scrollWheelZoom
         className="h-full w-full"
       >
@@ -324,18 +326,32 @@ export default function ActivitiesMap({
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
             <Popup>
               {restricted ? (
-                // Everything a visitor is allowed to know: what kind of
-                // thing it is, which the pin already showed them. The
-                // title, time and meeting point were never sent to this
-                // page at all, so there's nothing here to withhold badly.
-                <div className="space-y-1 max-w-[190px]">
+                // What kind of thing it is, in the clear (the pin already
+                // said so), then the shape of the details under a blur.
+                //
+                // The blurred lines are stand-ins, not the real details
+                // with a filter on. The title, time and meeting point were
+                // never sent to this page, because a blur is CSS and CSS
+                // is one right-click away from switched off. Unblurred,
+                // these say exactly what they are.
+                <div className="space-y-1 max-w-[200px]">
                   <p className="font-semibold">
                     {categoryFor(a.category).emoji} {categoryFor(a.category).label}
                   </p>
-                  <p className="text-sm text-slate-500">Somewhere round here 👀</p>
-                  <p className="text-sm text-slate-600">
-                    Members see the time, the meeting point and who&apos;s going.
-                  </p>
+                  <div className="relative">
+                    <div aria-hidden="true" className="popup-blur space-y-1">
+                      <p className="font-semibold">A members-only meetup</p>
+                      <p className="text-sm text-slate-600">Log in to see the day and time</p>
+                      <p className="text-sm text-slate-600 underline">Log in to see where ↗</p>
+                      <p className="text-sm text-slate-500">Log in to see who&apos;s in 🙌</p>
+                    </div>
+                    <Link
+                      href="/login"
+                      className="absolute inset-0 m-auto flex h-8 w-fit items-center rounded-full bg-slate-900/85 px-3 text-xs font-semibold !text-white shadow"
+                    >
+                      🔒 Log in to see
+                    </Link>
+                  </div>
                   <div className="flex gap-2 pt-1">
                     <Link href="/signup" className="text-brand-600 underline text-sm font-medium">
                       I have a code →
@@ -393,13 +409,15 @@ export default function ActivitiesMap({
           </Link>
         </div>
       )}
-      {empty && (
+      {/* Members only. A visitor who lands on a quiet week is better served
+          by a plain, pannable map than by a card telling them there's
+          nothing here; the one below has a button, which is the whole
+          reason it's worth covering the map for. */}
+      {empty && !restricted && (
         <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
-          <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg dark:bg-slate-800/95">
+          <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg">
             <p className="text-sm text-slate-600">
-              {restricted
-                ? "Nothing on right now. Members see them the moment they're posted. 🗺️"
-                : "Nothing on right now. Somebody has to go first 🤞"}
+              Nothing on right now. Somebody has to go first 🤞
             </p>
             {/* An empty map is the moment a new member most needs telling
                 what to do next, so the one useful action is right here

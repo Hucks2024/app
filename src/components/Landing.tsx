@@ -52,10 +52,13 @@ export default async function Landing() {
 
   return (
     <div>
-      {/* Straight to the map. Nothing above it: a visitor who has been
-          sent here by a member already knows what this is, and a hero
-          only delays the one thing that shows them it's real. */}
+      {/* One line above the map, and only one: it says what the place is
+          for in the time it takes to read it, and then gets out of the way
+          of the thing that shows a visitor it's real. */}
       <div className="mx-auto max-w-3xl px-4 pt-2 pb-10">
+        <p className="mb-2 text-center text-base font-semibold tracking-tight text-white sm:text-lg">
+          A backpacker&apos;s guide to the galaxy
+        </p>
         <MeetupBoard activities={previewActivities} restricted />
         <p className="text-xs text-white/75 text-center mt-3">
           Pins are approximate. Tap one to see what it is.{" "}

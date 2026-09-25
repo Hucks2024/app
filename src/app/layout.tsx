@@ -42,26 +42,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   // Tints the bar above the page when installed. Matched to the nav rather
   // than the body gradient, so the two read as one surface.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#6d28d9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
-  ],
+  themeColor: "#6d28d9",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* Runs before paint/hydration so there's no flash of the wrong
-            theme: reads the saved choice (or falls back to the OS
-            preference) and stamps the "dark" class straight onto <html>,
-            the same class ThemeToggle toggles later. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
-          }}
-        />
-      </head>
+    // One theme, so nothing has to be decided before paint: no
+    // pre-hydration script, no flash, no per-device difference in what the
+    // app looks like.
+    <html lang="en">
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>

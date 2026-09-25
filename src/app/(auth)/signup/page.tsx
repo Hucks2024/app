@@ -19,7 +19,7 @@ export default async function SignupPage({
         for. Free to join, and free to stay while we&apos;re small.
       </p>
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
+        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
           {error}
         </p>
       )}

@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class",
   content: [
     "./src/app/**/*.{ts,tsx}",
     "./src/components/**/*.{ts,tsx}",
@@ -22,14 +21,11 @@ const config: Config = {
           900: "#145330",
           950: "#0b3220",
         },
-        // Every existing text-slate-*/bg-slate-*/border-slate-* utility in
-        // the app (there are a lot, scattered across every page) keeps
-        // working as-is, but each shade now resolves through a CSS
-        // variable instead of a fixed value. globals.css sets the
-        // light-mode values on :root and flips them (roughly mirrored,
-        // 50<->900, 100<->800, etc.) under .dark, so the whole existing
-        // app becomes dark-mode-aware from one place rather than needing
-        // dark: variants hand-added to every element.
+        // Every text-slate-*/bg-slate-*/border-slate-* utility in the app
+        // (there are a lot, scattered across every page) keeps working
+        // as-is, but each shade resolves through a CSS variable instead of
+        // a fixed value, set once on :root in globals.css. One place to
+        // retune the greys for the whole app.
         slate: {
           50: "rgb(var(--slate-50) / <alpha-value>)",
           100: "rgb(var(--slate-100) / <alpha-value>)",

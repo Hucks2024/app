@@ -24,8 +24,8 @@ export default function JoinedBurst({ label }: { label: string }) {
   if (gone) return null;
 
   return (
-    <div className="mb-4 rounded-xl bg-brand-50 border border-brand-200 px-4 py-3 text-center dark:bg-brand-950 dark:border-brand-800">
-      <p className="font-semibold text-brand-800 dark:text-brand-200">{label}</p>
+    <div className="mb-4 rounded-xl bg-brand-50 border border-brand-200 px-4 py-3 text-center">
+      <p className="font-semibold text-brand-800">{label}</p>
       <div className="burst" aria-hidden="true">
         {BITS.map((bit, i) => (
           <span key={i} style={{ "--i": i } as React.CSSProperties}>

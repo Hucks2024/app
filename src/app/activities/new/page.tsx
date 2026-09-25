@@ -19,7 +19,7 @@ export default async function NewActivityPage({
       </p>
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 dark:bg-red-950 dark:border-red-800 dark:text-red-300">
+        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
           {error}
         </p>
       )}
@@ -76,7 +76,7 @@ export default async function NewActivityPage({
         </div>
 
         <details className="border-t border-slate-200 pt-4">
-          <summary className="cursor-pointer select-none text-sm font-medium text-brand-700 dark:text-brand-400">
+          <summary className="cursor-pointer select-none text-sm font-medium text-brand-700">
             Add more details (all optional)
           </summary>
 
@@ -160,7 +160,7 @@ export default async function NewActivityPage({
                 type="url"
                 placeholder="https://www.strava.com/routes/..."
               />
-              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              <p className="text-xs text-amber-700 mt-1">
                 ⚠️ Set the route to <strong>Public</strong> in Strava, a private link won&apos;t
                 open for anyone else.
               </p>
