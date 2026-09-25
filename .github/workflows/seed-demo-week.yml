@@ -1,0 +1,45 @@
+name: Demo week (fake meetups)
+
+# Manual-only test-data helper. Actions tab -> "Demo week (fake meetups)"
+# -> "Run workflow", then pick:
+#
+#   seed   a week of made-up meetups across London, hosted by six demo
+#          members, so the map has something on it. Safe to re-run: it
+#          clears the previous demo set first, so you always get the
+#          coming week and never two of everything.
+#   clear  remove every demo row and put nothing back.
+#
+# Only ever touches rows whose id starts with "demo-". Real accounts and
+# real meetups get cuids, so none of them can be caught by this.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "seed a fresh demo week, or clear the demo data"
+        type: choice
+        required: true
+        default: seed
+        options:
+          - seed
+          - clear
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Seed or clear the demo week
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          if [ "${{ inputs.mode }}" = "clear" ]; then
+            node scripts/seed-demo-week.mjs --clear
+          else
+            node scripts/seed-demo-week.mjs
+          fi
