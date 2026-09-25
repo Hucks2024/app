@@ -22,7 +22,7 @@ export default async function Nav() {
                 dissolves into a purple background. */}
             <Logo variant="white" size={32} />
           </span>
-          <span className="font-wordmark font-semibold text-[22px] min-[375px]:text-2xl truncate">
+          <span className="font-wordmark font-semibold text-[22px] min-[375px]:text-2xl lowercase truncate">
             {SITE.name}
           </span>
         </Link>
