@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import InstallHint from "@/components/InstallHint";
 import { SITE } from "@/lib/site";
+
+// The stand-in for Segoe UI on devices that don't have it (see
+// .font-wordmark in globals.css). Downloaded at build time and served from
+// this domain, so a visitor's browser never talks to Google.
+const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-open-sans" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -50,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // One theme, so nothing has to be decided before paint: no
     // pre-hydration script, no flash, no per-device difference in what the
     // app looks like.
-    <html lang="en">
+    <html lang="en" className={openSans.variable}>
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>

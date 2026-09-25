@@ -29,6 +29,13 @@ body {
   min-height: 100vh;
 }
 
+/* The name in the nav and the line above the map: Segoe UI, the Windows
+   interface font. It's Microsoft's and can't be served to other devices,
+   so anything without it gets Open Sans, the nearest free match. */
+.font-wordmark {
+  font-family: "Segoe UI", var(--font-open-sans), system-ui, sans-serif;
+}
+
 .btn {
   @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
@@ -150,17 +157,7 @@ body {
 }
 
 .map-pin:hover {
-  animation-play-state: paused;
   transform: scale(1.12);
-}
-@keyframes map-pin-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
 }
 
 /* Leaflet map wrapper (ActivitiesMap). iOS Safari's address bar
@@ -413,15 +410,11 @@ a:active > .meetup-row {
   }
 }
 
-/* The map's pins land rather than appear, then breathe. Two animations on
-   one element: the drop runs once from the top, the bob loops forever, and
-   --bob (set per pin in ActivitiesMap) offsets only the second so they
-   don't all rise and fall together. */
+/* The map's pins land rather than appear, once, and then stay put: a pin
+   is where a meetup is, and one that keeps moving is harder to tap and
+   reads as less certain about it. */
 .map-pin {
-  animation:
-    map-pin-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
-    map-pin-bob 2.2s ease-in-out infinite;
-  animation-delay: 0s, var(--bob, 0s);
+  animation: map-pin-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
 @keyframes map-pin-drop {
   0% {

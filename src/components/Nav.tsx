@@ -22,7 +22,7 @@ export default async function Nav() {
                 dissolves into a purple background. */}
             <Logo variant="white" size={32} />
           </span>
-          <span className="truncate">{SITE.name}</span>
+          <span className="font-wordmark font-normal truncate">{SITE.name}</span>
         </Link>
         {/* Tighter gaps on a phone: an admin's row (the name + four
             links) is wider than a 390px screen at the roomier desktop

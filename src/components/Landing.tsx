@@ -27,9 +27,8 @@ export default async function Landing() {
   // titles and times and merely declining to render them would put all of
   // it one View Source away. The popup can't leak what was never sent.
   //
-  // The id is synthetic for the same reason. React needs a stable key and
-  // the pin animation needs something to derive its rhythm from, and
-  // neither needs to be the real row id.
+  // The id is synthetic for the same reason. React needs a stable key,
+  // and that doesn't need to be the real row id.
   const previewActivities: MapActivity[] = activities
     .filter((a) => a.latitude != null && a.longitude != null)
     .map((a, i) => ({
@@ -56,8 +55,8 @@ export default async function Landing() {
           for in the time it takes to read it, and then gets out of the way
           of the thing that shows a visitor it's real. */}
       <div className="mx-auto max-w-3xl px-4 pt-2 pb-10">
-        <p className="mb-2 text-center text-base font-semibold tracking-tight text-white sm:text-lg">
-          A backpacker&apos;s guide to the galaxy
+        <p className="font-wordmark mb-2 text-center text-base text-white sm:text-lg">
+          a backpacker&apos;s guide to the galaxy
         </p>
         <MeetupBoard activities={previewActivities} restricted />
         <p className="text-xs text-white/75 text-center mt-3">
