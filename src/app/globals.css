@@ -427,6 +427,31 @@ a:active > .meetup-row {
   }
 }
 
+/* A popup grows out of its pin rather than fading in, timed to finish as
+   the map lands on it (FocusOnOpen in ActivitiesMap flies in over 0.5s).
+   Only the inner parts are animated: Leaflet positions .leaflet-popup
+   itself with a transform, and animating that would fight it. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip-container {
+  animation: popup-expand 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards;
+}
+.leaflet-popup-content-wrapper {
+  transform-origin: 50% 100%;
+}
+.leaflet-popup-tip-container {
+  transform-origin: 50% 0;
+}
+@keyframes popup-expand {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* The burst under "You're in": each bit flies out on its own angle, set
    from --i so twelve spans need one keyframe rather than twelve.
    Deliberately large and fully opaque for most of its flight — a first
@@ -484,6 +509,8 @@ a:active > .meetup-row {
    moving things gets the app without any of it. */
 @media (prefers-reduced-motion: reduce) {
   .map-pin,
+  .leaflet-popup-content-wrapper,
+  .leaflet-popup-tip-container,
   .soon-badge,
   .chip-on,
   .burst span,

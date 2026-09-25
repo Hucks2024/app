@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -133,6 +133,47 @@ function LocationErrorModal({ message, onClose }: { message: string; onClose: ()
     </div>,
     document.body,
   );
+}
+
+/** Tapping a pin flies the map in on it, and the popup opens as it lands.
+ *
+ * Hung off popupopen rather than each marker's click, so it's one handler
+ * for every pin and it also fires when a popup opens from the keyboard.
+ * Popups have their own autoPan switched off (see <Popup> below): it
+ * would start panning at the same moment and the two animations would
+ * fight over where the map ends up.
+ *
+ * Logged out, the zoom stops at neighbourhood level. Those pins are
+ * deliberately up to a kilometre or so off, and a street-level close-up
+ * would dress an approximate position up as an exact one. */
+function FocusOnOpen({ restricted }: { restricted: boolean }) {
+  const map = useMapEvents({
+    popupopen(e) {
+      const latlng = e.popup.getLatLng();
+      if (!latlng) return;
+      const zoom = Math.max(map.getZoom(), restricted ? 14 : 16);
+      // Land with the pin low in the frame rather than dead centre, so the
+      // popup opening above it has room without a second pan.
+      const size = map.getSize();
+      const target = map.unproject(
+        map.project(latlng, zoom).subtract([0, size.y * 0.22]),
+        zoom
+      );
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      map.flyTo(target, zoom, { animate: !reduceMotion, duration: 0.5 });
+
+      // A short map (a small laptop window, say) can still leave the top of
+      // a tall popup cut off, so once it has landed, nudge it into view.
+      map.once("moveend", () => {
+        const container = e.popup.getElement();
+        if (!container) return;
+        const overflow =
+          map.getContainer().getBoundingClientRect().top + 8 - container.getBoundingClientRect().top;
+        if (overflow > 0) map.panBy([0, -overflow], { animate: !reduceMotion });
+      });
+    },
+  });
+  return null;
 }
 
 function LocateControl() {
@@ -306,9 +347,10 @@ export default function ActivitiesMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <LocateControl />
+        <FocusOnOpen restricted={restricted} />
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
-            <Popup>
+            <Popup autoPan={false}>
               {restricted ? (
                 // What kind of thing it is, in the clear (the pin already
                 // said so), then the shape of the details under a blur.

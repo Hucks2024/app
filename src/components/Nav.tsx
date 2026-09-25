@@ -22,7 +22,9 @@ export default async function Nav() {
                 dissolves into a purple background. */}
             <Logo variant="white" size={32} />
           </span>
-          <span className="font-wordmark font-normal truncate">{SITE.name}</span>
+          <span className="font-wordmark font-semibold text-[22px] min-[375px]:text-2xl truncate">
+            {SITE.name}
+          </span>
         </Link>
         {/* Tighter gaps on a phone: an admin's row (the name + four
             links) is wider than a 390px screen at the roomier desktop
@@ -30,7 +32,9 @@ export default async function Nav() {
         <nav className="flex items-center gap-3 sm:gap-4 text-sm text-white/90 shrink-0">
           {user ? (
             <>
-              <Link href="/activities" className="hover:text-white">
+              {/* Not on a phone: it's the same map the name already opens,
+                  and the name needs the room more than a second way in. */}
+              <Link href="/activities" className="hidden sm:inline hover:text-white">
                 Meetups
               </Link>
               <Link href="/profile" className="hover:text-white">

@@ -55,7 +55,7 @@ export default async function Landing() {
           for in the time it takes to read it, and then gets out of the way
           of the thing that shows a visitor it's real. */}
       <div className="mx-auto max-w-3xl px-4 pt-2 pb-10">
-        <p className="font-wordmark mb-2 text-center text-base text-white sm:text-lg">
+        <p className="font-wordmark mb-2 text-center text-base font-semibold text-white sm:text-lg">
           a backpacker&apos;s guide to the galaxy
         </p>
         <MeetupBoard activities={previewActivities} restricted />
