@@ -3,6 +3,7 @@ import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import InstallHint from "@/components/InstallHint";
+import ClaudeMark from "@/components/ClaudeMark";
 import { SITE } from "@/lib/site";
 
 // The stand-in for Segoe UI on devices that don't have it (see
@@ -68,6 +69,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {SITE.name} ·{" "}
             <a href={SITE.url} className="hover:text-white hover:underline" rel="noopener">
               {SITE.domain}
+            </a>
+          </p>
+          <p className="mt-2">
+            <a
+              href="https://claude.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-white"
+            >
+              built with claude
+              {/* On a white disc: Claude's orange all but disappears into the
+                  pink end of the page gradient on its own. */}
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm">
+                <ClaudeMark size={13} />
+              </span>
             </a>
           </p>
         </footer>
