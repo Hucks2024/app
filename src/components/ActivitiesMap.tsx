@@ -181,7 +181,9 @@ function LocateControl() {
 
   return (
     <>
-      <div ref={wrapRef} className="absolute top-3 right-3 z-[1000]">
+      {/* 10px in, the same margin Leaflet gives the zoom capsule on the
+          other side, so the two sit level. */}
+      <div ref={wrapRef} className="absolute top-[10px] right-[10px] z-[1000]">
         <button
           type="button"
           onClick={() => {
@@ -197,10 +199,26 @@ function LocateControl() {
             });
           }}
           aria-label="Show my location"
+          aria-busy={status === "locating"}
           title="Show my location"
-          className="w-9 h-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-base hover:bg-slate-50"
+          className="locate-btn"
         >
-          {status === "locating" ? "⏳" : "📍"}
+          {/* A drawn crosshair rather than the 📍 emoji: white, like the + and
+              - it sits opposite, where a red emoji on violet would clash. */}
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="6.5" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+            <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+          </svg>
         </button>
       </div>
       {status === "error" && errorMessage && (
