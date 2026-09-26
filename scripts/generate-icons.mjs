@@ -38,19 +38,21 @@ const PIN = { width: 240, height: 344, cx: 256, cy: 246 };
 
 /**
  * @param fill how much of the canvas height the drop should take, 0-1.
- * @param tile false drops the violet square: the pin stands on its own in
- *   the brand colour with the pack in white, on a transparent background.
- *   That's the browser-tab version, where a solid square reads as a
- *   sticker and shrinks the mark to make room for its own padding.
+ * @param tile false drops the violet square: the pin stands on its own on
+ *   a transparent background. That's the browser-tab version, where a
+ *   solid square reads as a sticker and shrinks the mark to make room for
+ *   its own padding.
  */
 function markSvg(size, fill, tile) {
   const scale = (512 * fill) / PIN.height;
-  const pin = tile ? "#fff" : BRAND;
-  const pack = tile ? BRAND : "#fff";
-  // Tabs are light in some browsers and near-black in others. A thin white
-  // edge disappears on the first and keeps a violet drop from sinking
-  // into the second.
-  const edge = tile ? "" : ` stroke="#fff" stroke-width="14" stroke-linejoin="round"`;
+  // Always the white drop with the violet pack: the same way round as the
+  // mark in the nav bar, so the tab and the page show one logo.
+  const pin = "#fff";
+  const pack = BRAND;
+  // Without the tile, a violet edge gives the white drop its shape. Tabs
+  // are light in some browsers and near-black in others: on the dark ones
+  // the white carries it, and on the light ones the edge does.
+  const edge = tile ? "" : ` stroke="${BRAND}" stroke-width="20" stroke-linejoin="round"`;
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
        ${tile ? `<rect width="512" height="512" fill="${BRAND}"/>` : ""}
@@ -77,7 +79,7 @@ await write(512, 0.82, "public/icon-512.png");
 await write(180, 0.82, "src/app/apple-icon.png");
 // The browser tab: no tile, and the drop nearly the full height of the
 // canvas, since there's no square around it that needs a margin.
-await write(96, 0.94, "src/app/icon.png", { tile: false });
+await write(96, 0.9, "src/app/icon.png", { tile: false });
 // Android crops this to whatever shape the launcher uses, and the safe
 // zone is the middle 80% as a circle. A drop this tall is 1.22x as wide
 // across its diagonal, so 0.58 is what keeps the corners of it inside a
