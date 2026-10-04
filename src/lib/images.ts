@@ -1,5 +1,7 @@
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_BYTES = 6 * 1024 * 1024; // 6MB per photo
+// Under the 4MB request limit in next.config.js, with room for the rest of
+// the form, so a too-big photo gets this message rather than a crash.
+const MAX_BYTES = 3.5 * 1024 * 1024;
 
 export class ImageValidationError extends Error {}
 
@@ -16,10 +18,10 @@ export async function readImageFile(file: File | null): Promise<{
   if (!file || file.size === 0) return null;
 
   if (!ALLOWED_TYPES.has(file.type)) {
-    throw new ImageValidationError("Please upload a JPEG, PNG, or WEBP image.");
+    throw new ImageValidationError("That photo's format isn't supported. Try a JPEG or PNG.");
   }
   if (file.size > MAX_BYTES) {
-    throw new ImageValidationError("Image is too large (6MB max).");
+    throw new ImageValidationError("That photo is too big to upload. Try a smaller one, or a screenshot of it.");
   }
 
   const arrayBuffer = await file.arrayBuffer();

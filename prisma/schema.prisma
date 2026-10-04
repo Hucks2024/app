@@ -90,6 +90,17 @@ model User {
   appleSub  String? @unique
   googleSub String? @unique
 
+  // Wrong passwords in a row, and when that run locks the account until.
+  // Five wrong and it waits fifteen minutes, which makes guessing a
+  // password by trying thousands of them hopeless (see src/lib/lockout.ts).
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+
+  // When the password last changed. Any session started before it is
+  // refused (see getCurrentUser), so changing your password signs out
+  // every other phone and browser, including whoever guessed the old one.
+  passwordChangedAt DateTime?
+
   createdAt DateTime @default(now())
 
   verification      VerificationRequest?
@@ -200,6 +211,11 @@ model RunActivity {
   // 12 High Street". One field rather than a name/address pair, it's read
   // by humans, not parsed.
   afterSpot String?
+
+  // Set when the host (or an admin) calls it off. Kept rather than deleted
+  // so the people going see "cancelled" on their profile instead of the
+  // meetup silently vanishing; it comes off the map straight away.
+  cancelledAt DateTime?
 
   createdAt DateTime @default(now())
 

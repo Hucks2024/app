@@ -7,7 +7,9 @@ import Avatar from "@/components/Avatar";
 import JoinedBurst from "@/components/JoinedBurst";
 import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
+import Link from "next/link";
 import {
+  cancelActivityAction,
   joinActivityAction,
   leaveActivityAction,
   reportUserAction,
@@ -35,11 +37,11 @@ export default async function ActivityDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; reported?: string; joined?: string }>;
+  searchParams: Promise<{ error?: string; reported?: string; joined?: string; saved?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { error, reported, joined: justJoined } = await searchParams;
+  const { error, reported, joined: justJoined, saved } = await searchParams;
   const prisma = await getPrisma();
 
   const activity = await prisma.runActivity.findUnique({
@@ -64,10 +66,14 @@ export default async function ActivityDetailPage({
   const isHost = activity.hostId === user.id;
   const joined = activity.participations.filter((p) => p.status === "JOINED");
   const waitlist = activity.participations.filter((p) => p.status === "WAITLIST");
-  const happened = activity.startsAt <= new Date();
+  const cancelled = activity.cancelledAt != null;
+  const happened = !cancelled && activity.startsAt <= new Date();
   // Whether this viewer can hand out thumbs here: they were going, and
   // it's started.
   const wasThere = happened && myParticipation?.status === "JOINED";
+  // The host, or an admin tidying up: they can change it or call it off
+  // until it starts.
+  const canManage = (isHost || user.role === "ADMIN") && !cancelled && !happened;
 
   const thumbs = await thumbsFor(prisma, [activity.hostId, ...joined.map((p) => p.userId)]);
   const givenByMe = new Set(
@@ -91,6 +97,11 @@ export default async function ActivityDetailPage({
         </p>
       )}
       {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
+      {saved && (
+        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
+          Saved. Everyone going sees the new details.
+        </p>
+      )}
       {reported && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
           Thanks for telling us. A moderator will look at it, and three red flags from different
@@ -152,7 +163,11 @@ export default async function ActivityDetailPage({
         </div>
 
         <div className="mt-6">
-          {happened ? (
+          {cancelled ? (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              ❌ This meetup has been cancelled.
+            </p>
+          ) : happened ? (
             <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
               {wasThere
                 ? "This one's happened. Give a 👍 to the people you met, below."
@@ -160,6 +175,8 @@ export default async function ActivityDetailPage({
             </p>
           ) : isHost ? (
             <p className="text-sm text-slate-500">You&apos;re hosting this one.</p>
+          ) : activity.host.accountStatus !== "ACTIVE" ? (
+            <p className="text-sm text-slate-500">This host has been removed.</p>
           ) : !myParticipation ? (
             <form action={joinActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
@@ -186,6 +203,30 @@ export default async function ActivityDetailPage({
                   Leave waitlist
                 </SubmitButton>
               </form>
+            </div>
+          )}
+
+          {canManage && (
+            <div className="mt-5 flex flex-wrap items-start gap-3 border-t border-slate-100 pt-4">
+              <Link href={`/activities/${activity.id}/edit`} className="btn-secondary !py-1.5 text-sm">
+                ✏️ Edit
+              </Link>
+              {/* Two taps: calling a meetup off can't be undone. */}
+              <details>
+                <summary className="btn-secondary !py-1.5 text-sm cursor-pointer list-none !text-red-700">
+                  Cancel meetup
+                </summary>
+                <form action={cancelActivityAction} className="mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3">
+                  <input type="hidden" name="activityId" value={activity.id} />
+                  <p className="text-xs text-slate-600 mb-2">
+                    It comes off the map, and everyone going sees it&apos;s cancelled. This
+                    can&apos;t be undone.
+                  </p>
+                  <SubmitButton className="btn-danger w-full !py-1.5 text-sm" pending="Cancelling…">
+                    Yes, cancel it
+                  </SubmitButton>
+                </form>
+              </details>
             </div>
           )}
         </div>

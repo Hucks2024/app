@@ -8,17 +8,23 @@ import { useEffect, useState } from "react";
  * ("2026-10-04T07:00"). Read on the server, that's UTC, so a 7am run in a
  * London summer used to be saved as 8am. The browser knows the zone, so it
  * does the converting, and the hidden field carries the answer. */
-export default function WhenInput() {
+/** A moment as the picker writes it, in this device's own zone. */
+function toPicker(d: Date): string {
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+export default function WhenInput({ initialIso }: { initialIso?: string }) {
   const [local, setLocal] = useState("");
   const [min, setMin] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Now, in the picker's own format, so past times are greyed out. Set
-    // after mount: the server's "now" is in the wrong zone.
-    const d = new Date();
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    setMin(d.toISOString().slice(0, 16));
-  }, []);
+    // Both set after mount, because both depend on this device's zone,
+    // which the server can't know: now (so past times are greyed out),
+    // and, when editing, the meetup's existing time.
+    setMin(toPicker(new Date()));
+    if (initialIso) setLocal(toPicker(new Date(initialIso)));
+  }, [initialIso]);
 
   const utc = local ? new Date(local).toISOString() : "";
 

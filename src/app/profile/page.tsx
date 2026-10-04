@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { hasOwnPassword, requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ensureMembership, formatMemberNumber } from "@/lib/invite";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
-import { updateProfileAction } from "@/app/profile/actions";
+import { deleteAccountAction, updateProfileAction } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
 import CopyableField from "@/components/CopyableField";
 import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
+import ChangePasswordForm from "@/components/ChangePasswordForm";
+import PhotoInput from "@/components/PhotoInput";
 
 export const metadata = { title: "Profile" };
 
@@ -32,13 +34,22 @@ export default async function ProfilePage({
       where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: now } } },
       orderBy: { activity: { startsAt: "asc" } },
       take: 5,
-      select: { activity: { select: { id: true, title: true, startsAt: true, category: true } } },
+      select: {
+        activity: { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } },
+      },
     }),
     prisma.participation.findMany({
-      where: { userId: user.id, status: "JOINED", activity: { startsAt: { lte: now } } },
+      // Called-off ones didn't happen, so they're not somewhere you've been.
+      where: {
+        userId: user.id,
+        status: "JOINED",
+        activity: { startsAt: { lte: now }, cancelledAt: null },
+      },
       orderBy: { activity: { startsAt: "desc" } },
       take: 5,
-      select: { activity: { select: { id: true, title: true, startsAt: true, category: true } } },
+      select: {
+        activity: { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } },
+      },
     }),
   ]);
 
@@ -157,24 +168,47 @@ export default async function ProfilePage({
           <label className="label" htmlFor="profilePhoto">
             Profile photo
           </label>
-          <input
-            className="input"
-            id="profilePhoto"
-            name="profilePhoto"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-          />
+          <PhotoInput />
         </div>
         <SubmitButton className="btn-primary w-full" pending="Saving…">
           Save
         </SubmitButton>
       </form>
+
+      <div className="card mt-4">
+        <p className="font-semibold mb-1">
+          {hasOwnPassword(user) ? "Change your password" : "Set a password"}
+        </p>
+        <p className="text-sm text-slate-600 mb-4">
+          {hasOwnPassword(user)
+            ? "Changing it signs you out everywhere else."
+            : "So you can also sign in with your email."}
+        </p>
+        <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
+      </div>
+
+      {/* Folded away and two taps deep: it's for good, and it should take
+          meaning to do. */}
+      <details className="card mt-4">
+        <summary className="cursor-pointer select-none text-sm font-medium text-red-700">
+          Delete my account
+        </summary>
+        <p className="text-sm text-slate-600 mt-3">
+          This deletes your account for good: your profile, your thumbs up, your places on
+          meetups, and any meetups you&apos;re hosting. It can&apos;t be undone.
+        </p>
+        <form action={deleteAccountAction} className="mt-3">
+          <SubmitButton className="btn-danger w-full" pending="Deleting…">
+            Yes, delete my account for good
+          </SubmitButton>
+        </form>
+      </details>
     </div>
   );
 }
 
 type MeetupRow = {
-  activity: { id: string; title: string; startsAt: Date; category: string };
+  activity: { id: string; title: string; startsAt: Date; category: string; cancelledAt: Date | null };
 };
 
 function MeetupLinks({
@@ -205,6 +239,7 @@ function MeetupLinks({
                 <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>
                 <span className="block text-xs text-slate-500">
                   <LocalTime iso={a.startsAt.toISOString()} style="short" />
+                  {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">Cancelled</span>}
                 </span>
               </span>
               <span className="text-slate-400" aria-hidden="true">

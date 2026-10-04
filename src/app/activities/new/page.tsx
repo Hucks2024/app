@@ -2,11 +2,8 @@ import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified } from "@/lib/trust";
-import { CATEGORIES } from "@/lib/categories";
-import { createActivityAction } from "@/app/activities/actions";
 import LocalTime from "@/components/LocalTime";
-import SubmitButton from "@/components/SubmitButton";
-import WhenInput from "@/components/WhenInput";
+import MeetupForm from "@/components/MeetupForm";
 
 export const metadata = { title: "Post a meetup" };
 
@@ -23,7 +20,11 @@ export default async function NewActivityPage({
   // say that's the one that'll do it.
   if (!(await refreshVerified(prisma, user)).verified) {
     const next = await prisma.participation.findFirst({
-      where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: new Date() } } },
+      where: {
+        userId: user.id,
+        status: "JOINED",
+        activity: { startsAt: { gt: new Date() }, cancelledAt: null },
+      },
       orderBy: { activity: { startsAt: "asc" } },
       select: { activity: { select: { id: true, title: true, startsAt: true } } },
     });
@@ -78,154 +79,7 @@ export default async function NewActivityPage({
         </p>
       )}
 
-      {/* Only three fields are actually required, so only three are shown.
-          Everything else the form supports (distance, pace, cap, notes,
-          Strava link) lives behind the expander below, folded away by
-          default, an empty value for any of them is perfectly valid. */}
-      <form action={createActivityAction} className="card space-y-5">
-        <div>
-          <label className="label" htmlFor="category">
-            1. What kind of meetup?
-          </label>
-          <select className="input" id="category" name="category" defaultValue="RUN">
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.emoji}  {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="label" htmlFor="title">
-            2. What&apos;s it called?
-          </label>
-          <input
-            className="input"
-            id="title"
-            name="title"
-            placeholder="Saturday morning 10K"
-            required
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="location">
-            3. Where do you meet?
-          </label>
-          <input
-            className="input"
-            id="location"
-            name="location"
-            placeholder="Riverside Park, main entrance"
-            required
-          />
-          <p className="text-xs text-slate-500 mt-1">
-            A landmark is plenty, we&apos;ll put it on the map for you.
-          </p>
-        </div>
-        <div>
-          <label className="label" htmlFor="startsAt">
-            4. When?
-          </label>
-          <WhenInput />
-        </div>
-
-        <details className="border-t border-slate-200 pt-4">
-          <summary className="cursor-pointer select-none text-sm font-medium text-brand-700">
-            Add more details (all optional)
-          </summary>
-
-          <div className="space-y-4 pt-4">
-            <div>
-              <label className="label" htmlFor="afterSpot">
-                Going somewhere after?
-              </label>
-              <input
-                className="input"
-                id="afterSpot"
-                name="afterSpot"
-                placeholder="The Crown, 12 High Street"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                The pub, the café, wherever. Name and rough location is plenty, it shows on the
-                meetup so people can join just for that bit.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label" htmlFor="distanceKm">
-                  Distance (km)
-                </label>
-                <input
-                  className="input"
-                  id="distanceKm"
-                  name="distanceKm"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  placeholder="10"
-                />
-              </div>
-              <div>
-                <label className="label" htmlFor="pace">
-                  Pace
-                </label>
-                <input className="input" id="pace" name="pace" placeholder="6:00 / km" />
-              </div>
-            </div>
-            <p className="text-xs text-slate-500">
-              Distance and pace only matter if you&apos;re moving, skip them for a coffee. No idea
-              on pace? Leave it blank, or write what it feels like. Every pace is a real pace.
-            </p>
-
-            <div>
-              <label className="label" htmlFor="maxParticipants">
-                Max people
-              </label>
-              <input
-                className="input"
-                id="maxParticipants"
-                name="maxParticipants"
-                type="number"
-                min="1"
-                placeholder="Leave blank for no limit"
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="description">
-                Anything else?
-              </label>
-              <textarea
-                className="input"
-                id="description"
-                name="description"
-                rows={3}
-                placeholder="Route, what to bring, coffee after…"
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="stravaUrl">
-                Strava route
-              </label>
-              <input
-                className="input"
-                id="stravaUrl"
-                name="stravaUrl"
-                type="url"
-                placeholder="https://www.strava.com/routes/..."
-              />
-              <p className="text-xs text-amber-700 mt-1">
-                ⚠️ Set the route to <strong>Public</strong> in Strava, a private link won&apos;t
-                open for anyone else.
-              </p>
-            </div>
-          </div>
-        </details>
-
-        <SubmitButton className="btn-primary w-full !py-3" pending="Putting it on the map…">
-          Post meetup
-        </SubmitButton>
-      </form>
+      <MeetupForm />
     </div>
   );
 }

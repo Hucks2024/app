@@ -228,6 +228,44 @@ function LocateControl() {
   );
 }
 
+// Where the map pictures come from. OpenStreetMap's own servers first:
+// no key, no account. (CartoDB's "Voyager" tiles were tried for a more
+// colourful look and started stamping "API KEY REQUIRED" across every
+// tile.) If they won't serve this visitor (an outage, or rate limiting),
+// the German OpenStreetMap community's mirror of the same map takes over,
+// so a bad day at one tile server is never a grey box where the map was.
+const TILE_SOURCES = [
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
+];
+
+function Tiles() {
+  const [source, setSource] = useState(0);
+  const loaded = useRef(0);
+  const failed = useRef(0);
+  return (
+    <TileLayer
+      key={source}
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url={TILE_SOURCES[source]}
+      eventHandlers={{
+        tileload: () => {
+          loaded.current += 1;
+        },
+        tileerror: () => {
+          failed.current += 1;
+          // Only when nothing at all has come through: a few failed tiles
+          // on a working server are just a patchy connection.
+          if (loaded.current === 0 && failed.current >= 4 && source < TILE_SOURCES.length - 1) {
+            failed.current = 0;
+            setSource(source + 1);
+          }
+        },
+      }}
+    />
+  );
+}
+
 export type MapActivity = {
   id: string;
   title: string;
@@ -317,15 +355,7 @@ export default function ActivitiesMap({
         scrollWheelZoom
         className="h-full w-full"
       >
-        <TileLayer
-          // CartoDB's "Voyager" tiles (used briefly here for a more
-          // colorful look) started stamping "API KEY REQUIRED" across
-          // every tile, their free/keyless tier apparently no longer
-          // covers this. Plain OpenStreetMap tiles genuinely require no
-          // key and no account, so that's what stays.
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <Tiles />
         <LocateControl />
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>

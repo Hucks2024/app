@@ -89,5 +89,6 @@ CREATE UNIQUE INDEX "VerificationRequest_userId_key" ON "VerificationRequest"("u
 -- CreateIndex
 CREATE UNIQUE INDEX "Participation_activityId_userId_key" ON "Participation"("activityId", "userId");
 
--- Create the admin account (login: admin@doyoulikepizza.com / CZqBol4mwDaL)
+-- Create the first admin account. Its starting password was handed over
+-- separately, never written here; change it from the profile page.
 INSERT INTO "User" ("id", "name", "email", "passwordHash", "role", "verificationStatus") VALUES ('aca557e3-c605-4faf-98f9-676962938c9a', 'Admin', 'admin@doyoulikepizza.com', '$2a$12$Z.mUdZwyq1O8e.SST7HPquoBZVsT81YO/fbHnEvRGUFRMJKrMxmYK', 'ADMIN', 'APPROVED');

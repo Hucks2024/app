@@ -15,10 +15,15 @@ function sixDigits(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-/** Issues a fresh code and emails it. Replaces any code already out. */
+/** Issues a fresh code and emails it. Replaces any code already out.
+ *
+ * The same code does two jobs: confirming the address at signup, and
+ * proving it's you when you've forgotten your password. Either way it
+ * shows you can read that inbox, so either use confirms the address. */
 export async function sendVerificationCode(
   prisma: PrismaClient,
-  user: { id: string; email: string; name: string }
+  user: { id: string; email: string; name: string },
+  purpose: "verify" | "reset" = "verify"
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await prisma.emailVerification.findUnique({ where: { userId: user.id } });
   if (existing) {
@@ -38,14 +43,17 @@ export async function sendVerificationCode(
     text: [
       `Hi ${user.name},`,
       ``,
-      `Your ${SITE.name} verification code is:`,
+      purpose === "reset"
+        ? `Here's your code to choose a new ${SITE.name} password:`
+        : `Your ${SITE.name} verification code is:`,
       ``,
       `    ${code}`,
       ``,
       `It expires in ${CODE_TTL_MINUTES} minutes.`,
       ``,
-      `If you didn't try to join ${SITE.name}, you can ignore this, nobody can use`,
-      `the code but you.`,
+      purpose === "reset"
+        ? `If you didn't ask to reset your password, ignore this. Your password stays as it is.`
+        : `If you didn't try to join ${SITE.name}, you can ignore this, nobody can use\nthe code but you.`,
     ].join("\n"),
   });
 

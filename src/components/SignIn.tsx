@@ -1,7 +1,13 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
-import { emailAuthAction, lookupEmailAction, type AuthState } from "@/app/(auth)/actions";
+import { startTransition, useActionState, useRef, useState, useTransition } from "react";
+import {
+  emailAuthAction,
+  finishResetAction,
+  lookupEmailAction,
+  startResetAction,
+  type AuthState,
+} from "@/app/(auth)/actions";
 
 // The buttons under "welcome to packmates": one big tap to get in.
 //
@@ -10,7 +16,7 @@ import { emailAuthAction, lookupEmailAction, type AuthState } from "@/app/(auth)
 // the address first, then whatever that address needs, a password if we
 // know you, a name and a new password if we don't.
 
-type Step = "start" | "email" | "password" | "create";
+type Step = "start" | "email" | "password" | "create" | "reset" | "no-reset";
 
 function AppleMark() {
   return (
@@ -35,12 +41,28 @@ function Spinner() {
   return <span className="spinner" aria-hidden="true" />;
 }
 
+/** Submits a form through useActionState by hand rather than through the
+ * form's action prop. Same request, but React doesn't clear the form
+ * afterwards, so a "password too short" doesn't also throw away the name
+ * you'd just typed. */
+function submitWith(dispatch: (data: FormData) => void) {
+  return (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => dispatch(data));
+  };
+}
+
 export default function SignIn({
   providers,
+  canEmail,
   startWithEmail = false,
   error: outsideError,
 }: {
   providers: { apple: boolean; google: boolean };
+  // Whether this site can send email, which is what decides how a
+  // forgotten password gets reset.
+  canEmail: boolean;
   // Straight to the email box, for the /login page when email is the
   // only way in anyway: one fewer tap to get to the thing you came for.
   startWithEmail?: boolean;
@@ -56,12 +78,39 @@ export default function SignIn({
   const [state, formAction, submitting] = useActionState<AuthState, FormData>(emailAuthAction, {
     error: null,
   });
+  const [resetState, resetAction, resetting] = useActionState<AuthState, FormData>(
+    finishResetAction,
+    { error: null }
+  );
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [sendingReset, startSendingReset] = useTransition();
   const emailRef = useRef<HTMLInputElement>(null);
 
   // The error from a provider bounce (?error=…) belongs to the first
   // screen; once you've moved on it's old news.
   const shownError =
-    step === "start" ? outsideError : step === "email" ? lookupError : state.error;
+    step === "start"
+      ? outsideError
+      : step === "email"
+        ? lookupError
+        : step === "reset"
+          ? resetState.error
+          : step === "no-reset"
+            ? null
+            : resetError ?? state.error;
+
+  function forgot() {
+    setResetError(null);
+    if (!canEmail) {
+      setStep("no-reset");
+      return;
+    }
+    startSendingReset(async () => {
+      const result = await startResetAction(email);
+      if (result.ok) setStep("reset");
+      else setResetError(result.error);
+    });
+  }
 
   function lookUp(e: React.FormEvent) {
     e.preventDefault();
@@ -128,14 +177,81 @@ export default function SignIn({
     <button
       type="button"
       onClick={() => {
-        setStep(step === "email" ? "start" : "email");
+        setStep(step === "email" ? "start" : step === "reset" || step === "no-reset" ? "password" : "email");
         setLookupError(null);
+        setResetError(null);
       }}
       className="text-sm font-medium text-white/85 underline underline-offset-2"
     >
-      {step === "email" ? "← Other ways in" : "← Use a different email"}
+      {step === "email"
+        ? "← Other ways in"
+        : step === "reset" || step === "no-reset"
+          ? "← Back to signing in"
+          : "← Use a different email"}
     </button>
   );
+
+  if (step === "no-reset") {
+    return (
+      <div className="space-y-3 text-center text-white">
+        <p className="text-lg font-bold">Forgotten it? 🔑</p>
+        <p className="rounded-2xl bg-white/15 px-4 py-3 text-sm">
+          Ask a packmates admin to reset it. They&apos;ll give you a temporary password to sign in
+          with, and you can change it on your profile straight after.
+        </p>
+        <div className="pt-1">{back}</div>
+      </div>
+    );
+  }
+
+  if (step === "reset") {
+    return (
+      <form onSubmit={submitWith(resetAction)} className="space-y-3">
+        <input type="hidden" name="email" value={email} />
+        <input type="email" value={email} autoComplete="username" readOnly hidden />
+        <p className="text-center text-white">
+          <span className="block text-lg font-bold">Check your email 📬</span>
+          <span className="text-sm text-white/85">
+            We sent a code to <strong className="text-white">{email}</strong>
+          </span>
+        </p>
+        {errorBox}
+        <label htmlFor="reset-code" className="sr-only">
+          The six-digit code
+        </label>
+        <input
+          id="reset-code"
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9 ]*"
+          maxLength={7}
+          required
+          autoFocus
+          placeholder="Six-digit code"
+          className="pill-input text-center tracking-[0.3em]"
+        />
+        <label htmlFor="reset-password" className="sr-only">
+          New password
+        </label>
+        <input
+          id="reset-password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          placeholder="New password (8+ characters)"
+          className="pill-input"
+        />
+        <button type="submit" disabled={resetting} className="pill-btn pill-black">
+          {resetting && <Spinner />}
+          Save and sign in
+        </button>
+        <div className="text-center pt-1">{back}</div>
+      </form>
+    );
+  }
 
   if (step === "email") {
     return (
@@ -170,7 +286,7 @@ export default function SignIn({
 
   const creating = step === "create";
   return (
-    <form action={formAction} className="space-y-3">
+    <form onSubmit={submitWith(formAction)} className="space-y-3">
       <input type="hidden" name="mode" value={creating ? "signup" : "login"} />
       <input type="hidden" name="email" value={email} />
       {/* Lets the browser's password manager file the new password under
@@ -209,6 +325,16 @@ export default function SignIn({
 
       {creating && (
         <>
+          {/* For bots only: off screen, out of the tab order, ignored by
+              password managers. A person never fills it in. */}
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute -left-[9999px] h-px w-px opacity-0"
+          />
           <label htmlFor="signin-name" className="sr-only">
             Your first name
           </label>
@@ -243,7 +369,19 @@ export default function SignIn({
         {submitting && <Spinner />}
         {creating ? "Create my account" : "Sign in"}
       </button>
-      <div className="text-center pt-1">{back}</div>
+      <div className="flex items-center justify-center gap-4 pt-1">
+        {back}
+        {!creating && (
+          <button
+            type="button"
+            onClick={forgot}
+            disabled={sendingReset}
+            className="text-sm font-medium text-white/85 underline underline-offset-2"
+          >
+            {sendingReset ? "Sending…" : "Forgot your password?"}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

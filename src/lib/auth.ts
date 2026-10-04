@@ -51,26 +51,49 @@ export async function destroySession() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function getSessionUserId(): Promise<string | null> {
+async function getSession(): Promise<{ userId: string; issuedAt: number } | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    return (payload.userId as string) ?? null;
+    if (typeof payload.userId !== "string") return null;
+    return { userId: payload.userId, issuedAt: (payload.iat ?? 0) * 1000 };
   } catch {
     return null;
   }
 }
 
+export async function getSessionUserId(): Promise<string | null> {
+  return (await getSession())?.userId ?? null;
+}
+
+/** Now, to the whole second, for passwordChangedAt. A session's issue time
+ * is only kept to the second, so this is what lets the session started
+ * straight after a change count as newer than it. */
+export function passwordChangeStamp(): Date {
+  return new Date(Math.floor(Date.now() / 1000) * 1000);
+}
+
+/** Whether this account has a password its owner chose, as opposed to the
+ * unknowable one an Apple or Google signup is given. */
+export function hasOwnPassword(
+  user: Pick<User, "appleSub" | "googleSub" | "passwordChangedAt">
+): boolean {
+  return !(user.appleSub || user.googleSub) || user.passwordChangedAt != null;
+}
+
 /** Returns the logged-in user (full record) or null. Does not redirect. */
 export async function getCurrentUser(): Promise<User | null> {
-  const userId = await getSessionUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) return null;
   const prisma = await getPrisma();
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
   // Suspended or banned: as good as signed out, everywhere, at once.
   if (!user || user.accountStatus !== "ACTIVE") return null;
+  // Signed in before the password last changed: that's exactly the
+  // session a password change is meant to end.
+  if (user.passwordChangedAt && session.issuedAt < user.passwordChangedAt.getTime()) return null;
   return user;
 }
 

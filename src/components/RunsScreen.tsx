@@ -2,7 +2,7 @@ import { subDays } from "date-fns";
 import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
-import { hostIsActive } from "@/lib/moderation";
+import { liveMeetup } from "@/lib/meetups";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
 
@@ -14,7 +14,7 @@ export default async function RunsScreen({ user }: { user: User }) {
   const { verified, justVerified } = await refreshVerified(prisma, user);
 
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() }, ...hostIsActive },
+    where: { startsAt: { gte: new Date() }, ...liveMeetup },
     orderBy: { startsAt: "asc" },
     include: {
       host: { select: { id: true, name: true } },
@@ -96,6 +96,7 @@ async function noticeFor(user: User, verified: boolean, justVerified: boolean) {
       status: "JOINED",
       activity: {
         startsAt: { gte: subDays(now, 7), lte: now },
+        cancelledAt: null,
         thumbsUps: { none: { fromId: user.id } },
       },
     },

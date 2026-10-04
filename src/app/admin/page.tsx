@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
+import AdminResetPassword from "@/components/AdminResetPassword";
 import { formatMemberNumber } from "@/lib/invite";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
@@ -330,6 +331,9 @@ export default async function AdminPage({
                             </button>
                           </form>
                         </details>
+                      )}
+                      {u.id !== me.id && u.accountStatus === "ACTIVE" && (
+                        <AdminResetPassword userId={u.id} name={u.name} />
                       )}
                     </div>
                   </td>

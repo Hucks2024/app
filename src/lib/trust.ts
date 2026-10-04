@@ -37,6 +37,7 @@ export async function refreshVerified(
       status: "JOINED",
       activity: {
         startsAt: { lte: new Date() },
+        cancelledAt: null,
         hostId: { not: user.id },
         host: {
           accountStatus: "ACTIVE",

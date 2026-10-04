@@ -1,5 +1,5 @@
 import { getPrisma } from "@/lib/db";
-import { hostIsActive } from "@/lib/moderation";
+import { liveMeetup } from "@/lib/meetups";
 import MeetupBoard from "@/components/MeetupBoard";
 import Welcome from "@/components/Welcome";
 import type { MapActivity } from "@/components/ActivitiesMap";
@@ -35,7 +35,7 @@ const STEPS = [
 export default async function Landing() {
   const prisma = await getPrisma();
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() }, ...hostIsActive },
+    where: { startsAt: { gte: new Date() }, ...liveMeetup },
     orderBy: { startsAt: "asc" },
   });
 

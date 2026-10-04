@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/db";
 import { enabledProviders } from "@/lib/oauth";
-import { hostIsActive } from "@/lib/moderation";
+import { liveMeetup } from "@/lib/meetups";
+import { emailVerificationEnabled } from "@/lib/email";
 import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
 
@@ -9,7 +10,7 @@ import SignIn from "@/components/SignIn";
  * number the map underneath shows, so the two can't disagree. */
 export async function meetupsComingUp(): Promise<number> {
   const prisma = await getPrisma();
-  return prisma.runActivity.count({ where: { startsAt: { gte: new Date() }, ...hostIsActive } });
+  return prisma.runActivity.count({ where: { startsAt: { gte: new Date() }, ...liveMeetup } });
 }
 
 /** The front door: who we are, what this is, and one big button.
@@ -56,7 +57,12 @@ export default async function Welcome({
       )}
 
       <div className="mx-auto mt-7 max-w-sm text-left">
-        <SignIn providers={enabledProviders()} startWithEmail={startWithEmail} error={error} />
+        <SignIn
+          providers={enabledProviders()}
+          canEmail={emailVerificationEnabled()}
+          startWithEmail={startWithEmail}
+          error={error}
+        />
       </div>
 
       <p className="mt-4 text-xs text-white/75">Free for everyone. No invite needed.</p>

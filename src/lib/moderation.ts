@@ -31,7 +31,9 @@ export async function redFlagCount(prisma: PrismaClient, userId: string): Promis
   // Every meetup these flags were raised at, with which of the two people
   // were going to it.
   const activities = await prisma.runActivity.findMany({
-    where: { id: { in: [...new Set(flags.map((f) => f.activityId!))] } },
+    // A meetup that was called off never happened, so it can't be where
+    // anything happened.
+    where: { id: { in: [...new Set(flags.map((f) => f.activityId!))] }, cancelledAt: null },
     select: {
       id: true,
       startsAt: true,
@@ -68,7 +70,8 @@ export async function banIfFlagged(prisma: PrismaClient, userId: string): Promis
 
   // Off everything still to come, so nobody turns up to meet them, and
   // whoever was first on each waitlist gets their place. Meetups they
-  // were hosting drop off the map on their own (see hostIsActive).
+  // were hosting drop off the map on their own (see liveMeetup in
+  // src/lib/meetups.ts).
   const upcoming = await prisma.participation.findMany({
     where: {
       userId,
@@ -101,8 +104,3 @@ export async function promoteWaitlist(prisma: PrismaClient, activityId: string):
     await prisma.participation.update({ where: { id: next.id }, data: { status: "JOINED" } });
   }
 }
-
-/** For meetup queries: only meetups whose host is still allowed in. A
- * banned or suspended host's meetups vanish from the map and the counts,
- * and come back if an admin lets them back in. */
-export const hostIsActive = { host: { accountStatus: "ACTIVE" } } as const;

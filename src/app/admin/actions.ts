@@ -1,9 +1,10 @@
 "use server";
 
+import { randomInt } from "crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
 import { processXrpPayments } from "@/lib/xrp";
 
 export async function approveVerificationAction(formData: FormData) {
@@ -148,4 +149,35 @@ export async function setAdminAction(formData: FormData) {
       : { role: "USER" },
   });
   revalidatePath("/admin");
+}
+
+export type ResetState = { password: string | null; error: string | null };
+
+// No 0/O/1/l/I: read off a screen and typed into a phone by somebody else.
+const TEMP_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+
+/** A temporary password for a member who's forgotten theirs, shown once
+ * to the admin to pass on. Signs the member out everywhere and clears any
+ * lock; they sign in with it and change it on their profile. Only needed
+ * while email isn't set up: with it, members reset their own. */
+export async function resetPasswordAction(_prev: ResetState, formData: FormData): Promise<ResetState> {
+  const me = await requireAdmin();
+  const userId = String(formData.get("userId"));
+  if (userId === me.id) {
+    return { password: null, error: "Change your own on your profile." };
+  }
+  const temp = Array.from({ length: 10 }, () => TEMP_ALPHABET[randomInt(TEMP_ALPHABET.length)])
+    .join("")
+    .replace(/(.{5})/, "$1-");
+  const prisma = await getPrisma();
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash: await hashPassword(temp),
+      passwordChangedAt: passwordChangeStamp(),
+      failedLogins: 0,
+      lockedUntil: null,
+    },
+  });
+  return { password: temp, error: null };
 }
