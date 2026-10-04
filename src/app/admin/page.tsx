@@ -13,6 +13,7 @@ import {
   unbanUserAction,
   scanXrpPaymentsAction,
   setVerifiedAction,
+  setAdminAction,
 } from "@/app/admin/actions";
 
 export default async function AdminPage({
@@ -20,7 +21,7 @@ export default async function AdminPage({
 }: {
   searchParams: Promise<{ xrpScan?: string }>;
 }) {
-  await requireAdmin();
+  const me = await requireAdmin();
   const { xrpScan } = await searchParams;
   const prisma = await getPrisma();
 
@@ -242,6 +243,7 @@ export default async function AdminPage({
                   <td className="py-2 pr-4 flex items-center gap-2">
                     <Avatar userId={u.id} hasPhoto={!!u.profilePhoto} size={6} />
                     {u.name}
+                    {u.role === "ADMIN" && <span className="badge-green">Admin</span>}
                   </td>
                   <td className="py-2 pr-4">{u.email}</td>
                   <td className="py-2 pr-4">{thumbs.get(u.id) ?? 0}</td>
@@ -283,22 +285,53 @@ export default async function AdminPage({
                     )}
                   </td>
                   <td className="py-2 pr-4">
-                    {u.role !== "ADMIN" &&
-                      (u.accountStatus !== "ACTIVE" ? (
-                        <form action={unbanUserAction}>
-                          <input type="hidden" name="userId" value={u.id} />
-                          <button type="submit" className="btn-secondary !py-1 !text-xs">
-                            {u.accountStatus === "BANNED" ? "Lift ban" : "Unsuspend"}
-                          </button>
-                        </form>
-                      ) : (
-                        <form action={banUserAction}>
-                          <input type="hidden" name="userId" value={u.id} />
-                          <button type="submit" className="btn-danger !py-1 !text-xs">
-                            Suspend
-                          </button>
-                        </form>
-                      ))}
+                    <div className="flex items-start gap-2">
+                      {u.role !== "ADMIN" &&
+                        (u.accountStatus !== "ACTIVE" ? (
+                          <form action={unbanUserAction}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <button type="submit" className="btn-secondary !py-1 !text-xs">
+                              {u.accountStatus === "BANNED" ? "Lift ban" : "Unsuspend"}
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={banUserAction}>
+                            <input type="hidden" name="userId" value={u.id} />
+                            <button type="submit" className="btn-danger !py-1 !text-xs">
+                              Suspend
+                            </button>
+                          </form>
+                        ))}
+                      {u.id !== me.id && u.accountStatus === "ACTIVE" && (
+                        // Two taps on purpose: the first only opens the
+                        // confirm, so a slip on a phone-width table can't
+                        // hand somebody the keys. It opens in place rather
+                        // than floating, because the table scrolls sideways
+                        // and would clip a floating box. Keyed on the role
+                        // so it closes once the change lands, instead of
+                        // staying open offering to undo it.
+                        <details key={u.role}>
+                          <summary className="btn-secondary !py-1 !text-xs cursor-pointer list-none whitespace-nowrap">
+                            {u.role === "ADMIN" ? "Remove admin" : "Make admin"}
+                          </summary>
+                          <form
+                            action={setAdminAction}
+                            className="mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                          >
+                            <input type="hidden" name="userId" value={u.id} />
+                            <input type="hidden" name="admin" value={u.role === "ADMIN" ? "0" : "1"} />
+                            <p className="text-xs text-slate-600 mb-2">
+                              {u.role === "ADMIN"
+                                ? `${u.name} goes back to being a normal member.`
+                                : `${u.name} gets everything you can do here, including this page.`}
+                            </p>
+                            <button type="submit" className="btn-primary w-full !py-1.5 !text-xs">
+                              {u.role === "ADMIN" ? `Yes, remove ${u.name}` : `Yes, make ${u.name} an admin`}
+                            </button>
+                          </form>
+                        </details>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

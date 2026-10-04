@@ -38,7 +38,7 @@ export default async function Welcome({
         welcome to packmates
       </h1>
       <p className="font-wordmark mt-1 text-lg font-semibold text-white/90">
-        a backpacker&apos;s guide to the galaxy
+        your guide to the galaxy
       </p>
       <p className="mt-3 text-[15px] leading-snug text-white/85">
         Real meetups with real people. Find one on the map, turn up, make friends.

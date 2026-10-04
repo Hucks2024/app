@@ -128,3 +128,24 @@ export async function setVerifiedAction(formData: FormData) {
   });
   revalidatePath("/admin");
 }
+
+/** Makes a member an admin, or takes it away, from the members table.
+ *
+ * Admins can do everything here, can't be red-flagged out and can always
+ * post, which is why it's a deliberate two-tap action on the page. You
+ * can't change your own role: that's how an app ends up with no admins. */
+export async function setAdminAction(formData: FormData) {
+  const me = await requireAdmin();
+  const userId = String(formData.get("userId"));
+  const makeAdmin = formData.get("admin") === "1";
+  if (userId === me.id) return;
+
+  const prisma = await getPrisma();
+  await prisma.user.updateMany({
+    where: { id: userId, ...(makeAdmin ? { accountStatus: "ACTIVE" } : {}) },
+    data: makeAdmin
+      ? { role: "ADMIN", memberVerifiedAt: new Date() }
+      : { role: "USER" },
+  });
+  revalidatePath("/admin");
+}

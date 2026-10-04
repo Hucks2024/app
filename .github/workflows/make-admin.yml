@@ -1,0 +1,30 @@
+name: Make a member an admin
+
+# Manual-only. Actions tab -> "Make a member an admin" -> "Run workflow",
+# enter their email. Safe to re-run.
+#
+# The normal way is the "Make admin" button on /admin. This is for when
+# nobody can sign in as an admin to press it. Bear in mind this repository
+# is public: the email typed here shows in the run's log for anyone to see.
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email address of the member to make an admin"
+        required: true
+        type: string
+
+jobs:
+  admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/make-admin.mjs
+        env:
+          MEMBER_EMAIL: ${{ inputs.email }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
