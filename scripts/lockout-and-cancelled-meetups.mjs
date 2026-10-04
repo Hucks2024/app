@@ -1,4 +1,5 @@
-// One-time schema change for login lockout and cancelled meetups (see
+// One-time schema change for login lockout, sign-out-everywhere on a
+// password change, and cancelled meetups (see
 // prisma/migrations/20261004140000_lockout_and_cancelled_meetups). Turso
 // speaks HTTP rather than the wire protocol prisma migrate deploy needs,
 // so the change is applied here instead. Checks before every step, so
@@ -27,6 +28,7 @@ async function addColumn(table, column, definition) {
 
 await addColumn("User", "failedLogins", "INTEGER NOT NULL DEFAULT 0");
 await addColumn("User", "lockedUntil", "DATETIME");
+await addColumn("User", "passwordChangedAt", "DATETIME");
 await addColumn("RunActivity", "cancelledAt", "DATETIME");
 
 console.log("\nDone.");
