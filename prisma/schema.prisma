@@ -37,7 +37,9 @@ model User {
   /// "UNSUBMITTED" | "PENDING" | "APPROVED" | "REJECTED"
   verificationStatus String @default("UNSUBMITTED")
 
-  /// "ACTIVE" | "SUSPENDED"
+  /// "ACTIVE" | "SUSPENDED" | "BANNED"
+  /// BANNED is for life: three red flags from people who met them at
+  /// meetups (see src/lib/moderation.ts). SUSPENDED is an admin's call.
   accountStatus String @default("ACTIVE")
 
   // Set once the six-digit code we emailed them has been typed back in.

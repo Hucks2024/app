@@ -113,7 +113,10 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return { error: "That password isn't right. Try again." };
   }
-  if (user.accountStatus === "SUSPENDED") {
+  if (user.accountStatus === "BANNED") {
+    return { error: "This account has been banned for good after three red flags." };
+  }
+  if (user.accountStatus !== "ACTIVE") {
     return { error: "This account has been suspended." };
   }
 

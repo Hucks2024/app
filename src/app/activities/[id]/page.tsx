@@ -14,14 +14,6 @@ import {
   toggleThumbsUpAction,
 } from "@/app/activities/actions";
 
-type Person = {
-  id: string;
-  name: string;
-  profilePhoto: Uint8Array | null;
-  role: string;
-  memberVerifiedAt: Date | null;
-};
-
 const personSelect = {
   id: true,
   name: true,
@@ -29,6 +21,14 @@ const personSelect = {
   role: true,
   memberVerifiedAt: true,
 } as const;
+
+type Person = {
+  id: string;
+  name: string;
+  profilePhoto: Uint8Array | null;
+  role: string;
+  memberVerifiedAt: Date | null;
+};
 
 export default async function ActivityDetailPage({
   params,
@@ -45,7 +45,7 @@ export default async function ActivityDetailPage({
   const activity = await prisma.runActivity.findUnique({
     where: { id },
     include: {
-      host: { select: personSelect },
+      host: { select: { ...personSelect, accountStatus: true } },
       participations: {
         where: { status: { in: ["JOINED", "WAITLIST"] } },
         include: { user: { select: personSelect } },
@@ -54,7 +54,11 @@ export default async function ActivityDetailPage({
     },
   });
 
-  if (!activity) notFound();
+  // A banned or suspended host's meetups are gone for everyone but the
+  // admins, who may need to see what they were.
+  if (!activity || (activity.host.accountStatus !== "ACTIVE" && user.role !== "ADMIN")) {
+    notFound();
+  }
 
   const myParticipation = activity.participations.find((p) => p.userId === user.id);
   const isHost = activity.hostId === user.id;
@@ -89,7 +93,8 @@ export default async function ActivityDetailPage({
       {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
       {reported && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          Thanks, a moderator will look into this.
+          Thanks for telling us. A moderator will look at it, and three red flags from different
+          people means a lifetime ban.
         </p>
       )}
 
@@ -234,7 +239,8 @@ export default async function ActivityDetailPage({
             this: there's no inbox here for anyone to pester you through. */}
         <p className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
           There are no messages on packmates, on purpose. Everything you need is up top: when,
-          where and who&apos;s coming. See you there.
+          where and who&apos;s coming. If somebody&apos;s out of line, give them a 🚩: three from
+          different people and they&apos;re banned for life.
         </p>
       </div>
     </div>
@@ -306,7 +312,7 @@ function ParticipantRow({
           <details className="relative text-sm">
             <summary
               className="cursor-pointer list-none rounded-full px-2 py-1 text-slate-400 hover:text-red-600"
-              title={`Report ${person.name}`}
+              title={`Red-flag ${person.name}`}
             >
               🚩
             </summary>
@@ -315,7 +321,8 @@ function ParticipantRow({
               className="absolute right-0 z-10 mt-2 flex w-60 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg"
             >
               <p className="text-xs text-slate-500">
-                Something not right? Only moderators see this.
+                Red flags are private: only moderators see them. Three from different people
+                who&apos;ve met {person.name} at meetups is a lifetime ban.
               </p>
               <input type="hidden" name="reportedUserId" value={person.id} />
               <input type="hidden" name="activityId" value={activityId} />
@@ -328,7 +335,7 @@ function ParticipantRow({
                 minLength={5}
               />
               <SubmitButton className="btn-danger !py-1 !text-xs" pending="Sending…">
-                Report {person.name}
+                🚩 Red-flag {person.name}
               </SubmitButton>
             </form>
           </details>

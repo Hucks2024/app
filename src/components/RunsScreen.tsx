@@ -2,6 +2,7 @@ import { subDays } from "date-fns";
 import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
+import { hostIsActive } from "@/lib/moderation";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
 
@@ -13,7 +14,7 @@ export default async function RunsScreen({ user }: { user: User }) {
   const { verified, justVerified } = await refreshVerified(prisma, user);
 
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() } },
+    where: { startsAt: { gte: new Date() }, ...hostIsActive },
     orderBy: { startsAt: "asc" },
     include: {
       host: { select: { id: true, name: true } },

@@ -69,7 +69,8 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!userId) return null;
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.accountStatus === "SUSPENDED") return null;
+  // Suspended or banned: as good as signed out, everywhere, at once.
+  if (!user || user.accountStatus !== "ACTIVE") return null;
   return user;
 }
 

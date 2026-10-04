@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireMember } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
+import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES } from "@/lib/categories";
 
@@ -146,25 +147,7 @@ export async function leaveActivityAction(formData: FormData) {
     data: { status: "CANCELLED" },
   });
 
-  // Promote the earliest waitlisted person if a spot opened up.
-  const activity = await prisma.runActivity.findUnique({ where: { id: activityId } });
-  if (activity?.maxParticipants) {
-    const joinedCount = await prisma.participation.count({
-      where: { activityId, status: "JOINED" },
-    });
-    if (joinedCount < activity.maxParticipants) {
-      const nextInLine = await prisma.participation.findFirst({
-        where: { activityId, status: "WAITLIST" },
-        orderBy: { joinedAt: "asc" },
-      });
-      if (nextInLine) {
-        await prisma.participation.update({
-          where: { id: nextInLine.id },
-          data: { status: "JOINED" },
-        });
-      }
-    }
-  }
+  await promoteWaitlist(prisma, activityId);
 
   redirect(`/activities/${activityId}`);
 }
@@ -206,25 +189,37 @@ export async function toggleThumbsUpAction(formData: FormData) {
   revalidatePath(`/activities/${activityId}`);
 }
 
+/** A 🚩 red flag. Always reaches the admins; counts towards the
+ * three-strikes ban when it's about somebody you were at a meetup with
+ * (see src/lib/moderation.ts), and the third such flag bans them on the
+ * spot rather than waiting for an admin to get round to it. */
 export async function reportUserAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireMember();
   const reportedUserId = String(formData.get("reportedUserId"));
-  const activityId = (formData.get("activityId") as string) || undefined;
+  const activityId = String(formData.get("activityId") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
+  const back = (query: string) => redirect(`/activities/${activityId}?${query}`);
 
   if (reportedUserId === user.id) {
-    redirect(`/activities/${activityId}?error=${encodeURIComponent("You can't report yourself.")}`);
+    back(`error=${encodeURIComponent("You can't red-flag yourself.")}`);
   }
   if (reason.length < 5) {
-    redirect(
-      `/activities/${activityId}?error=${encodeURIComponent("Please give a bit more detail in the report.")}`
-    );
+    back(`error=${encodeURIComponent("Say a bit more about what happened, so a moderator can act on it.")}`);
   }
 
   const prisma = await getPrisma();
-  await prisma.report.create({
-    data: { reporterId: user.id, reportedUserId, activityId, reason },
-  });
+  // Both looked up rather than trusted from the form: a made-up id would
+  // otherwise be a crash, or a flag against nobody.
+  const [reported, activity] = await Promise.all([
+    prisma.user.findUnique({ where: { id: reportedUserId }, select: { id: true } }),
+    prisma.runActivity.findUnique({ where: { id: activityId }, select: { id: true } }),
+  ]);
+  if (!reported || !activity) redirect("/");
 
-  redirect(`/activities/${activityId}?reported=1`);
+  await prisma.report.create({
+    data: { reporterId: user.id, reportedUserId, activityId, reason: reason.slice(0, 1000) },
+  });
+  await banIfFlagged(prisma, reportedUserId);
+
+  back("reported=1");
 }

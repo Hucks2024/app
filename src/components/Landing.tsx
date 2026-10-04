@@ -1,4 +1,5 @@
 import { getPrisma } from "@/lib/db";
+import { hostIsActive } from "@/lib/moderation";
 import MeetupBoard from "@/components/MeetupBoard";
 import Welcome from "@/components/Welcome";
 import type { MapActivity } from "@/components/ActivitiesMap";
@@ -34,7 +35,7 @@ const STEPS = [
 export default async function Landing() {
   const prisma = await getPrisma();
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() } },
+    where: { startsAt: { gte: new Date() }, ...hostIsActive },
     orderBy: { startsAt: "asc" },
   });
 
@@ -92,6 +93,11 @@ export default async function Landing() {
             </li>
           ))}
         </ol>
+        {/* The house rule, said up front: it's part of what this place is,
+            and the people it's meant to put off should read it first. */}
+        <p className="mt-3 text-center text-sm font-medium text-white">
+          🚩 Three red flags from people you&apos;ve met and you&apos;re banned for life.
+        </p>
       </section>
 
       <section className="mx-auto max-w-3xl px-4 pt-4 pb-10" aria-labelledby="map-heading">

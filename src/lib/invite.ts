@@ -109,7 +109,7 @@ export async function checkInviteCode(
       reason: "That code isn't valid. Check it with whoever invited you.",
     };
   }
-  if (inviter.accountStatus === "SUSPENDED") {
+  if (inviter.accountStatus !== "ACTIVE") {
     return { ok: false, reason: "That code is no longer active." };
   }
   if (inviter.role !== "ADMIN" && inviter.invitesLeft <= 0) {

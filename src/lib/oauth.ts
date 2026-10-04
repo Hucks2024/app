@@ -245,7 +245,10 @@ export async function signInWithIdentity(provider: Provider, id: Identity): Prom
     await ensureMembership(prisma, user.id);
   }
 
-  if (user.accountStatus === "SUSPENDED") {
+  if (user.accountStatus === "BANNED") {
+    return { ok: false, error: "This account has been banned for good after three red flags." };
+  }
+  if (user.accountStatus !== "ACTIVE") {
     return { ok: false, error: "This account has been suspended." };
   }
   return { ok: true, user };

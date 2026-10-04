@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import { formatMemberNumber } from "@/lib/invite";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
+import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
 import {
   approveVerificationAction,
   rejectVerificationAction,
@@ -47,6 +48,16 @@ export default async function AdminPage({
   const thumbs = await thumbsFor(
     prisma,
     users.map((u) => u.id)
+  );
+  // Counted red flags, for everyone who has had at least one raised.
+  const flagged = await prisma.report.findMany({
+    distinct: ["reportedUserId"],
+    select: { reportedUserId: true },
+  });
+  const flags = new Map(
+    await Promise.all(
+      flagged.map(async (f) => [f.reportedUserId, await redFlagCount(prisma, f.reportedUserId)] as const)
+    )
   );
 
   return (
@@ -121,11 +132,15 @@ export default async function AdminPage({
           {openReports.map((r) => (
             <div key={r.id} className="card">
               <p className="text-sm">
-                <span className="font-medium">{r.reporter.name}</span> reported{" "}
+                🚩 <span className="font-medium">{r.reporter.name}</span> red-flagged{" "}
                 <span className="font-medium">{r.reportedUser.name}</span>{" "}
                 <span className="text-slate-400 text-xs">
                   ({format(r.createdAt, "MMM d, h:mm a")})
                 </span>
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {flags.get(r.reportedUserId) ?? 0} of {RED_FLAG_LIMIT} counted flags (from different
+                people who met them at a meetup)
               </p>
               <p className="text-sm text-slate-700 mt-1">&ldquo;{r.reason}&rdquo;</p>
               <div className="flex items-center gap-3 mt-3">
@@ -143,7 +158,7 @@ export default async function AdminPage({
                     </button>
                   </form>
                 ) : (
-                  <span className="badge-red">Suspended</span>
+                  <StatusBadge status={r.reportedUser.accountStatus} />
                 )}
               </div>
             </div>
@@ -260,19 +275,20 @@ export default async function AdminPage({
                     )}
                   </td>
                   <td className="py-2 pr-4">
-                    {u.accountStatus === "SUSPENDED" ? (
-                      <span className="badge-red">Suspended</span>
-                    ) : (
-                      <span className="badge-green">Active</span>
+                    <StatusBadge status={u.accountStatus} />
+                    {(flags.get(u.id) ?? 0) > 0 && (
+                      <span className="ml-1 text-xs text-red-700" title="Counted red flags">
+                        🚩{flags.get(u.id)}
+                      </span>
                     )}
                   </td>
                   <td className="py-2 pr-4">
                     {u.role !== "ADMIN" &&
-                      (u.accountStatus === "SUSPENDED" ? (
+                      (u.accountStatus !== "ACTIVE" ? (
                         <form action={unbanUserAction}>
                           <input type="hidden" name="userId" value={u.id} />
                           <button type="submit" className="btn-secondary !py-1 !text-xs">
-                            Unsuspend
+                            {u.accountStatus === "BANNED" ? "Lift ban" : "Unsuspend"}
                           </button>
                         </form>
                       ) : (
@@ -292,4 +308,10 @@ export default async function AdminPage({
       </section>
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "BANNED") return <span className="badge-red">Banned for life</span>;
+  if (status === "SUSPENDED") return <span className="badge-red">Suspended</span>;
+  return <span className="badge-green">Active</span>;
 }
