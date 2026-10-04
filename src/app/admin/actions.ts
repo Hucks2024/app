@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { processXrpPayments } from "@/lib/xrp";
-import { DEFAULT_INVITES } from "@/lib/invite";
 
 export async function approveVerificationAction(formData: FormData) {
   await requireAdmin();
@@ -114,16 +113,18 @@ export async function scanXrpPaymentsAction() {
   redirect("/admin?xrpScan=" + encodeURIComponent(summary));
 }
 
-/** Tops a member's invite allowance back up. The cap exists so one code
- * leaking can't open the doors; this is the release valve for members who
- * are actually bringing good people in. */
-export async function grantInvitesAction(formData: FormData) {
+/** Gives somebody the ✓, and with it posting, without a first meetup.
+ *
+ * Normally earned by going to one (see src/lib/trust.ts). This is for
+ * when it can't be: someone starting things off in a new city, with
+ * nobody there yet to host the first one. */
+export async function setVerifiedAction(formData: FormData) {
   await requireAdmin();
   const userId = String(formData.get("userId"));
   const prisma = await getPrisma();
-  await prisma.user.update({
-    where: { id: userId },
-    data: { invitesLeft: { increment: DEFAULT_INVITES } },
+  await prisma.user.updateMany({
+    where: { id: userId, memberVerifiedAt: null },
+    data: { memberVerifiedAt: new Date() },
   });
   revalidatePath("/admin");
 }

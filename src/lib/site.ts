@@ -5,7 +5,7 @@ export const SITE = {
   name: "Packmates",
   domain: "doyoulikepizza.com",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://doyoulikepizza.com",
-  tagline: "A highly exclusive club. Runs, treks, travel days, and the pint after.",
+  tagline: "Real meetups with real people. Find one on the map, turn up, make friends.",
   description:
-    "Packmates is a highly exclusive club for people all over the world to train, travel and meet up. Members only, by referral, and free while it's small.",
+    "Packmates is a free map of meetups: runs, walks, coffee, a pint. Pick one, turn up, make friends. No messages, no swiping, no browsing people. Just meetups.",
 };

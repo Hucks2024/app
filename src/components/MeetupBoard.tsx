@@ -51,6 +51,7 @@ export default function MeetupBoard({
   activities,
   restricted = false,
   post,
+  notice,
   stage = "fill",
 }: {
   activities: MapActivity[];
@@ -63,6 +64,8 @@ export default function MeetupBoard({
   // Where "post a meetup" goes, and what this club calls one. Absent on
   // the logged-out map, where there's nothing to post yet.
   post?: { href: string; label: string };
+  // A tip floating over the bottom of the map (see MapNotice).
+  notice?: React.ReactNode;
 }) {
   const [category, setCategory] = useState<string>("ALL");
   const [day, setDay] = useState<Day>("ANY");
@@ -154,11 +157,7 @@ export default function MeetupBoard({
           float on top of it rather than taking a row each underneath. On a
           phone those rows were the difference between a map you can read
           and a letterbox. */}
-      <div
-        className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""} ${
-          restricted ? "board-stage-open" : ""
-        }`}
-      >
+      <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
         {view === "map" ? (
           // Never swapped out for a card. The map handles having nothing
           // on it, and taking it away because a filter matched nothing
@@ -183,6 +182,8 @@ export default function MeetupBoard({
             {view === "map" ? "☰ List" : "🗺️ Map"}
           </button>
         )}
+
+        {notice}
 
         {post && (
           <Link href={post.href} className="board-fab" aria-label={post.label} title={post.label}>

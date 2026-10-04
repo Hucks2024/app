@@ -1,4 +1,4 @@
-// Packmates, invite-only meetup app
+// Packmates, a free map of meetups
 // Small, self-contained SQLite database. Photos are stored as binary blobs
 // directly in the DB (not on disk) so the app has no external file-storage
 // dependency and works the same in dev and in production.
@@ -40,12 +40,6 @@ model User {
   /// "ACTIVE" | "SUSPENDED"
   accountStatus String @default("ACTIVE")
 
-  // Invite-only signup. Every member has one permanent code they hand out,
-  // and invitedById records who vouched for them, so every account traces
-  // back up a chain to an admin. That chain is the moderation tool: if
-  // someone turns out to be a creep, you can see exactly who let them in
-  // and deal with that whole branch. invitesLeft caps how far one code can
-  // spread if it gets posted somewhere public (admins are exempt).
   // Set once the six-digit code we emailed them has been typed back in.
   // Null means unverified: they can log in, but nothing else, see
   // requireMember in src/lib/auth.ts. Nobody is held up by this when email
@@ -59,6 +53,10 @@ model User {
   // rather than derived from it.
   memberNumber Int? @unique
 
+  // From the invite-only days, when every account needed a member's code
+  // and invitedById recorded who vouched for them. Signup is open now and
+  // nothing reads or spends these; they're kept so that history (who
+  // brought in whom) isn't thrown away.
   inviteCode  String? @unique
   invitedById String?
   invitedBy   User?   @relation("Invites", fields: [invitedById], references: [id], onDelete: SetNull)
@@ -77,6 +75,19 @@ model User {
   xrpDestinationTag Int?      @unique
   paidUntil         DateTime?
 
+  // The ✓ next to a name, and the key to the + button. Signup is open, so
+  // posting meetups isn't: it unlocks once you've been to one meetup run
+  // by somebody who already has this, which makes every host traceable to
+  // a real meetup with real people at it (see src/lib/trust.ts). Members
+  // from the invite-only days were stamped at the switch.
+  memberVerifiedAt DateTime?
+
+  // "Continue with Apple" / "Continue with Google": the provider's stable
+  // id for this person, so a changed or hidden email address still finds
+  // the same account. Null for email-and-password accounts.
+  appleSub  String? @unique
+  googleSub String? @unique
+
   createdAt DateTime @default(now())
 
   verification      VerificationRequest?
@@ -87,6 +98,26 @@ model User {
   reportsMade       Report[]             @relation("ReportsMade")
   reportsReceived   Report[]             @relation("ReportsReceived")
   xrpPayments       XrpPayment[]
+  thumbsGiven       ThumbsUp[]           @relation("ThumbsGiven")
+  thumbsReceived    ThumbsUp[]           @relation("ThumbsReceived")
+}
+
+// One 👍 from one person to another, for one meetup they were both at.
+// The unique key is what makes it one per person per meetup: a member's
+// count is how many times somebody who actually met them was glad they
+// came, not how many times one fan pressed a button.
+model ThumbsUp {
+  id         String      @id @default(cuid())
+  activityId String
+  activity   RunActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  fromId     String
+  from       User        @relation("ThumbsGiven", fields: [fromId], references: [id], onDelete: Cascade)
+  toId       String
+  to         User        @relation("ThumbsReceived", fields: [toId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+
+  @@unique([activityId, fromId, toId])
+  @@index([toId])
 }
 
 // One row per XRPL payment we've credited, keyed by transaction hash so the
@@ -172,6 +203,7 @@ model RunActivity {
 
   participations Participation[]
   comments       Comment[]
+  thumbsUps      ThumbsUp[]
 }
 
 model Participation {

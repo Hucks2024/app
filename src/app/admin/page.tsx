@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import { formatMemberNumber } from "@/lib/invite";
+import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import {
   approveVerificationAction,
   rejectVerificationAction,
@@ -10,7 +11,7 @@ import {
   banUserAction,
   unbanUserAction,
   scanXrpPaymentsAction,
-  grantInvitesAction,
+  setVerifiedAction,
 } from "@/app/admin/actions";
 
 export default async function AdminPage({
@@ -36,7 +37,6 @@ export default async function AdminPage({
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
-      include: { invitedBy: { select: { name: true } } },
     }),
     prisma.xrpPayment.findMany({
       include: { user: true },
@@ -44,6 +44,10 @@ export default async function AdminPage({
       take: 20,
     }),
   ]);
+  const thumbs = await thumbsFor(
+    prisma,
+    users.map((u) => u.id)
+  );
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 space-y-10">
@@ -207,8 +211,8 @@ export default async function AdminPage({
                 <th className="py-2 pr-4">#</th>
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Invited by</th>
-                <th className="py-2 pr-4">Invites left</th>
+                <th className="py-2 pr-4">👍</th>
+                <th className="py-2 pr-4">Can post</th>
                 <th className="py-2 pr-4">Paid until</th>
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4"></th>
@@ -225,22 +229,23 @@ export default async function AdminPage({
                     {u.name}
                   </td>
                   <td className="py-2 pr-4">{u.email}</td>
+                  <td className="py-2 pr-4">{thumbs.get(u.id) ?? 0}</td>
                   <td className="py-2 pr-4">
-                    {u.invitedBy?.name ?? <span className="text-slate-400">nobody</span>}
-                  </td>
-                  <td className="py-2 pr-4">
-                    {u.role === "ADMIN" ? (
-                      <span className="text-slate-400">unlimited</span>
+                    {isVerifiedMember(u) ? (
+                      <span>✓</span>
                     ) : (
-                      <form action={grantInvitesAction} className="flex items-center gap-1">
+                      // Only ever adds the tick: one taken away would come
+                      // straight back from any meetup they've been to.
+                      // Suspending is the way to stop somebody.
+                      <form action={setVerifiedAction} className="flex items-center gap-1.5">
                         <input type="hidden" name="userId" value={u.id} />
-                        <span>{u.invitesLeft}</span>
+                        <span className="text-slate-400">new</span>
                         <button
                           type="submit"
                           className="text-brand-600 hover:underline text-xs"
-                          title="Give this member 5 more invites"
+                          title="Let them post without going to a meetup first"
                         >
-                          +5
+                          verify
                         </button>
                       </form>
                     )}

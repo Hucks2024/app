@@ -1,18 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { format, isToday, isTomorrow } from "date-fns";
+import LocalTime from "@/components/LocalTime";
 import { categoryFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
-
-/** "Today · 6:00 am", else "Sat 27 Sep · 6:00 am". */
-function when(iso: string): string {
-  const d = new Date(iso);
-  const time = format(d, "h:mm a");
-  if (isToday(d)) return `Today · ${time}`;
-  if (isTomorrow(d)) return `Tomorrow · ${time}`;
-  return `${format(d, "EEE d MMM")} · ${time}`;
-}
 
 /** "in 20m", "in 3h" — but only while that's news.
  *
@@ -51,7 +42,7 @@ export default function MeetupList({
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-slate-900 truncate">{a.title}</p>
               <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                {restricted ? "Members see the time and place" : when(a.startsAt)}
+                {restricted ? "Sign in to see the time and place" : <LocalTime iso={a.startsAt} style="short" />}
                 {soon && <span className="soon-badge">{soon}</span>}
               </p>
               <p className="text-xs text-slate-500 truncate">
@@ -67,6 +58,11 @@ export default function MeetupList({
               )}
               {a.afterSpot && !restricted && (
                 <p className="text-xs text-slate-500 truncate">🍻 After: {a.afterSpot}</p>
+              )}
+              {a.host && (
+                <p className="text-xs text-slate-500 truncate">
+                  Hosted by {a.host.name} · 👍 {a.host.thumbs}
+                </p>
               )}
             </div>
             {!restricted && (

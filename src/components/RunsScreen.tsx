@@ -1,16 +1,22 @@
+import { subDays } from "date-fns";
+import type { User } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
+import { refreshVerified, thumbsFor } from "@/lib/trust";
 import MeetupBoard from "@/components/MeetupBoard";
+import MapNotice from "@/components/MapNotice";
 
 // The map of upcoming meetups. Only reachable by members, both "/" and
 // "/activities" gate on requireMember() before rendering this, so there's
 // no "you're not a member yet" branch to handle here.
-export default async function RunsScreen() {
+export default async function RunsScreen({ user }: { user: User }) {
   const prisma = await getPrisma();
+  const { verified, justVerified } = await refreshVerified(prisma, user);
 
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() } },
     orderBy: { startsAt: "asc" },
     include: {
+      host: { select: { id: true, name: true } },
       // The people, not just the count: the pins show a face, which is
       // what makes a meetup read as somebody going rather than a category
       // sitting on a map.
@@ -21,6 +27,13 @@ export default async function RunsScreen() {
       },
     },
   });
+
+  // The host's 👍 is the trust signal at the point of choosing: it's what
+  // somebody new looks at before saying they'll turn up.
+  const thumbs = await thumbsFor(
+    prisma,
+    activities.map((a) => a.hostId)
+  );
 
   const mapActivities = activities
     .filter((a) => a.latitude != null && a.longitude != null)
@@ -41,6 +54,7 @@ export default async function RunsScreen() {
         userId: p.user.id,
         hasPhoto: p.user.profilePhoto != null,
       })),
+      host: { name: a.host.name, thumbs: thumbs.get(a.host.id) ?? 0 },
     }));
 
   return (
@@ -51,8 +65,74 @@ export default async function RunsScreen() {
     <div className="mx-auto max-w-3xl px-4 pt-2 pb-2">
       <MeetupBoard
         activities={mapActivities}
-        post={{ href: "/activities/new", label: "Post a meetup" }}
+        post={{ href: "/activities/new", label: verified ? "Post a meetup" : "How to post a meetup" }}
+        notice={await noticeFor(user, verified, justVerified)}
       />
     </div>
   );
+}
+
+/** The one thing worth saying to this member on the map right now, most
+ * important first, or nothing. */
+async function noticeFor(user: User, verified: boolean, justVerified: boolean) {
+  if (justVerified) {
+    return (
+      <MapNotice id="verified">
+        <strong className="text-slate-900">🎉 You&apos;re verified ✓</strong>
+        <br />
+        You&apos;ve been to your first meetup, so you can post your own now. Tap the + to start one.
+      </MapNotice>
+    );
+  }
+
+  // A meetup from the last week that's had people at it, where this
+  // member hasn't given anyone a thumbs up yet.
+  const prisma = await getPrisma();
+  const now = new Date();
+  const recent = await prisma.participation.findFirst({
+    where: {
+      userId: user.id,
+      status: "JOINED",
+      activity: {
+        startsAt: { gte: subDays(now, 7), lte: now },
+        thumbsUps: { none: { fromId: user.id } },
+      },
+    },
+    orderBy: { activity: { startsAt: "desc" } },
+    select: {
+      activity: {
+        select: {
+          id: true,
+          title: true,
+          _count: { select: { participations: { where: { status: "JOINED" } } } },
+        },
+      },
+    },
+  });
+  if (recent && recent.activity._count.participations > 1) {
+    return (
+      <MapNotice
+        id={`thumbs-${recent.activity.id}`}
+        href={`/activities/${recent.activity.id}#people`}
+        cta="Give thumbs up"
+      >
+        <strong className="text-slate-900">How was {recent.activity.title}? 👍</strong>
+        <br />
+        Give a thumbs up to the people you met there.
+      </MapNotice>
+    );
+  }
+
+  if (!verified) {
+    return (
+      <MapNotice id="welcome">
+        <strong className="text-slate-900">👋 Welcome to packmates</strong>
+        <br />
+        Pick a pin, tap <strong>I&apos;m in</strong>, and turn up. After your first meetup you can
+        post your own with the +.
+      </MapNotice>
+    );
+  }
+
+  return null;
 }

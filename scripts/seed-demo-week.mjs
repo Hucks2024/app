@@ -54,6 +54,58 @@ const MEMBERS = [
   { key: "sam", name: "Sam", city: "Greenwich", pace: "5:55 / km", bio: "Park walks, pub quizzes, the occasional 10K I regret signing up for." },
 ];
 
+// Two that have already happened, so the demo members have some thumbs up
+// to show. They're in the past, so they never appear on the map; they're
+// only there to be the meetups those 👍 were given at.
+const PAST_MEETUPS = [
+  {
+    key: "past-canal-long-run",
+    host: "ayo",
+    going: ["mira", "tom", "lena", "priya"],
+    category: "RUN",
+    title: "Long run along the canal",
+    location: "Regent's Canal, Angel, London",
+    latitude: 51.5326,
+    longitude: -0.1054,
+    day: -3,
+    hour: 9,
+    minute: 0,
+  },
+  {
+    key: "past-pub-quiz",
+    host: "sam",
+    going: ["priya", "lena", "tom", "mira"],
+    category: "DRINKS",
+    title: "Pub quiz, terrible team name pending",
+    location: "The Lord Clyde, Borough, London",
+    latitude: 51.5017,
+    longitude: -0.0932,
+    day: -5,
+    hour: 19,
+    minute: 30,
+  },
+];
+
+// Who gave whom a 👍, at which past meetup: [meetup, from, to].
+const THUMBS = [
+  ["past-canal-long-run", "mira", "ayo"],
+  ["past-canal-long-run", "tom", "ayo"],
+  ["past-canal-long-run", "lena", "ayo"],
+  ["past-canal-long-run", "priya", "ayo"],
+  ["past-canal-long-run", "ayo", "lena"],
+  ["past-canal-long-run", "ayo", "mira"],
+  ["past-canal-long-run", "lena", "mira"],
+  ["past-canal-long-run", "priya", "tom"],
+  ["past-pub-quiz", "priya", "sam"],
+  ["past-pub-quiz", "lena", "sam"],
+  ["past-pub-quiz", "tom", "sam"],
+  ["past-pub-quiz", "mira", "sam"],
+  ["past-pub-quiz", "sam", "priya"],
+  ["past-pub-quiz", "lena", "priya"],
+  ["past-pub-quiz", "sam", "lena"],
+  ["past-pub-quiz", "mira", "tom"],
+];
+
 const MEETUPS = [
   {
     key: "serpentine-5k",
@@ -234,7 +286,13 @@ async function clearDemo() {
   // Children first: the demo rows are deleted by id prefix rather than by
   // cascade, so this works the same whether or not foreign keys are being
   // enforced on the far end.
+  const hasThumbs = (
+    await client.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ThumbsUp'")
+  ).rows.length > 0;
   const statements = [
+    ...(hasThumbs
+      ? [`DELETE FROM "ThumbsUp" WHERE "activityId" LIKE 'demo-%' OR "fromId" LIKE 'demo-%' OR "toId" LIKE 'demo-%'`]
+      : []),
     `DELETE FROM "Comment" WHERE "activityId" LIKE 'demo-%' OR "authorId" LIKE 'demo-%'`,
     `DELETE FROM "Participation" WHERE "activityId" LIKE 'demo-%' OR "userId" LIKE 'demo-%'`,
     `DELETE FROM "Report" WHERE "reporterId" LIKE 'demo-%' OR "reportedUserId" LIKE 'demo-%'`,
@@ -259,13 +317,16 @@ async function seed() {
     await client.execute({
       sql: `INSERT INTO "User"
               ("id", "name", "email", "passwordHash", "bio", "city", "pace", "role",
-               "verificationStatus", "accountStatus", "emailVerifiedAt", "invitesLeft", "createdAt")
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'USER', 'APPROVED', 'ACTIVE', ?, 0, ?)`,
-      args: [`demo-user-${m.key}`, m.name, `${m.key}@demo.packmates.invalid`, passwordHash, m.bio, m.city, m.pace, now, now],
+               "verificationStatus", "accountStatus", "emailVerifiedAt", "memberVerifiedAt",
+               "invitesLeft", "createdAt")
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'USER', 'APPROVED', 'ACTIVE', ?, ?, 0, ?)`,
+      // Verified, the same as anyone who has hosted for real: only
+      // verified members can post, and every demo member hosts something.
+      args: [`demo-user-${m.key}`, m.name, `${m.key}@demo.packmates.invalid`, passwordHash, m.bio, m.city, m.pace, now, now, now],
     });
   }
 
-  for (const meetup of MEETUPS) {
+  for (const meetup of [...PAST_MEETUPS, ...MEETUPS]) {
     const id = `demo-${meetup.key}`;
     const startsAt = when(meetup.day, meetup.hour, meetup.minute);
     await client.execute({
@@ -302,6 +363,13 @@ async function seed() {
 
     console.log(`  ${startsAt.toISOString().slice(0, 16).replace("T", " ")}  ${meetup.title}`);
   }
+
+  for (const [meetup, from, to] of THUMBS) {
+    await client.execute({
+      sql: `INSERT INTO "ThumbsUp" ("id", "activityId", "fromId", "toId", "createdAt") VALUES (?, ?, ?, ?, ?)`,
+      args: [`demo-thumb-${meetup}-${from}-${to}`, `demo-${meetup}`, `demo-user-${from}`, `demo-user-${to}`, now],
+    });
+  }
 }
 
 const removed = await clearDemo();
@@ -310,7 +378,10 @@ if (clearOnly) {
 } else {
   if (removed) console.log(`Cleared ${removed} row(s) from the previous demo set.`);
   await seed();
-  console.log(`\nSeeded ${MEETUPS.length} demo meetups and ${MEMBERS.length} demo members.`);
+  console.log(
+    `\nSeeded ${MEETUPS.length} upcoming and ${PAST_MEETUPS.length} past demo meetups, ` +
+      `${MEMBERS.length} demo members and ${THUMBS.length} thumbs up.`
+  );
   console.log("Run again with --clear to remove every one of them.");
 }
 

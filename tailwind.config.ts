@@ -8,18 +8,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Violet, the colour of the nav, the pins and the app icon (see
+        // BRAND in src/components/Logo.tsx). This used to be a green from
+        // when the app was only about running, which left every button and
+        // link a different colour from everything around it.
         brand: {
-          50: "#f0fdf6",
-          100: "#dcfce9",
-          200: "#bbf7d4",
-          300: "#86efb3",
-          400: "#4ade8a",
-          500: "#22c368",
-          600: "#16a352",
-          700: "#158043",
-          800: "#166538",
-          900: "#145330",
-          950: "#0b3220",
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
+          950: "#2e1065",
         },
         // Every text-slate-*/bg-slate-*/border-slate-* utility in the app
         // (there are a lot, scattered across every page) keeps working

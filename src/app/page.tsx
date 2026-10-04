@@ -11,7 +11,7 @@ export default async function HomePage() {
   if (user) {
     if (needsEmailCheck(user)) redirect("/verify-email");
     if (!isPaidUp(user)) redirect("/subscribe");
-    return <RunsScreen />;
+    return <RunsScreen user={user} />;
   }
 
   return <Landing />;

@@ -1,10 +1,17 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ensureMembership, formatMemberNumber } from "@/lib/invite";
+import { refreshVerified, thumbsFor } from "@/lib/trust";
+import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
 import { updateProfileAction } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
 import CopyableField from "@/components/CopyableField";
+import LocalTime from "@/components/LocalTime";
+import SubmitButton from "@/components/SubmitButton";
+
+export const metadata = { title: "Profile" };
 
 export default async function ProfilePage({
   searchParams,
@@ -15,16 +22,32 @@ export default async function ProfilePage({
   const user = await requireUser();
 
   const prisma = await getPrisma();
-  const { memberNumber, inviteCode } = await ensureMembership(prisma, user.id);
-  const invitedCount = await prisma.user.count({ where: { invitedById: user.id } });
-  const unlimited = user.role === "ADMIN";
+  const { memberNumber } = await ensureMembership(prisma, user.id);
+  const { verified } = await refreshVerified(prisma, user);
+  const thumbs = (await thumbsFor(prisma, [user.id])).get(user.id) ?? 0;
+
+  const now = new Date();
+  const [upcoming, past] = await Promise.all([
+    prisma.participation.findMany({
+      where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: now } } },
+      orderBy: { activity: { startsAt: "asc" } },
+      take: 5,
+      select: { activity: { select: { id: true, title: true, startsAt: true, category: true } } },
+    }),
+    prisma.participation.findMany({
+      where: { userId: user.id, status: "JOINED", activity: { startsAt: { lte: now } } },
+      orderBy: { activity: { startsAt: "desc" } },
+      take: 5,
+      select: { activity: { select: { id: true, title: true, startsAt: true, category: true } } },
+    }),
+  ]);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12">
+    <div className="mx-auto max-w-xl px-4 py-10">
       <div className="flex items-center gap-4 mb-6">
         <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
-        <div>
-          <h1 className="text-2xl font-bold text-white drop-shadow">{user.name}</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
           <p className="text-sm text-white/80">Member #{formatMemberNumber(memberNumber)}</p>
         </div>
       </div>
@@ -40,29 +63,57 @@ export default async function ProfilePage({
         </p>
       )}
 
-      <div className="card mb-4">
-        <p className="font-semibold mb-1">Invite someone 🎟️</p>
-        <p className="text-sm text-slate-600 mb-4">
-          {SITE.name} is invite only. Share this with people you&apos;d actually turn up and
-          meet, whoever joins stays linked to you.
-        </p>
-        <div className="space-y-3">
-          <div>
-            <p className="label">Your code</p>
-            <CopyableField value={inviteCode} />
-          </div>
-          <div>
-            <p className="label">Or send this link</p>
-            <CopyableField value={`${SITE.url}/signup?code=${inviteCode}`} />
-          </div>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="card !p-4 text-center">
+          <p className="text-3xl font-bold text-slate-900">👍 {thumbs}</p>
+          <p className="text-xs text-slate-500 mt-1">
+            thumbs up from people you&apos;ve met
+          </p>
         </div>
-        <p className="text-xs text-slate-500 mt-3">
-          {unlimited
-            ? "Your code never runs out."
-            : `${user.invitesLeft} ${user.invitesLeft === 1 ? "invite" : "invites"} left.`}
-          {invitedCount > 0 &&
-            ` ${invitedCount} ${invitedCount === 1 ? "person has" : "people have"} joined through you.`}
+        <div className="card !p-4 text-center">
+          {verified ? (
+            <>
+              <p className="text-3xl font-bold text-brand-700">✓</p>
+              <p className="text-xs text-slate-500 mt-1">Verified. You can post meetups.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-3xl" aria-hidden="true">
+                🌱
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                New member. Go to one meetup to unlock posting.
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="card mb-4">
+        <p className="font-semibold mb-3">Your meetups</p>
+        {upcoming.length === 0 && past.length === 0 ? (
+          <p className="text-sm text-slate-600">
+            Nothing yet.{" "}
+            <Link href="/" className="font-medium text-brand-700 underline">
+              Find one on the map →
+            </Link>
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {upcoming.length > 0 && <MeetupLinks label="Coming up" rows={upcoming} />}
+            {past.length > 0 && (
+              <MeetupLinks label="Been to (give your 👍 here)" rows={past} toPeople />
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="card mb-4">
+        <p className="font-semibold mb-1">Bring a friend 🎒</p>
+        <p className="text-sm text-slate-600 mb-3">
+          It&apos;s free and there&apos;s no invite code. Send them this.
         </p>
+        <CopyableField value={SITE.url} />
       </div>
 
       <form action={updateProfileAction} className="card space-y-4">
@@ -114,10 +165,55 @@ export default async function ProfilePage({
             accept="image/jpeg,image/png,image/webp"
           />
         </div>
-        <button type="submit" className="btn-primary w-full">
+        <SubmitButton className="btn-primary w-full" pending="Saving…">
           Save
-        </button>
+        </SubmitButton>
       </form>
+    </div>
+  );
+}
+
+type MeetupRow = {
+  activity: { id: string; title: string; startsAt: Date; category: string };
+};
+
+function MeetupLinks({
+  label,
+  rows,
+  toPeople = false,
+}: {
+  label: string;
+  rows: MeetupRow[];
+  // Straight down to the people (and their thumbs up buttons) for ones
+  // that have happened.
+  toPeople?: boolean;
+}) {
+  return (
+    <div>
+      <p className="label">{label}</p>
+      <ul className="divide-y divide-slate-100">
+        {rows.map(({ activity: a }) => (
+          <li key={a.id}>
+            <Link
+              href={`/activities/${a.id}${toPeople ? "#people" : ""}`}
+              className="flex items-center gap-3 py-2 hover:bg-slate-50 -mx-2 px-2 rounded-lg"
+            >
+              <span className="text-xl" aria-hidden="true">
+                {categoryFor(a.category).emoji}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>
+                <span className="block text-xs text-slate-500">
+                  <LocalTime iso={a.startsAt.toISOString()} style="short" />
+                </span>
+              </span>
+              <span className="text-slate-400" aria-hidden="true">
+                ›
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

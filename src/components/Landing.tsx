@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { getPrisma } from "@/lib/db";
 import MeetupBoard from "@/components/MeetupBoard";
+import Welcome from "@/components/Welcome";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
 // Anonymous visitors get a real map (so there's something to see, and a
@@ -11,7 +11,26 @@ function jitter(value: number) {
   return value + (Math.random() - 0.5) * 0.02;
 }
 
-/** The front door: what this is, and a blurred look at the map. */
+const STEPS = [
+  {
+    emoji: "📍",
+    title: "Find a meetup",
+    body: "Runs, walks, coffee, a pint. Everything on is a pin on the map.",
+  },
+  {
+    emoji: "🙌",
+    title: "Tap “I'm in” and turn up",
+    body: "That's it. No messages, no swiping, no browsing people.",
+  },
+  {
+    emoji: "👍",
+    title: "Thumbs up the people you met",
+    body: "Everyone has a count. After your first meetup you can post your own.",
+  },
+];
+
+/** The front door: hello and the way in, how it works in three lines, and
+ * a blurred look at what's on. */
 export default async function Landing() {
   const prisma = await getPrisma();
   const activities = await prisma.runActivity.findMany({
@@ -47,26 +66,46 @@ export default async function Landing() {
       // logged-out map shows that meetups exist, never who is at them.
       faces: [],
       maxParticipants: null,
+      host: null,
     }));
 
   return (
     <div>
-      {/* One line above the map, and only one: it says what the place is
-          for in the time it takes to read it, and then gets out of the way
-          of the thing that shows a visitor it's real. */}
-      <div className="mx-auto max-w-3xl px-4 pt-2 pb-10">
-        <p className="font-wordmark mb-2 text-center text-base font-semibold text-white sm:text-lg">
-          a backpacker&apos;s guide to the galaxy
-        </p>
-        <MeetupBoard activities={previewActivities} restricted />
+      <Welcome />
+
+      <section className="mx-auto max-w-3xl px-4 pb-4" aria-labelledby="how-heading">
+        <h2 id="how-heading" className="sr-only">
+          How it works
+        </h2>
+        <ol className="grid gap-3 sm:grid-cols-3">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="card !p-4 flex items-start gap-3 sm:flex-col sm:gap-2">
+              <span className="step-badge" aria-hidden="true">
+                {s.emoji}
+              </span>
+              <div>
+                <p className="font-semibold text-slate-900">
+                  <span className="text-brand-600">{i + 1}.</span> {s.title}
+                </p>
+                <p className="text-sm text-slate-600 mt-0.5">{s.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-4 pt-4 pb-10" aria-labelledby="map-heading">
+        <h2
+          id="map-heading"
+          className="font-wordmark mb-2 text-center text-lg font-bold text-white lowercase"
+        >
+          what&apos;s on near you
+        </h2>
+        <MeetupBoard activities={previewActivities} restricted stage="preview" />
         <p className="text-xs text-white/75 text-center mt-3">
-          Pins are approximate. Tap one to see what it is.{" "}
-          <Link href="/login" className="underline font-medium text-white">
-            Log in
-          </Link>{" "}
-          for exact times, meeting points, and who&apos;s going.
+          Pins are approximate until you sign in. Tap one to see what it is.
         </p>
-      </div>
+      </section>
     </div>
   );
 }

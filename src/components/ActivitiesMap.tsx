@@ -5,10 +5,10 @@ import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
-import { format } from "date-fns";
 import "leaflet/dist/leaflet.css";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
+import { formatWhen } from "@/components/LocalTime";
 
 // The app's own logo as the map marker: the same teardrop from
 // src/components/Logo.tsx, in the same brand violet, with the category
@@ -245,6 +245,9 @@ export type MapActivity = {
   // the pin. Empty on the logged-out map: who is going is members-only,
   // and a face is a person.
   faces: Face[];
+  // Who's running it and their 👍 count. Null on the logged-out map, for
+  // the same reason as the faces.
+  host: { name: string; thumbs: number } | null;
 };
 
 export default function ActivitiesMap({
@@ -342,33 +345,28 @@ export default function ActivitiesMap({
                   </p>
                   <div className="relative">
                     <div aria-hidden="true" className="popup-blur space-y-1">
-                      <p className="font-semibold">A members-only meetup</p>
-                      <p className="text-sm text-slate-600">Log in to see the day and time</p>
-                      <p className="text-sm text-slate-600 underline">Log in to see where ↗</p>
-                      <p className="text-sm text-slate-500">Log in to see who&apos;s in 🙌</p>
+                      <p className="font-semibold">A meetup near here</p>
+                      <p className="text-sm text-slate-600">Sign in to see the day and time</p>
+                      <p className="text-sm text-slate-600 underline">Sign in to see where ↗</p>
+                      <p className="text-sm text-slate-500">Sign in to see who&apos;s in 🙌</p>
                     </div>
                     <Link
                       href="/login"
                       className="absolute inset-0 m-auto flex h-8 w-fit items-center rounded-full bg-slate-900/85 px-3 text-xs font-semibold !text-white shadow"
                     >
-                      🔒 Log in to see
+                      🔒 Sign in to see
                     </Link>
                   </div>
-                  <div className="flex gap-2 pt-1">
-                    <Link href="/signup" className="text-brand-600 underline text-sm font-medium">
-                      I have a code →
-                    </Link>
-                    <Link href="/login" className="text-brand-600 underline text-sm">
-                      Log in
-                    </Link>
-                  </div>
+                  <Link href="/login" className="text-brand-600 underline text-sm font-medium block pt-1">
+                    Join free, no invite needed →
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <p className="font-semibold">{a.title} 🏃</p>
-                  <p className="text-sm text-slate-600">
-                    {format(new Date(a.startsAt), "EEE, MMM d · h:mm a")}
+                  <p className="font-semibold">
+                    {categoryFor(a.category).emoji} {a.title}
                   </p>
+                  <p className="text-sm text-slate-600">{formatWhen(a.startsAt, "short")}</p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${a.latitude},${a.longitude}`}
                     target="_blank"
@@ -384,6 +382,11 @@ export default function ActivitiesMap({
                   </p>
                   {a.afterSpot && (
                     <p className="text-sm text-slate-600">🍻 After: {a.afterSpot}</p>
+                  )}
+                  {a.host && (
+                    <p className="text-sm text-slate-500">
+                      Hosted by {a.host.name} · 👍 {a.host.thumbs}
+                    </p>
                   )}
                   <Link
                     href={`/activities/${a.id}`}
@@ -407,7 +410,7 @@ export default function ActivitiesMap({
             href="/login"
             className="pointer-events-auto rounded-full bg-slate-900/85 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur"
           >
-            {activities.length} on right now · log in to see
+            {activities.length} coming up · sign in to see
           </Link>
         </div>
       )}

@@ -11,117 +11,122 @@ import {
   needsEmailCheck,
   verifyPassword,
 } from "@/lib/auth";
-import { checkInviteCode, ensureMembership, spendInvite } from "@/lib/invite";
+import { ensureMembership } from "@/lib/invite";
 import { emailVerificationEnabled } from "@/lib/email";
 import { sendVerificationCode } from "@/lib/email-verification";
 
-const signupSchema = z.object({
-  name: z.string().trim().min(2, "Name is too short").max(80),
-  email: z.string().trim().toLowerCase().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  inviteCode: z.string().trim().min(1, "Enter the invite code from the member who invited you."),
-});
+// One way in for email, in two steps: the address first, then either the
+// password (we know you) or a name and a new password (we don't). Nobody
+// has to decide between "log in" and "sign up" before they've typed
+// anything, and a mistyped address shows up as "create your account"
+// instead of as a mystery second account later.
 
-export async function signupAction(formData: FormData) {
-  const parsed = signupSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    password: formData.get("password"),
-    inviteCode: formData.get("inviteCode"),
-  });
+const emailSchema = z.string().trim().toLowerCase().email("That doesn't look like an email address.");
 
-  if (!parsed.success) {
-    redirect(`/signup?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
-  }
+export type EmailLookup =
+  | { kind: "existing"; provider: "apple" | "google" | null }
+  | { kind: "new" }
+  | { kind: "invalid"; error: string };
 
-  const { name, email, password, inviteCode } = parsed.data;
+/** Step one: is there an account at this address? */
+export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
+  const parsed = emailSchema.safeParse(raw);
+  if (!parsed.success) return { kind: "invalid", error: parsed.error.issues[0].message };
 
   const prisma = await getPrisma();
-
-  // Invite-only: no valid code, no account. Checked before anything is
-  // written so a bad code can't leave a half-made user behind.
-  const invite = await checkInviteCode(prisma, inviteCode);
-  if (!invite.ok) {
-    redirect(`/signup?error=${encodeURIComponent(invite.reason)}`);
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    redirect(`/signup?error=${encodeURIComponent("An account with that email already exists.")}`);
-  }
-
-  const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      invitedById: invite.inviter.id,
-      // Nobody is made to confirm an address we have no way of writing to,
-      // so with email switched off the account is verified from the start.
-      emailVerifiedAt: emailVerificationEnabled() ? null : new Date(),
-    },
+  const user = await prisma.user.findUnique({
+    where: { email: parsed.data },
+    select: { appleSub: true, googleSub: true },
   });
-  await spendInvite(prisma, invite.inviter);
-  // Hand out the membership number (and the code built from it) right away,
-  // so it's on their profile the moment they land.
-  await ensureMembership(prisma, user.id);
-
-  await createSession(user.id);
-
-  if (emailVerificationEnabled()) {
-    const sent = await sendVerificationCode(prisma, user);
-    // A send that fails still lands them on /verify-email; the page has a
-    // resend button, which beats dead-ending them on the signup form with
-    // an account that already exists.
-    const query = sent.ok ? "" : `?error=${encodeURIComponent(sent.error)}`;
-    redirect(`/verify-email${query}`);
-  }
-
-  redirect(nextStepFor(user));
+  if (!user) return { kind: "new" };
+  // Said up front, so somebody who joined with a button doesn't sit there
+  // guessing at a password they never had.
+  return {
+    kind: "existing",
+    provider: user.appleSub ? "apple" : user.googleSub ? "google" : null,
+  };
 }
 
-/** Where a logged-in user should land: confirm the email if one is still
- * owed, then the app, unless the membership fee is switched on and theirs
- * has lapsed. */
-function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerifiedAt: Date | null }) {
-  if (needsEmailCheck(user)) return "/verify-email";
-  return isPaidUp(user) ? "/activities" : "/subscribe";
-}
+export type AuthState = { error: string | null };
 
-const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Enter a valid email"),
-  password: z.string().min(1, "Enter your password"),
+const signupSchema = z.object({
+  name: z.string().trim().min(2, "What should people call you? Two letters at least.").max(80),
+  email: emailSchema,
+  password: z.string().min(8, "Your password needs at least 8 characters."),
 });
 
-export async function loginAction(formData: FormData) {
+const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Enter your password."),
+});
+
+/** Step two, either way round. Errors come back as state rather than a
+ * redirect, so a wrong password is a line of red under the box and not a
+ * reload that empties the form. */
+export async function emailAuthAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const prisma = await getPrisma();
+
+  if (formData.get("mode") === "signup") {
+    const parsed = signupSchema.safeParse({
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+    const { name, email, password } = parsed.data;
+
+    if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
+      return { error: "There's already an account with that email. Go back and sign in instead." };
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash: await hashPassword(password),
+        // Nobody is made to confirm an address we have no way of writing to,
+        // so with email switched off the account is confirmed from the start.
+        emailVerifiedAt: emailVerificationEnabled() ? null : new Date(),
+      },
+    });
+    await ensureMembership(prisma, user.id);
+    await createSession(user.id);
+
+    if (emailVerificationEnabled()) {
+      const sent = await sendVerificationCode(prisma, user);
+      // A send that fails still lands them on /verify-email; the page has a
+      // resend button, which beats dead-ending them here with an account
+      // that already exists.
+      redirect(sent.ok ? "/verify-email" : `/verify-email?error=${encodeURIComponent(sent.error)}`);
+    }
+    redirect("/");
+  }
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
-
-  if (!parsed.success) {
-    redirect(`/login?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
-  }
-
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { email, password } = parsed.data;
-  const prisma = await getPrisma();
+
   const user = await prisma.user.findUnique({ where: { email } });
-  const genericError = encodeURIComponent("Incorrect email or password.");
-  if (!user) {
-    redirect(`/login?error=${genericError}`);
+  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+    return { error: "That password isn't right. Try again." };
   }
   if (user.accountStatus === "SUSPENDED") {
-    redirect(`/login?error=${encodeURIComponent("This account has been suspended.")}`);
-  }
-
-  const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) {
-    redirect(`/login?error=${genericError}`);
+    return { error: "This account has been suspended." };
   }
 
   await createSession(user.id);
   redirect(nextStepFor(user));
+}
+
+/** Where a signed-in member should land: confirm the email if one is
+ * still owed, then the map, unless the membership fee is switched on and
+ * theirs has lapsed. */
+function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerifiedAt: Date | null }) {
+  if (needsEmailCheck(user)) return "/verify-email";
+  return isPaidUp(user) ? "/" : "/subscribe";
 }
 
 export async function logoutAction() {

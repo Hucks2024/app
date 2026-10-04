@@ -82,11 +82,10 @@ export async function requireUser(): Promise<User> {
 
 /** Whether the membership fee is being charged at all.
  *
- * Off by default, and meant to stay off for now: the app is free while it
- * grows, and gets in through invite codes rather than payment. The XRP
- * flow underneath (/subscribe, the admin ledger scan, the payment log) is
- * untouched and starts gating again the moment this is set to "true" in
- * the environment.
+ * Off by default, and meant to stay off for now: the app is free for
+ * everyone while it grows. The XRP flow underneath (/subscribe, the admin
+ * ledger scan, the payment log) is untouched and starts gating again the
+ * moment this is set to "true" in the environment.
  *
  * Note that setting it also means taking money, which the Vercel Hobby
  * plan doesn't allow: that switch and a paid Vercel plan go together. */
@@ -108,12 +107,10 @@ export function needsEmailCheck(user: Pick<User, "emailVerifiedAt">): boolean {
   return emailVerificationEnabled() && user.emailVerifiedAt == null;
 }
 
-/** The bar for joining, hosting and commenting on runs: a logged-in,
- * non-suspended account with a confirmed email address, plus a current
- * membership if the fee is switched on. There's deliberately no photo-ID
- * check here, everyone got in through someone else's invite code and stays
- * traceable to them (see src/lib/invite.ts), which is what keeps strangers
- * out now. */
+/** The bar for joining meetups and giving thumbs up: a signed-in,
+ * non-suspended account with a confirmed email address (when email is
+ * switched on), plus a current membership if the fee is switched on.
+ * Posting meetups asks for more than this, see src/lib/trust.ts. */
 export async function requireMember(): Promise<User> {
   const user = await requireUser();
   if (needsEmailCheck(user)) {

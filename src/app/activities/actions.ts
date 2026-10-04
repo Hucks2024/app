@@ -1,9 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireMember } from "@/lib/auth";
+import { refreshVerified } from "@/lib/trust";
 import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES } from "@/lib/categories";
 
@@ -34,6 +36,13 @@ const createSchema = z.object({
 
 export async function createActivityAction(formData: FormData) {
   const user = await requireMember();
+  const prisma = await getPrisma();
+
+  // Posting is for verified members: somebody who's been to a meetup
+  // themselves. The page explains how to get there; this is the lock.
+  if (!(await refreshVerified(prisma, user)).verified) {
+    redirect("/activities/new");
+  }
 
   const raw = {
     title: formData.get("title"),
@@ -52,16 +61,23 @@ export async function createActivityAction(formData: FormData) {
     redirect(`/activities/new?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
   }
 
-  const startsAt = new Date(parsed.data.startsAt);
+  // The picker gives a wall-clock time with no zone ("2026-10-04T07:00"),
+  // which the server would read as UTC: an hour out all summer in London.
+  // The form also sends the same moment as the browser understood it, in
+  // its own zone, and that's the one we keep when it's there.
+  const fromBrowser = String(formData.get("startsAtUtc") ?? "");
+  const startsAt = new Date(fromBrowser || parsed.data.startsAt);
   if (Number.isNaN(startsAt.getTime())) {
     redirect(`/activities/new?error=${encodeURIComponent("That date/time doesn't look right.")}`);
+  }
+  if (startsAt.getTime() < Date.now() - 5 * 60 * 1000) {
+    redirect(`/activities/new?error=${encodeURIComponent("That time has already gone. Pick one in the future.")}`);
   }
 
   // Best-effort: a run still gets posted even if geocoding fails, it just
   // won't show up on the map view.
   const geocoded = await geocodeLocation(parsed.data.location);
 
-  const prisma = await getPrisma();
   const activity = await prisma.runActivity.create({
     data: {
       hostId: user.id,
@@ -96,6 +112,9 @@ export async function joinActivityAction(formData: FormData) {
     include: { participations: { where: { status: "JOINED" } } },
   });
   if (!activity) redirect("/activities");
+  // Saying you're going to something that's over would count as having
+  // been, which is what unlocks posting.
+  if (activity!.startsAt <= new Date()) redirect(`/activities/${activityId}`);
 
   const alreadyIn = activity!.participations.some((p) => p.userId === user.id);
   const isFull =
@@ -120,8 +139,10 @@ export async function leaveActivityAction(formData: FormData) {
   const activityId = String(formData.get("activityId"));
 
   const prisma = await getPrisma();
+  // Once it's started, who went is history, and history is what thumbs up
+  // and the verified tick are built on: no un-going afterwards.
   await prisma.participation.updateMany({
-    where: { activityId, userId: user.id },
+    where: { activityId, userId: user.id, activity: { startsAt: { gt: new Date() } } },
     data: { status: "CANCELLED" },
   });
 
@@ -148,29 +169,41 @@ export async function leaveActivityAction(formData: FormData) {
   redirect(`/activities/${activityId}`);
 }
 
-export async function postCommentAction(formData: FormData) {
+/** 👍 for somebody you were at a meetup with, or take it back.
+ *
+ * Only after the meetup has started, only between two people who were both
+ * going, and never yourself: the count is meant to mean "somebody who met
+ * them was glad they came". No redirect, so the page just refreshes in
+ * place with the new numbers. */
+export async function toggleThumbsUpAction(formData: FormData) {
   const user = await requireMember();
   const activityId = String(formData.get("activityId"));
-  const body = String(formData.get("body") ?? "").trim();
-
-  if (body.length === 0 || body.length > 1000) {
-    redirect(`/activities/${activityId}?error=${encodeURIComponent("Message must be 1-1000 characters.")}`);
-  }
+  const toId = String(formData.get("toId"));
+  if (toId === user.id) return;
 
   const prisma = await getPrisma();
-  // Looked up rather than trusted from the form: without this, a posted id
-  // was enough to write into any meetup at all.
   const activity = await prisma.runActivity.findUnique({
     where: { id: activityId },
-    select: { id: true },
+    select: {
+      startsAt: true,
+      participations: {
+        where: { status: "JOINED", userId: { in: [user.id, toId] } },
+        select: { userId: true },
+      },
+    },
   });
-  if (!activity) redirect("/activities");
+  if (!activity || activity.startsAt > new Date()) return;
+  if (activity.participations.length !== 2) return;
 
-  await prisma.comment.create({
-    data: { activityId, authorId: user.id, body },
-  });
+  const key = { activityId_fromId_toId: { activityId, fromId: user.id, toId } };
+  const existing = await prisma.thumbsUp.findUnique({ where: key });
+  if (existing) {
+    await prisma.thumbsUp.delete({ where: key });
+  } else {
+    await prisma.thumbsUp.create({ data: { activityId, fromId: user.id, toId } });
+  }
 
-  redirect(`/activities/${activityId}`);
+  revalidatePath(`/activities/${activityId}`);
 }
 
 export async function reportUserAction(formData: FormData) {
