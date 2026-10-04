@@ -108,13 +108,15 @@ body {
   line-height: 1;
   pointer-events: none;
 }
-/* How many are going, tucked into the top-right of the drop. Only drawn
-   when there's a group (see emojiIcon), so an empty meetup never announces
-   itself. */
+/* How many are going, centred just under the emoji, on the narrowing
+   part of the drop (the white disc ends 37px down and the drop is still
+   about 30px wide there). Only drawn when there's a group (see
+   emojiIcon), so an empty meetup never announces itself. */
 .map-pin-count {
   position: absolute;
-  top: -2px;
-  right: -4px;
+  top: 33px;
+  left: 50%;
+  transform: translateX(-50%);
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
@@ -129,13 +131,13 @@ body {
   pointer-events: none;
 }
 
-/* One face from the group, overlapping the bottom-right of the drop. A
-   meetup reads as people rather than a category the moment there's a face
-   on it, which is the whole reason it's here. */
+/* One face from the group, on the top-right of the drop. A meetup reads
+   as people rather than a category the moment there's a face on it,
+   which is the whole reason it's here. */
 .map-pin-face {
   position: absolute;
+  top: -3px;
   right: -6px;
-  bottom: 6px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
