@@ -30,14 +30,11 @@ const PIN_H = 63;
 export type Face = { userId: string; hasPhoto: boolean };
 
 function faceBubble(face: Face | undefined): string {
-  if (!face) return "";
-  // No photo is the common case early on, so the fallback is a real part
-  // of the design rather than a broken image: the same disc, with the
-  // club's own emoji in it.
-  const inner = face.hasPhoto
-    ? `<img src="/api/photos/profile/${face.userId}" alt="" loading="lazy">`
-    : `<span>🙂</span>`;
-  return `<span class="map-pin-face">${inner}</span>`;
+  // A real photo or nothing. There used to be a 🙂 standing in for anyone
+  // without one, which early on was every pin, and read as decoration
+  // rather than a person.
+  if (!face?.hasPhoto) return "";
+  return `<span class="map-pin-face"><img src="/api/photos/profile/${face.userId}" alt="" loading="lazy"></span>`;
 }
 
 function emojiIcon(emoji: string, going: number, face?: Face) {
@@ -317,7 +314,9 @@ export default function ActivitiesMap({
     for (const a of activities) {
       map.set(
         a.id,
-        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces[0])
+        // The first person going who has a photo, so one photo-less early
+        // joiner doesn't leave the pin faceless when others have one.
+        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces.find((f) => f.hasPhoto))
       );
     }
     return map;

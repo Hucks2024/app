@@ -83,12 +83,21 @@ export function hasOwnPassword(
   return !(user.appleSub || user.googleSub) || user.passwordChangedAt != null;
 }
 
-/** Returns the logged-in user (full record) or null. Does not redirect. */
-export async function getCurrentUser(): Promise<User | null> {
+/** The signed-in member, minus their photo. The photo is the one big thing
+ * on the row, and this runs several times on every page; whether there is
+ * one is profilePhotoType, and the picture itself comes from
+ * /api/photos/profile/[userId] only when something actually shows it. */
+export type CurrentUser = Omit<User, "profilePhoto">;
+
+/** Returns the logged-in user or null. Does not redirect. */
+export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await getSession();
   if (!session) return null;
   const prisma = await getPrisma();
-  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    omit: { profilePhoto: true },
+  });
   // Suspended or banned: as good as signed out, everywhere, at once.
   if (!user || user.accountStatus !== "ACTIVE") return null;
   // Signed in before the password last changed: that's exactly the
@@ -98,7 +107,7 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 /** Requires any logged-in, non-suspended user. Redirects to /login otherwise. */
-export async function requireUser(): Promise<User> {
+export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   return user;
@@ -135,7 +144,7 @@ export function needsEmailCheck(user: Pick<User, "emailVerifiedAt">): boolean {
  * non-suspended account with a confirmed email address (when email is
  * switched on), plus a current membership if the fee is switched on.
  * Posting meetups asks for more than this, see src/lib/trust.ts. */
-export async function requireMember(): Promise<User> {
+export async function requireMember(): Promise<CurrentUser> {
   const user = await requireUser();
   if (needsEmailCheck(user)) {
     redirect("/verify-email");
@@ -147,7 +156,7 @@ export async function requireMember(): Promise<User> {
 }
 
 /** Requires a logged-in admin. Redirects home otherwise. */
-export async function requireAdmin(): Promise<User> {
+export async function requireAdmin(): Promise<CurrentUser> {
   const user = await requireUser();
   if (user.role !== "ADMIN") {
     redirect("/");

@@ -1,5 +1,5 @@
 import { subDays } from "date-fns";
-import type { User } from "@prisma/client";
+import type { CurrentUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { liveMeetup } from "@/lib/meetups";
@@ -9,7 +9,7 @@ import MapNotice from "@/components/MapNotice";
 // The map of upcoming meetups. Only reachable by members, both "/" and
 // "/activities" gate on requireMember() before rendering this, so there's
 // no "you're not a member yet" branch to handle here.
-export default async function RunsScreen({ user }: { user: User }) {
+export default async function RunsScreen({ user }: { user: CurrentUser }) {
   const prisma = await getPrisma();
   const { verified, justVerified } = await refreshVerified(prisma, user);
 
@@ -23,7 +23,9 @@ export default async function RunsScreen({ user }: { user: User }) {
       // sitting on a map.
       participations: {
         where: { status: "JOINED" },
-        include: { user: { select: { id: true, profilePhoto: true } } },
+        // The type, not the photo: it says whether there is one without
+        // pulling every picture on the map out of the database.
+        include: { user: { select: { id: true, profilePhotoType: true } } },
         orderBy: { joinedAt: "asc" },
       },
     },
@@ -51,10 +53,11 @@ export default async function RunsScreen({ user }: { user: User }) {
       afterSpot: a.afterSpot,
       joinedCount: a.participations.length,
       maxParticipants: a.maxParticipants,
-      faces: a.participations.slice(0, 3).map((p) => ({
-        userId: p.user.id,
-        hasPhoto: p.user.profilePhoto != null,
-      })),
+      // Only people with a photo: the pin shows a real face or none.
+      faces: a.participations
+        .filter((p) => p.user.profilePhotoType != null)
+        .slice(0, 3)
+        .map((p) => ({ userId: p.user.id, hasPhoto: true })),
       host: { name: a.host.name, thumbs: thumbs.get(a.host.id) ?? 0 },
     }));
 
@@ -75,7 +78,7 @@ export default async function RunsScreen({ user }: { user: User }) {
 
 /** The one thing worth saying to this member on the map right now, most
  * important first, or nothing. */
-async function noticeFor(user: User, verified: boolean, justVerified: boolean) {
+async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boolean) {
   if (justVerified) {
     return (
       <MapNotice id="verified">

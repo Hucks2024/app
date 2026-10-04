@@ -56,7 +56,7 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <div className="flex items-center gap-4 mb-6">
-        <Avatar userId={user.id} hasPhoto={!!user.profilePhoto} size={16} />
+        <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} size={16} />
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
           <p className="text-sm text-white/80">Member #{formatMemberNumber(memberNumber)}</p>
