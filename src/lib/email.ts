@@ -13,7 +13,7 @@ export function emailVerificationEnabled(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
-function fromAddress(): string {
+export function fromAddress(): string {
   // Resend only accepts a from-address on a domain you've verified with
   // them, with onboarding@resend.dev as the exception for testing.
   return process.env.EMAIL_FROM ?? "Packmates <onboarding@resend.dev>";
@@ -54,4 +54,32 @@ export async function sendEmail(opts: {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+/** What a failed send means, in words an admin can act on without anyone
+ * to ask. Resend's own message is kept underneath for the rest. */
+export function explainEmailError(error: string): string {
+  const e = error.toLowerCase();
+  if (e.includes("api key is invalid") || e.includes("returned 401")) {
+    return "Resend doesn't recognise the API key. Copy it again from resend.com → API Keys into RESEND_API_KEY in Vercel, then redeploy.";
+  }
+  if (e.includes("domain is not verified") || e.includes("not verified")) {
+    return "The sending domain isn't verified in Resend yet. On resend.com → Domains, check doyoulikepizza.com says Verified. DNS changes can take a few hours to show up.";
+  }
+  if (e.includes("only send testing emails") || e.includes("testing emails to your own")) {
+    return "Resend is still in testing mode, so it only sends to your own address. Verify doyoulikepizza.com on resend.com → Domains, and set EMAIL_FROM to an address on it, e.g. Packmates <hello@doyoulikepizza.com>, then redeploy.";
+  }
+  if (e.includes("invalid `from`") || e.includes("invalid from")) {
+    return 'EMAIL_FROM isn\'t in a form Resend accepts. Set it to exactly: Packmates <hello@doyoulikepizza.com>, then redeploy.';
+  }
+  if (e.includes("restricted") || e.includes("returned 403")) {
+    return "Resend refused this key for sending from this address. Check the key has sending access for doyoulikepizza.com on resend.com → API Keys, and the domain shows Verified.";
+  }
+  if (e.includes("returned 429")) {
+    return "Resend's sending limit was hit (100 a day on the free plan). It resets within a day.";
+  }
+  if (e.includes("fetch failed") || e.includes("timeout") || e.includes("network")) {
+    return "Couldn't reach Resend at all. Usually a blip on their side: try again in a few minutes.";
+  }
+  return "Resend said no, for the reason below.";
 }

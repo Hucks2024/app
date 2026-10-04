@@ -3,6 +3,8 @@ import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import AdminResetPassword from "@/components/AdminResetPassword";
+import AdminEmailCheck from "@/components/AdminEmailCheck";
+import { emailVerificationEnabled, fromAddress } from "@/lib/email";
 import { formatMemberNumber } from "@/lib/invite";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
@@ -65,6 +67,32 @@ export default async function AdminPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 space-y-10">
       <h1 className="text-2xl font-bold text-white drop-shadow">Admin</h1>
+
+      {/* First on the page because it's the thing most likely to need a
+          look: without working email, members can't reset their own
+          passwords. */}
+      <section>
+        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Email</h2>
+        <div className="card space-y-3">
+          <p className="text-sm text-slate-700">
+            {emailVerificationEnabled() ? (
+              <>
+                Switched on. Sending from <strong>{fromAddress()}</strong>.
+                {!process.env.EMAIL_FROM && (
+                  <span className="text-amber-700">
+                    {" "}
+                    That&apos;s Resend&apos;s test address, which only delivers to the Resend
+                    account&apos;s own email. Set EMAIL_FROM in Vercel.
+                  </span>
+                )}
+              </>
+            ) : (
+              <>Switched off. Add RESEND_API_KEY in Vercel and redeploy to turn it on.</>
+            )}
+          </p>
+          <AdminEmailCheck />
+        </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">

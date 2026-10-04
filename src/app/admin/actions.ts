@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
+import { emailVerificationEnabled, explainEmailError, sendEmail } from "@/lib/email";
+import { SITE } from "@/lib/site";
 import { processXrpPayments } from "@/lib/xrp";
 
 export async function approveVerificationAction(formData: FormData) {
@@ -180,4 +182,28 @@ export async function resetPasswordAction(_prev: ResetState, formData: FormData)
     },
   });
   return { password: temp, error: null };
+}
+
+export type TestEmailState = { ok: boolean; message: string; detail?: string } | null;
+
+/** "Send me a test email" on /admin: the one place that shows exactly why
+ * email isn't going out, so it can be fixed from Vercel and Resend
+ * without anybody digging through logs. */
+export async function testEmailAction(): Promise<TestEmailState> {
+  const me = await requireAdmin();
+  if (!emailVerificationEnabled()) {
+    return {
+      ok: false,
+      message: "Email is switched off: RESEND_API_KEY isn't set in Vercel (for Production), or the site hasn't been redeployed since it was added.",
+    };
+  }
+  const sent = await sendEmail({
+    to: me.email,
+    subject: `Test email from ${SITE.name}`,
+    text: `It works. ${SITE.name} can send email, so members can reset their own passwords.`,
+  });
+  if (sent.ok) {
+    return { ok: true, message: `Sent to ${me.email}. If it isn't in your inbox in a minute, check spam.` };
+  }
+  return { ok: false, message: explainEmailError(sent.error), detail: sent.error };
 }
