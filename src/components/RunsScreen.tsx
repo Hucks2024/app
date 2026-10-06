@@ -71,6 +71,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
       <MeetupBoard
         activities={mapActivities}
         post={{ href: "/activities/new", label: verified ? "Post a meetup" : "How to post a meetup" }}
+        canPost={verified}
         notice={await noticeFor(user, verified, justVerified)}
       />
     </div>

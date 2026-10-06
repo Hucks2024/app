@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { categoryFor } from "@/lib/categories";
 import MeetupList, { kmBetween } from "@/components/MeetupList";
@@ -45,6 +46,7 @@ export default function MeetupBoard({
   activities,
   restricted = false,
   post,
+  canPost = false,
   notice,
   stage = "fill",
 }: {
@@ -56,6 +58,8 @@ export default function MeetupBoard({
   stage?: "fill" | "preview";
   // Where "post a meetup" goes, offered on an empty map.
   post?: { href: string; label: string };
+  // Whether this member can post yet (they've been to a meetup).
+  canPost?: boolean;
   // A tip floating over the bottom of the map (see MapNotice).
   notice?: React.ReactNode;
 }) {
@@ -177,10 +181,23 @@ export default function MeetupBoard({
         {nearestKm != null && nearestKm > 50 && (
           <div className="card mb-3 !p-4 text-base text-slate-700">
             <p className="font-bold text-slate-900">Nothing near you yet 🌍</p>
-            <p className="mt-1">
-              {SITE_NAME} is new where you are. Know people nearby who&apos;d come along? Send them the
-              link, and the first meetup near you could be yours.
-            </p>
+            {canPost ? (
+              <>
+                <p className="mt-1">
+                  {SITE_NAME} is new where you are. Be the first: post a meetup here and people nearby
+                  will see it.
+                </p>
+                <Link href="/activities/new" className="btn-primary mt-3 min-h-12 w-full text-base">
+                  Post the first meetup here
+                </Link>
+              </>
+            ) : (
+              <p className="mt-1">
+                {SITE_NAME} is new where you are, and you can start it. Go to one meetup anywhere
+                first, on a trip for example. After that you can post meetups anywhere, including
+                here.
+              </p>
+            )}
           </div>
         )}
         {filtered.length === 0 ? (

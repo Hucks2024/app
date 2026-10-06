@@ -35,12 +35,16 @@ export default async function NewActivityPage({
             🔓
           </p>
           <h1 className="mt-2 text-xl font-bold">Post your own after your first meetup</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-base text-slate-700">
             Everyone who hosts on packmates has been to a meetup first. It&apos;s how we keep it
             friendly without invites: every host has turned up and met people.
           </p>
+          <p className="mt-2 text-base text-slate-700">
+            It can be any meetup, anywhere. After that you can post wherever you like, even
+            somewhere with no meetups yet.
+          </p>
           {next ? (
-            <p className="mt-4 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-800">
+            <p className="mt-4 rounded-xl bg-brand-50 px-4 py-3 text-base text-brand-800">
               You&apos;re going to{" "}
               <Link href={`/activities/${next.activity.id}`} className="font-semibold underline">
                 {next.activity.title}
@@ -49,7 +53,7 @@ export default async function NewActivityPage({
               it&apos;s happened, you can post your own.
             </p>
           ) : (
-            <ol className="mt-4 space-y-1 text-left text-sm text-slate-700 inline-block">
+            <ol className="mt-4 space-y-1 text-left text-base text-slate-700 inline-block">
               <li>1. Pick a meetup on the map</li>
               <li>2. Tap <strong>I&apos;m in</strong> and go along</li>
               <li>3. That&apos;s it: you can post your own from then on</li>

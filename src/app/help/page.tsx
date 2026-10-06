@@ -155,7 +155,8 @@ export default async function HelpPage() {
             <p>
               Everyone goes to one meetup before they can post their own. It keeps things friendly:
               every host has turned up and met people. Once a meetup you said you&apos;d go to has
-              happened, you can post.
+              happened, you can post. It can be a meetup anywhere, for example while you&apos;re
+              travelling, and after that you can post anywhere, even somewhere with no meetups yet.
             </p>
           ),
         },
