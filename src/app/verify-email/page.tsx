@@ -17,7 +17,7 @@ export default async function VerifyEmailPage({
   return (
     <div className="mx-auto max-w-sm px-4 py-16">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Check your email</h1>
-      <p className="text-sm text-white/85 mb-6">
+      <p className="text-sm text-white mb-6">
         We sent a six-digit code to <strong className="text-white">{user.email}</strong>. Pop it in
         below and you&apos;re in.
       </p>
@@ -50,7 +50,7 @@ export default async function VerifyEmailPage({
             required
             autoFocus
           />
-          <p className="text-xs text-slate-500 mt-1">It expires in 15 minutes.</p>
+          <p className="text-sm text-slate-500 mt-1">It expires in 15 minutes.</p>
         </div>
         <button type="submit" className="btn-primary w-full">
           Confirm
@@ -58,12 +58,12 @@ export default async function VerifyEmailPage({
       </form>
 
       <form action={resendCodeAction} className="mt-4 text-center">
-        <button type="submit" className="text-sm text-white/85 underline">
+        <button type="submit" className="text-sm text-white underline">
           Didn&apos;t get it? Send another
         </button>
       </form>
 
-      <div className="text-xs text-white/70 text-center mt-6 flex items-center justify-center gap-1">
+      <div className="text-sm text-white text-center mt-6 flex items-center justify-center gap-1">
         <span>Wrong address? Log out and sign up again.</span>
         <LogoutButton />
       </div>

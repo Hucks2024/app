@@ -16,17 +16,17 @@ const STEPS = [
   {
     emoji: "📍",
     title: "Find a meetup",
-    body: "Runs, walks, coffee, a pint. Everything on is a pin on the map.",
+    body: "Runs, walks, coffee, a pint. Each one is a pin on the map.",
   },
   {
     emoji: "🙌",
-    title: "Tap “I'm in” and turn up",
-    body: "That's it. No messages, no swiping, no browsing people.",
+    title: "Tap “I'm in” and go",
+    body: "That's all. No messages. No swiping. No browsing people.",
   },
   {
     emoji: "👍",
-    title: "Thumbs up the people you met",
-    body: "Everyone has a count. After your first meetup you can post your own.",
+    title: "Give a thumbs up",
+    body: "Thank the people you met. After one meetup, you can post your own.",
   },
 ];
 
@@ -96,7 +96,7 @@ export default async function Landing() {
         {/* The house rule, said up front: it's part of what this place is,
             and the people it's meant to put off should read it first. */}
         <p className="mt-3 text-center text-sm font-medium text-white">
-          🚩 Three red flags from people you&apos;ve met and you&apos;re banned for life.
+          🚩 If three people you&apos;ve met report you, you&apos;re banned for life.
         </p>
       </section>
 
@@ -108,8 +108,8 @@ export default async function Landing() {
           what&apos;s on near you
         </h2>
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
-        <p className="text-xs text-white/75 text-center mt-3">
-          Pins are approximate until you sign in. Tap one to see what it is.
+        <p className="text-base text-white text-center mt-3">
+          Pins show roughly where. Sign in to see exactly where and when.
         </p>
       </section>
     </div>

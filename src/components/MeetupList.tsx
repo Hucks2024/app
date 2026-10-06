@@ -5,79 +5,90 @@ import LocalTime from "@/components/LocalTime";
 import { categoryFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
-/** "in 20m", "in 3h" — but only while that's news.
+/** "in 20 min", "in 3 hours", but only while that's news.
  *
  * A countdown is the difference between a listing and something about to
  * happen, so it shows up inside the day and goes quiet beyond it, where
  * "in 6 days" tells you nothing the date didn't. */
 function countdown(iso: string): string | null {
   const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
-  if (minutes < 0) return "happening now";
-  if (minutes < 5) return "starting now";
-  if (minutes < 60) return `in ${minutes}m`;
-  if (minutes < 60 * 24) return `in ${Math.round(minutes / 60)}h`;
+  if (minutes < 0) return "Happening now";
+  if (minutes < 5) return "Starting now";
+  if (minutes < 60) return `In ${minutes} min`;
+  if (minutes < 60 * 24) {
+    const hours = Math.round(minutes / 60);
+    return `In ${hours} hour${hours === 1 ? "" : "s"}`;
+  }
   return null;
 }
 
-// The same meetups as the map, as rows. A map answers "what's near me";
-// a list answers "what's on next", and sorted by start time it answers it
-// better than squinting at pins does.
+/** Straight-line distance, in km, between two points on the globe. */
+export function kmBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+}
+
+function away(km: number): string {
+  if (km < 1) return `${Math.max(50, Math.round((km * 1000) / 50) * 50)} m away`;
+  if (km < 10) return `${km.toFixed(1)} km away`;
+  return `${Math.round(km)} km away`;
+}
+
+// The same meetups as the map, as rows, always under it. Research on
+// finding places on a phone keeps finding the same thing: people do it
+// faster and more accurately from a list than from a map, so the map says
+// where and the list says what, when and who, readably.
 export default function MeetupList({
   activities,
-  restricted,
+  here,
 }: {
   activities: MapActivity[];
-  restricted: boolean;
+  // Where the viewer is, once they've tapped "Near me": adds "1.2 km away".
+  here: { lat: number; lng: number } | null;
 }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {activities.map((a) => {
         const category = categoryFor(a.category);
-        const soon = restricted ? null : countdown(a.startsAt);
-        const row = (
-          <div className="card !p-4 flex items-start gap-3 meetup-row">
-            <span className="text-2xl leading-none shrink-0" aria-hidden="true">
-              {category.emoji}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-slate-900 truncate">{a.title}</p>
-              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                {restricted ? "Sign in to see the time and place" : <LocalTime iso={a.startsAt} style="short" />}
-                {soon && <span className="soon-badge">{soon}</span>}
-              </p>
-              <p className="text-xs text-slate-500 truncate">
-                {restricted ? "Somewhere round here" : a.location}
-              </p>
-              {/* The detail the pins no longer carry. */}
-              {(a.distanceKm || a.pace) && (
-                <p className="text-xs text-slate-500">
-                  {[a.distanceKm ? `${a.distanceKm} km` : null, a.pace]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              )}
-              {a.afterSpot && !restricted && (
-                <p className="text-xs text-slate-500 truncate">🍻 After: {a.afterSpot}</p>
-              )}
-              {a.host && (
-                <p className="text-xs text-slate-500 truncate">
-                  Hosted by {a.host.name} · 👍 {a.host.thumbs}
-                </p>
-              )}
-            </div>
-            {!restricted && (
-              <span className="shrink-0 text-xs font-semibold text-slate-500 whitespace-nowrap">
-                {a.joinedCount > 0 ? `${a.joinedCount} in 🙌` : "be the first 🤞"}
-              </span>
-            )}
-          </div>
-        );
-        // Logged out there's nothing to open: the detail page is
-        // members-only, and a link straight to a login wall is a worse
-        // answer than no link.
+        const soon = countdown(a.startsAt);
+        const going = a.joinedCount;
         return (
           <li key={a.id}>
-            {restricted ? row : <Link href={`/activities/${a.id}`}>{row}</Link>}
+            <Link href={`/activities/${a.id}`} className="block">
+              <div className="card !p-4 flex items-start gap-3 meetup-row">
+                <span className="step-badge" aria-hidden="true">
+                  {category.emoji}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-semibold text-slate-900">{a.title}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
+                    <LocalTime iso={a.startsAt} style="short" />
+                    {soon && <span className="soon-badge">{soon}</span>}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    📍 {a.location}
+                    {here && (
+                      <span className="font-medium text-brand-700"> · {away(kmBetween(here, { lat: a.latitude, lng: a.longitude }))}</span>
+                    )}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {going > 1 ? `${going} going` : going === 1 ? "1 going so far" : "Be the first to go"}
+                    {a.host && (
+                      <>
+                        {" · "}Host {a.host.name} 👍 {a.host.thumbs}
+                      </>
+                    )}
+                  </p>
+                </div>
+                <span className="self-center text-xl text-slate-400" aria-hidden="true">
+                  ›
+                </span>
+              </div>
+            </Link>
           </li>
         );
       })}

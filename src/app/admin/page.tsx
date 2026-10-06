@@ -101,7 +101,7 @@ export default async function AdminPage({
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
           Pending photo-ID verifications ({pending.length})
         </h2>
-        {pending.length === 0 && <p className="text-sm text-white/80">Nothing to review.</p>}
+        {pending.length === 0 && <p className="text-sm text-white">Nothing to review.</p>}
         <div className="space-y-4">
           {pending.map((req) => (
             <div key={req.id} className="card">
@@ -110,7 +110,7 @@ export default async function AdminPage({
                   <p className="font-medium">{req.user.name}</p>
                   <p className="text-xs text-slate-500">{req.user.email}</p>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Submitted {format(req.submittedAt, "MMM d, h:mm a")}
                 </p>
               </div>
@@ -160,14 +160,14 @@ export default async function AdminPage({
 
       <section>
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Open reports ({openReports.length})</h2>
-        {openReports.length === 0 && <p className="text-sm text-white/80">No open reports.</p>}
+        {openReports.length === 0 && <p className="text-sm text-white">No open reports.</p>}
         <div className="space-y-3">
           {openReports.map((r) => (
             <div key={r.id} className="card">
               <p className="text-sm">
                 🚩 <span className="font-medium">{r.reporter.name}</span> red-flagged{" "}
                 <span className="font-medium">{r.reportedUser.name}</span>{" "}
-                <span className="text-slate-400 text-xs">
+                <span className="text-slate-500 text-xs">
                   ({format(r.createdAt, "MMM d, h:mm a")})
                 </span>
               </p>
@@ -214,7 +214,7 @@ export default async function AdminPage({
           </p>
         )}
         {xrpPayments.length === 0 ? (
-          <p className="text-sm text-white/80">
+          <p className="text-sm text-white">
             No payments credited yet. Nothing checks the ledger on its own, use &ldquo;Scan
             now&rdquo; above whenever you want to check for new ones.
           </p>
@@ -263,7 +263,9 @@ export default async function AdminPage({
                 <th className="py-2 pr-4">Can post</th>
                 <th className="py-2 pr-4">Paid until</th>
                 <th className="py-2 pr-4">Status</th>
-                <th className="py-2 pr-4"></th>
+                <th className="py-2 pr-4">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -288,7 +290,7 @@ export default async function AdminPage({
                       // Suspending is the way to stop somebody.
                       <form action={setVerifiedAction} className="flex items-center gap-1.5">
                         <input type="hidden" name="userId" value={u.id} />
-                        <span className="text-slate-400">new</span>
+                        <span className="text-slate-500">new</span>
                         <button
                           type="submit"
                           className="text-brand-600 hover:underline text-xs"
@@ -305,7 +307,7 @@ export default async function AdminPage({
                     ) : u.paidUntil && u.paidUntil > new Date() ? (
                       format(u.paidUntil, "MMM d, yyyy")
                     ) : (
-                      <span className="text-slate-400">not paid</span>
+                      <span className="text-slate-500">not paid</span>
                     )}
                   </td>
                   <td className="py-2 pr-4">

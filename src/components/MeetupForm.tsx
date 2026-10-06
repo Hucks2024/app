@@ -1,16 +1,17 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
-import { CATEGORIES } from "@/lib/categories";
+import { startTransition, useActionState, useCallback, useRef, useState } from "react";
+import { CATEGORIES, categoryFor } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation } from "@/lib/geocode";
-import WhenInput from "@/components/WhenInput";
+import WhenPicker from "@/components/WhenPicker";
 
 export type MeetupInitial = {
   id: string;
   title: string;
   category: string;
   location: string;
+  findUs: string | null;
   startsAt: string;
   afterSpot: string | null;
   distanceKm: number | null;
@@ -26,26 +27,47 @@ type PlaceCheck =
   | { status: "found"; for: string; label: string; latitude: number; longitude: number }
   | { status: "not_found" | "unavailable"; for: string };
 
-/** Posting a meetup, and editing one: the same four questions either way.
+const STEPS = ["What", "Where", "When", "Name"] as const;
+
+/** Posting a meetup, one question per screen; or editing one, all on one
+ * page.
  *
- * Sent by hand rather than through the form's action prop, so a mistake
- * comes back as a line of red with everything still filled in, instead of
- * a cleared form to start again. */
+ * One question at a time because that's what research on forms keeps
+ * finding works best for people who aren't confident online, and it works
+ * on a small screen. Editing is different: you came to change one thing,
+ * so everything is laid out to find it.
+ *
+ * Every input stays in the one form whichever step is showing, and the
+ * whole lot is sent once at the end. Sent by hand rather than through the
+ * form's action prop, so a mistake comes back as a line of red with
+ * everything still filled in. */
 export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
+  const editing = Boolean(initial);
   const [state, action, pending] = useActionState<MeetupFormState, FormData>(saveMeetupAction, {
     error: null,
   });
+  const [step, setStep] = useState(0);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const [category, setCategory] = useState(initial?.category ?? "");
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
+  const [when, setWhen] = useState<Date | null>(null);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [titleTouched, setTitleTouched] = useState(editing);
   // An error is about the form as it was sent. Once they start fixing it,
-  // it's out of date, and leaving it up beside "📍 On the map" reads as if
-  // the fix didn't work.
+  // it's out of date.
   const [edited, setEdited] = useState(false);
-  // Busy from the tap, through the place lookup, until the save is back.
+  const formRef = useRef<HTMLFormElement>(null);
+  const onWhen = useCallback((d: Date | null) => setWhen(d), []);
+
   const saving = pending || place.status === "checking";
+  const show = (i: number) => editing || step === i;
+
+  function locationText(): string {
+    return String(new FormData(formRef.current!).get("location") ?? "").trim();
+  }
 
   /** Looks the place up from this browser, once per distinct text. */
-  async function lookUp(value: string): Promise<PlaceCheck> {
-    const text = value.trim();
+  async function lookUp(text: string): Promise<PlaceCheck> {
     if (text.length < 3) return { status: "idle" };
     if (place.status !== "idle" && place.status !== "checking" && place.for === text) return place;
     setPlace({ status: "checking", for: text });
@@ -56,20 +78,50 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     return next;
   }
 
+  /** A suggested name from what they've picked, until they type their own. */
+  function suggestTitle(placeLabel?: string) {
+    if (titleTouched) return;
+    const kind = categoryFor(category).label.split(" / ")[0];
+    const where = (placeLabel ?? locationText()).split(",")[0].trim();
+    setTitle(where ? `${kind} at ${where}` : kind);
+  }
+
+  async function next() {
+    setStepError(null);
+    if (step === 0 && !category) return setStepError("Tap what you're doing.");
+    if (step === 1) {
+      const text = locationText();
+      if (text.length < 3) return setStepError("Type where people should meet.");
+      const found = await lookUp(text);
+      if (found.status === "not_found") {
+        return setStepError(`We can't find "${text}" on the map. Add the area or a postcode, like "Hyde Park, London".`);
+      }
+      suggestTitle(found.status === "found" ? found.label : undefined);
+    }
+    if (step === 2 && !when) return setStepError("Pick a day and a time that's still to come.");
+    setStep(step + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function back() {
+    setStepError(null);
+    setStep(Math.max(0, step - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <form
+      ref={formRef}
       onChange={() => setEdited(true)}
       onSubmit={async (e) => {
         e.preventDefault();
-        const form = e.currentTarget;
         setEdited(false);
-        // Make sure the pin was found for exactly what's in the box now
-        // (pressing return skips the blur that normally does it). The
-        // server looks it up itself if this came back empty.
-        const text = String(new FormData(form).get("location") ?? "").trim();
+        if (!editing && step < STEPS.length - 1) return next();
+        if (!when) return setStepError("Pick a day and a time that's still to come.");
+        const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
-        const data = new FormData(form);
+        const data = new FormData(formRef.current!);
         if (found?.status === "found") {
           data.set("latitude", String(found.latitude));
           data.set("longitude", String(found.longitude));
@@ -77,200 +129,275 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         }
         startTransition(() => action(data));
       }}
-      className="card space-y-5"
+      className="card space-y-6"
+      noValidate
     >
       {initial && <input type="hidden" name="activityId" value={initial.id} />}
+      <input type="hidden" name="category" value={category} />
 
-      {state.error && !edited && (
-        <p role="alert" className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
-          {state.error}
-        </p>
-      )}
-
-      <div>
-        <label className="label" htmlFor="category">
-          1. What kind of meetup?
-        </label>
-        <select className="input" id="category" name="category" defaultValue={initial?.category ?? "RUN"}>
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.emoji}  {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="label" htmlFor="title">
-          2. What&apos;s it called?
-        </label>
-        <input
-          className="input"
-          id="title"
-          name="title"
-          placeholder="Saturday morning 10K"
-          defaultValue={initial?.title}
-          required
-          minLength={3}
-          maxLength={120}
-        />
-      </div>
-      <div>
-        <label className="label" htmlFor="location">
-          3. Where do you meet?
-        </label>
-        <input
-          className="input"
-          id="location"
-          name="location"
-          placeholder="Riverside Park, main entrance, London"
-          defaultValue={initial?.location}
-          required
-          minLength={3}
-          maxLength={200}
-          onBlur={(e) => void lookUp(e.target.value)}
-        />
-        <p className="text-xs mt-1" aria-live="polite">
-          {place.status === "checking" && <span className="text-slate-500">Finding it on the map…</span>}
-          {place.status === "found" && <span className="text-brand-700">📍 On the map at {place.label}</span>}
-          {place.status === "not_found" && (
-            <span className="text-amber-700">
-              Can&apos;t find that on the map. Add the area or a postcode.
-            </span>
-          )}
-          {(place.status === "idle" || place.status === "unavailable") && (
-            <span className="text-slate-500">A landmark and the area is plenty: we&apos;ll put it on the map.</span>
-          )}
-        </p>
-      </div>
-      <div>
-        <label className="label" htmlFor="startsAt">
-          4. When?
-        </label>
-        <WhenInput initialIso={initial?.startsAt} />
-      </div>
-
-      {/* Only four things are needed, so only four are shown. Everything
-          else lives behind the expander, folded away unless editing
-          something that already uses it. */}
-      <details
-        className="border-t border-slate-200 pt-4"
-        open={Boolean(
-          initial &&
-            (initial.afterSpot || initial.distanceKm || initial.pace || initial.maxParticipants || initial.description || initial.stravaUrl)
-        )}
-      >
-        <summary className="cursor-pointer select-none text-sm font-medium text-brand-700">
-          Add more details (all optional)
-        </summary>
-
-        <div className="space-y-4 pt-4">
-          <div>
-            <label className="label" htmlFor="afterSpot">
-              Going somewhere after?
-            </label>
-            <input
-              className="input"
-              id="afterSpot"
-              name="afterSpot"
-              placeholder="The Crown, 12 High Street"
-              defaultValue={initial?.afterSpot ?? ""}
-              maxLength={200}
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              The pub, the café, wherever. Name and rough location is plenty, it shows on the
-              meetup so people can join just for that bit.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label" htmlFor="distanceKm">
-                Distance (km)
-              </label>
-              <input
-                className="input"
-                id="distanceKm"
-                name="distanceKm"
-                type="number"
-                step="0.1"
-                min="0"
-                max="500"
-                placeholder="10"
-                defaultValue={initial?.distanceKm ?? ""}
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="pace">
-                Pace
-              </label>
-              <input
-                className="input"
-                id="pace"
-                name="pace"
-                placeholder="6:00 / km"
-                defaultValue={initial?.pace ?? ""}
-                maxLength={40}
-              />
-            </div>
-          </div>
-          <p className="text-xs text-slate-500">
-            Distance and pace only matter if you&apos;re moving, skip them for a coffee. No idea on
-            pace? Leave it blank, or write what it feels like. Every pace is a real pace.
+      {!editing && (
+        <div aria-live="polite">
+          <p className="text-sm font-semibold text-slate-600">
+            Step {step + 1} of {STEPS.length}
           </p>
-
-          <div>
-            <label className="label" htmlFor="maxParticipants">
-              Max people
-            </label>
-            <input
-              className="input"
-              id="maxParticipants"
-              name="maxParticipants"
-              type="number"
-              min="1"
-              max="500"
-              placeholder="Leave blank for no limit"
-              defaultValue={initial?.maxParticipants ?? ""}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="description">
-              Anything else?
-            </label>
-            <textarea
-              className="input"
-              id="description"
-              name="description"
-              rows={3}
-              maxLength={2000}
-              placeholder="Route, what to bring, coffee after…"
-              defaultValue={initial?.description ?? ""}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="stravaUrl">
-              Strava route
-            </label>
-            <input
-              className="input"
-              id="stravaUrl"
-              name="stravaUrl"
-              type="url"
-              placeholder="https://www.strava.com/routes/..."
-              defaultValue={initial?.stravaUrl ?? ""}
-            />
-            <p className="text-xs text-amber-700 mt-1">
-              ⚠️ Set the route to <strong>Public</strong> in Strava, a private link won&apos;t open
-              for anyone else.
-            </p>
+          <div className="mt-2 flex gap-1.5" aria-hidden="true">
+            {STEPS.map((s, i) => (
+              <span key={s} className={`h-2 flex-1 rounded-full ${i <= step ? "bg-brand-600" : "bg-slate-200"}`} />
+            ))}
           </div>
         </div>
-      </details>
+      )}
 
-      <button type="submit" disabled={saving} aria-busy={saving} className="btn-primary w-full !py-3">
-        {saving && <span className="spinner mr-2" aria-hidden="true" />}
-        {saving ? (initial ? "Saving…" : "Putting it on the map…") : initial ? "Save changes" : "Post meetup"}
-      </button>
+      {(state.error && !edited) || stepError ? (
+        <p role="alert" className="rounded-xl bg-red-50 border border-red-200 text-red-700 text-base px-4 py-3">
+          {stepError ?? state.error}
+        </p>
+      ) : null}
+
+      {/* 1. What */}
+      <fieldset hidden={!show(0)}>
+        <legend className="mb-3 text-xl font-bold text-slate-900">What are you doing?</legend>
+        <div className="type-grid">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.value}
+              type="button"
+              onClick={() => {
+                setCategory(c.value);
+                setStepError(null);
+                setEdited(true);
+                // On the first step, picking one is the answer: straight on.
+                if (!editing) {
+                  setStep(1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              className={`type-btn ${category === c.value ? "type-btn-on" : ""}`}
+              aria-pressed={category === c.value}
+            >
+              <span className="text-3xl leading-none" aria-hidden="true">
+                {c.emoji}
+              </span>
+              <span>{c.label}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      {/* 2. Where */}
+      <fieldset hidden={!show(1)} className="space-y-4">
+        <legend className="mb-1 text-xl font-bold text-slate-900">Where should people meet?</legend>
+        <div>
+          <label className="label !text-base" htmlFor="location">
+            Meeting place
+          </label>
+          <p id="location-hint" className="text-sm text-slate-600 mb-2">
+            Somewhere easy to find, and the area. For example: Hyde Park Corner, London.
+          </p>
+          <input
+            className="input !text-base min-h-12"
+            id="location"
+            name="location"
+            defaultValue={initial?.location}
+            maxLength={200}
+            autoComplete="off"
+            aria-describedby="location-hint location-check"
+            onBlur={(e) => void lookUp(e.target.value.trim())}
+          />
+          <p id="location-check" className="mt-2 text-base" aria-live="polite">
+            {place.status === "checking" && <span className="text-slate-600">Finding it on the map…</span>}
+            {place.status === "found" && (
+              <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
+            )}
+            {place.status === "not_found" && (
+              <span className="font-medium text-amber-800">Can&apos;t find that on the map. Add the area or a postcode.</span>
+            )}
+          </p>
+        </div>
+        <div>
+          <label className="label !text-base" htmlFor="findUs">
+            How will people spot you? <span className="font-normal text-slate-600">(optional)</span>
+          </label>
+          <p id="findUs-hint" className="text-sm text-slate-600 mb-2">
+            For example: &ldquo;Yellow jacket, by the big gate.&rdquo;
+          </p>
+          <input
+            className="input !text-base min-h-12"
+            id="findUs"
+            name="findUs"
+            defaultValue={initial?.findUs ?? ""}
+            maxLength={200}
+            aria-describedby="findUs-hint"
+          />
+        </div>
+      </fieldset>
+
+      {/* 3. When */}
+      <fieldset hidden={!show(2)}>
+        <legend className="mb-3 text-xl font-bold text-slate-900">When is it?</legend>
+        <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
+      </fieldset>
+
+      {/* 4. Name and extras */}
+      <fieldset hidden={!show(3)} className="space-y-4">
+        <legend className="mb-1 text-xl font-bold text-slate-900">
+          {editing ? "Name" : "Last thing: give it a name"}
+        </legend>
+        <div>
+          <label className="label !text-base" htmlFor="title">
+            Name of your meetup
+          </label>
+          <input
+            className="input !text-base min-h-12"
+            id="title"
+            name="title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setTitleTouched(true);
+            }}
+            maxLength={120}
+          />
+          {!editing && (
+            <p className="mt-1 text-sm text-slate-600">We&apos;ve suggested one. Change it if you like.</p>
+          )}
+        </div>
+
+        <details
+          className="rounded-xl border border-slate-200 px-4 py-2"
+          open={Boolean(
+            initial &&
+              (initial.afterSpot || initial.distanceKm || initial.pace || initial.maxParticipants || initial.description || initial.stravaUrl)
+          )}
+        >
+          <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-brand-700">
+            More details (you can skip these)
+          </summary>
+          <div className="space-y-4 py-3">
+            <div>
+              <label className="label !text-base" htmlFor="description">
+                Anything people should know?
+              </label>
+              <textarea
+                className="input !text-base"
+                id="description"
+                name="description"
+                rows={3}
+                maxLength={2000}
+                defaultValue={initial?.description ?? ""}
+              />
+            </div>
+            <div>
+              <label className="label !text-base" htmlFor="afterSpot">
+                Going somewhere after? Where?
+              </label>
+              <input
+                className="input !text-base min-h-12"
+                id="afterSpot"
+                name="afterSpot"
+                defaultValue={initial?.afterSpot ?? ""}
+                maxLength={200}
+              />
+            </div>
+            <div>
+              <label className="label !text-base" htmlFor="maxParticipants">
+                Most people who can come
+              </label>
+              <input
+                className="input !text-base min-h-12"
+                id="maxParticipants"
+                name="maxParticipants"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="500"
+                defaultValue={initial?.maxParticipants ?? ""}
+                aria-describedby="max-hint"
+              />
+              <p id="max-hint" className="mt-1 text-sm text-slate-600">
+                Leave it empty for no limit.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label !text-base" htmlFor="distanceKm">
+                  Distance (km)
+                </label>
+                <input
+                  className="input !text-base min-h-12"
+                  id="distanceKm"
+                  name="distanceKm"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  min="0"
+                  max="500"
+                  defaultValue={initial?.distanceKm ?? ""}
+                />
+              </div>
+              <div>
+                <label className="label !text-base" htmlFor="pace">
+                  Pace
+                </label>
+                <input
+                  className="input !text-base min-h-12"
+                  id="pace"
+                  name="pace"
+                  defaultValue={initial?.pace ?? ""}
+                  maxLength={40}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="label !text-base" htmlFor="stravaUrl">
+                Strava route link
+              </label>
+              <input
+                className="input !text-base min-h-12"
+                id="stravaUrl"
+                name="stravaUrl"
+                type="url"
+                inputMode="url"
+                defaultValue={initial?.stravaUrl ?? ""}
+                aria-describedby="strava-hint"
+              />
+              <p id="strava-hint" className="mt-1 text-sm text-amber-800">
+                Set the route to Public in Strava, or nobody else can open it.
+              </p>
+            </div>
+          </div>
+        </details>
+      </fieldset>
+
+      <div className="flex gap-3">
+        {!editing && step > 0 && (
+          <button type="button" onClick={back} className="btn-secondary min-h-12 px-5 text-base">
+            ← Back
+          </button>
+        )}
+        {/* Step 1 moves on when a type is tapped, so it has no Next. */}
+        {(editing || step > 0) && (
+          <button
+            type="submit"
+            disabled={saving}
+            aria-busy={saving}
+            className="btn-primary min-h-12 flex-1 text-lg"
+          >
+            {saving && <span className="spinner mr-2" aria-hidden="true" />}
+            {editing
+              ? saving
+                ? "Saving…"
+                : "Save changes"
+              : step < STEPS.length - 1
+                ? place.status === "checking"
+                  ? "Finding it…"
+                  : "Next"
+                : saving
+                  ? "Putting it on the map…"
+                  : "Post meetup 🎉"}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

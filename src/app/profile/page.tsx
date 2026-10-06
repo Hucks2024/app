@@ -12,6 +12,7 @@ import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
 import PhotoInput from "@/components/PhotoInput";
+import LogoutButton from "@/components/LogoutButton";
 
 export const metadata = { title: "Profile" };
 
@@ -59,7 +60,7 @@ export default async function ProfilePage({
         <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} size={16} />
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
-          <p className="text-sm text-white/80">Member #{formatMemberNumber(memberNumber)}</p>
+          <p className="text-sm text-white">Member #{formatMemberNumber(memberNumber)}</p>
         </div>
       </div>
 
@@ -77,7 +78,7 @@ export default async function ProfilePage({
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="card !p-4 text-center">
           <p className="text-3xl font-bold text-slate-900">👍 {thumbs}</p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             thumbs up from people you&apos;ve met
           </p>
         </div>
@@ -85,14 +86,14 @@ export default async function ProfilePage({
           {verified ? (
             <>
               <p className="text-3xl font-bold text-brand-700">✓</p>
-              <p className="text-xs text-slate-500 mt-1">Verified. You can post meetups.</p>
+              <p className="text-sm text-slate-500 mt-1">Verified. You can post meetups.</p>
             </>
           ) : (
             <>
               <p className="text-3xl" aria-hidden="true">
                 🌱
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-sm text-slate-500 mt-1">
                 New member. Go to one meetup to unlock posting.
               </p>
             </>
@@ -187,6 +188,11 @@ export default async function ProfilePage({
         <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
       </div>
 
+      <div className="card mt-4 flex items-center justify-between gap-3">
+        <p className="text-base text-slate-700">Signed in as {user.email}</p>
+        <LogoutButton className="btn-secondary min-h-11 flex-none" />
+      </div>
+
       {/* Folded away and two taps deep: it's for good, and it should take
           meaning to do. */}
       <details className="card mt-4">
@@ -237,7 +243,7 @@ function MeetupLinks({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>
-                <span className="block text-xs text-slate-500">
+                <span className="block text-sm text-slate-500">
                   <LocalTime iso={a.startsAt.toISOString()} style="short" />
                   {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">Cancelled</span>}
                 </span>

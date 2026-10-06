@@ -17,9 +17,14 @@ export async function proxy(req: NextRequest) {
   );
   if (!needsAuth) return NextResponse.next();
 
+  // Where they were going, so a shared meetup link still lands on the
+  // meetup once they've signed in, not on the map.
+  const login = new URL("/login", req.url);
+  login.searchParams.set("next", pathname + req.nextUrl.search);
+
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(login);
   }
 
   try {
@@ -28,7 +33,7 @@ export async function proxy(req: NextRequest) {
     await jwtVerify(token, new TextEncoder().encode(secret));
     return NextResponse.next();
   } catch {
-    const res = NextResponse.redirect(new URL("/login", req.url));
+    const res = NextResponse.redirect(login);
     res.cookies.delete(SESSION_COOKIE);
     return res;
   }

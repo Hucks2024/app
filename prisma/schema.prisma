@@ -207,6 +207,11 @@ model RunActivity {
   // labels and map-pin emoji.
   category String @default("RUN")
 
+  // How to spot the group when you get there: "yellow jacket, by the
+  // gate". The commonest way a first meetup goes wrong is turning up at
+  // the right place and not knowing who you're looking for.
+  findUs String?
+
   // Free text for wherever people are heading afterwards, e.g. "The Crown,
   // 12 High Street". One field rather than a name/address pair, it's read
   // by humans, not parsed.

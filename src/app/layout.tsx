@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 import Nav from "@/components/Nav";
+import BottomBar from "@/components/BottomBar";
+import { getCurrentUser } from "@/lib/auth";
 import InstallHint from "@/components/InstallHint";
 import ClaudeMark from "@/components/ClaudeMark";
 import { SITE } from "@/lib/site";
@@ -52,22 +55,33 @@ export const viewport: Viewport = {
   themeColor: "#6d28d9",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
   return (
     // One theme, so nothing has to be decided before paint: no
     // pre-hydration script, no flash, no per-device difference in what the
     // app looks like.
     <html lang="en" className={openSans.variable}>
-      <body className="min-h-screen flex flex-col">
+      <body className={`min-h-screen flex flex-col ${user ? "has-bottom-bar" : ""}`}>
+        <a href="#main" className="skip-link">
+          Skip to the page
+        </a>
         <Nav />
-        <main className="flex-1">{children}</main>
+        <main id="main" className="flex-1">
+          {children}
+        </main>
         <InstallHint />
+        {user && <BottomBar />}
         {/* White rather than slate: the footer sits on the page gradient,
             not on a card, and slate-on-magenta is close to invisible. */}
-        <footer className="border-t border-white/15 py-6 text-center text-xs text-white/70">
-          <p>
-            {SITE.name} ·{" "}
-            <a href={SITE.url} className="hover:text-white hover:underline" rel="noopener">
+        {/* Solid white, not faded: small text needs full contrast to be
+            readable at the pink end of the gradient. */}
+        <footer className="border-t border-white/20 py-6 text-center text-sm text-white">
+          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link href="/help" className="underline underline-offset-2">
+              Help and questions
+            </Link>
+            <a href={SITE.url} className="underline underline-offset-2" rel="noopener">
               {SITE.domain}
             </a>
           </p>
@@ -76,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               href="https://claude.ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 hover:text-white"
+              className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline"
             >
               built with claude
               {/* On a white disc: Claude's orange all but disappears into the

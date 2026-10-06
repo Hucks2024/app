@@ -66,7 +66,8 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     // and on a phone that row was costing the map about 90px to tell
     // members something they knew. Posting moved to the floating button,
     // where it's bigger and always within thumb reach.
-    <div className="mx-auto max-w-3xl px-4 pt-2 pb-2">
+    <div className="mx-auto max-w-3xl px-4 pt-3 pb-8">
+      <h1 className="sr-only">Meetups near you</h1>
       <MeetupBoard
         activities={mapActivities}
         post={{ href: "/activities/new", label: verified ? "Post a meetup" : "How to post a meetup" }}
@@ -84,7 +85,8 @@ async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boo
       <MapNotice id="verified">
         <strong className="text-slate-900">🎉 You&apos;re verified ✓</strong>
         <br />
-        You&apos;ve been to your first meetup, so you can post your own now. Tap the + to start one.
+        You&apos;ve been to your first meetup, so now you can post your own. Tap{" "}
+        <strong>Post</strong> to start one.
       </MapNotice>
     );
   }
@@ -133,8 +135,8 @@ async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boo
       <MapNotice id="welcome">
         <strong className="text-slate-900">👋 Welcome to packmates</strong>
         <br />
-        Pick a pin, tap <strong>I&apos;m in</strong>, and turn up. After your first meetup you can
-        post your own with the +.
+        Tap a pin or a meetup in the list, then tap <strong>I&apos;m in</strong>. After your first
+        meetup, you can post your own.
       </MapNotice>
     );
   }

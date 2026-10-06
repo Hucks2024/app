@@ -26,7 +26,7 @@ export default async function SubscribePage() {
   return (
     <div className="mx-auto max-w-md px-4 py-12">
       <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Join {SITE.name}</h1>
-      <p className="text-white/85 mb-6">
+      <p className="text-white mb-6">
         {XRP_PER_MONTH} XRP a month, sent to the address below with your personal destination
         tag. Send it for as many months as you like at once, e.g. {XRP_PER_MONTH * 12} XRP covers
         a year. An admin checks the ledger and unlocks access once they see it, not instant, but
@@ -56,7 +56,7 @@ export default async function SubscribePage() {
             <p className="label">With destination tag</p>
             <CopyableField value={String(tag)} />
           </div>
-          <p className="text-xs text-amber-700">
+          <p className="text-sm text-amber-700">
             ⚠️ The destination tag is required. Without it we can&apos;t tell your payment apart
             from anyone else&apos;s, and it won&apos;t be credited automatically.
           </p>
@@ -73,7 +73,7 @@ export default async function SubscribePage() {
         </div>
       )}
 
-      <div className="text-xs text-white/70 text-center mt-4 flex items-center justify-center gap-1">
+      <div className="text-sm text-white text-center mt-4 flex items-center justify-center gap-1">
         <span>Signed in as {user.email}, not you?</span>
         <LogoutButton />
       </div>

@@ -46,7 +46,7 @@ export default async function NewActivityPage({
                 {next.activity.title}
               </Link>{" "}
               (<LocalTime iso={next.activity.startsAt.toISOString()} style="short" />). Once
-              it&apos;s happened, the + is yours.
+              it&apos;s happened, you can post your own.
             </p>
           ) : (
             <ol className="mt-4 space-y-1 text-left text-sm text-slate-700 inline-block">
@@ -66,11 +66,10 @@ export default async function NewActivityPage({
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12">
+    <div className="mx-auto max-w-xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a meetup</h1>
-      <p className="text-sm text-white/85 mb-6">
-        Four questions and you&apos;re done. A run, a trek, a travel day, or just coffee, they all
-        count. Everyone welcome, whatever shape you&apos;re in.
+      <p className="text-base text-white mb-6">
+        Four quick questions. Anything counts: a run, a walk, a coffee, a pint.
       </p>
 
       {error && (

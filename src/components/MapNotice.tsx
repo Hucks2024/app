@@ -49,7 +49,7 @@ export default function MapNotice({
 
   return (
     <div className="map-notice" role="status">
-      <div className="min-w-0 flex-1 text-sm text-slate-700">
+      <div className="min-w-0 flex-1 text-base text-slate-700">
         {children}
         {href && cta && (
           <Link href={href} className="mt-1 block font-semibold text-brand-700">
@@ -61,7 +61,7 @@ export default function MapNotice({
         type="button"
         onClick={close}
         aria-label="Close"
-        className="-mr-1 -mt-1 flex h-8 w-8 flex-none items-center justify-center rounded-full text-lg text-slate-400 hover:bg-slate-100"
+        className="-mr-2 -mt-2 flex h-11 w-11 flex-none items-center justify-center rounded-full text-2xl text-slate-500 hover:bg-slate-100"
       >
         ×
       </button>

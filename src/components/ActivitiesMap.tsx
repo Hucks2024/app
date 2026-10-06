@@ -132,12 +132,18 @@ function LocationErrorModal({ message, onClose }: { message: string; onClose: ()
   );
 }
 
-function LocateControl() {
+function LocateControl({ onLocated }: { onLocated?: (lat: number, lng: number) => void }) {
   const leafletMap = useMap();
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.CircleMarker | null>(null);
+  // Kept in a ref so a new callback each render doesn't tear down the
+  // location listeners (and the "you are here" dot with them).
+  const onLocatedRef = useRef(onLocated);
+  useEffect(() => {
+    onLocatedRef.current = onLocated;
+  });
 
   useEffect(() => {
     // Stop clicks/scrolls on the button reaching Leaflet underneath, same
@@ -152,6 +158,7 @@ function LocateControl() {
   useEffect(() => {
     function onFound(e: L.LocationEvent) {
       setStatus("idle");
+      onLocatedRef.current?.(e.latlng.lat, e.latlng.lng);
       if (markerRef.current) leafletMap.removeLayer(markerRef.current);
       markerRef.current = L.circleMarker(e.latlng, {
         radius: 8,
@@ -195,13 +202,13 @@ function LocateControl() {
               maximumAge: 60000,
             });
           }}
-          aria-label="Show my location"
           aria-busy={status === "locating"}
-          title="Show my location"
           className="locate-btn"
         >
           {/* A drawn crosshair rather than the 📍 emoji: white, like the + and
-              - it sits opposite, where a red emoji on violet would clash. */}
+              - it sits opposite, where a red emoji on violet would clash.
+              With the words beside it: a crosshair on its own is one of the
+              many icons people guess at. */}
           <svg
             viewBox="0 0 24 24"
             width="22"
@@ -216,6 +223,7 @@ function LocateControl() {
             <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
             <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
           </svg>
+          <span>{status === "locating" ? "Finding you…" : "Near me"}</span>
         </button>
       </div>
       {status === "error" && errorMessage && (
@@ -289,8 +297,12 @@ export default function ActivitiesMap({
   activities,
   restricted = false,
   post,
+  onLocated,
 }: {
   activities: MapActivity[];
+  // Told where the viewer is when "Near me" finds them, so the list can
+  // say how far away each meetup is.
+  onLocated?: (lat: number, lng: number) => void;
   // Passed through so the empty map can offer the one thing worth doing
   // on an empty map.
   post?: { href: string; label: string };
@@ -355,7 +367,7 @@ export default function ActivitiesMap({
         className="h-full w-full"
       >
         <Tiles />
-        <LocateControl />
+        <LocateControl onLocated={onLocated} />
         {activities.map((a) => (
           <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
             <Popup>
@@ -421,7 +433,7 @@ export default function ActivitiesMap({
                     href={`/activities/${a.id}`}
                     className="text-brand-600 underline text-sm font-medium"
                   >
-                    Let&apos;s go →
+                    See details and join →
                   </Link>
                 </div>
               )}

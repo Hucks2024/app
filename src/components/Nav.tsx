@@ -11,48 +11,61 @@ export default async function Nav() {
     // Violet-700 is the exact top stop of the body gradient (globals.css),
     // so the bar reads as the top of the page rather than a separate strip
     // sitting on it, and white text/marks have something to sit on.
-    <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-10">
-      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+    <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-[1400]">
+      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
         <Link
           href="/"
           className="font-bold text-lg text-white flex items-center gap-2 min-w-0 shrink"
+          aria-label={`${SITE.name}, home`}
         >
           <span className="nav-mark">
             {/* White variant, same reason as the hero: the gradient mark
                 dissolves into a purple background. */}
             <Logo variant="white" size={32} />
           </span>
-          <span className="font-wordmark font-semibold text-[22px] min-[375px]:text-2xl lowercase truncate">
+          {/* translate="no": a phone translating the page would otherwise
+              turn the name into "pack mates" in somebody else's words. */}
+          <span translate="no" className="font-wordmark font-semibold text-[22px] min-[375px]:text-2xl lowercase truncate">
             {SITE.name}
           </span>
         </Link>
-        {/* Tighter gaps on a phone: an admin's row (the name + four
-            links) is wider than a 390px screen at the roomier desktop
-            spacing. */}
-        <nav className="flex items-center gap-3 sm:gap-4 text-sm text-white/90 shrink-0">
+        <nav className="flex items-center gap-1 text-[15px] font-medium text-white shrink-0" aria-label="Top">
           {user ? (
             <>
-              {/* Not on a phone: it's the same map the name already opens,
-                  and the name needs the room more than a second way in. */}
-              <Link href="/activities" className="hidden sm:inline hover:text-white">
-                Meetups
+              {/* On a phone the bottom bar carries these, within thumb's
+                  reach; up here they're for bigger screens. */}
+              <Link href="/" className="nav-link hidden sm:inline-flex">
+                Map
               </Link>
-              <Link href="/profile" className="hover:text-white">
-                Profile
+              <Link href="/activities/new" className="nav-link hidden sm:inline-flex">
+                Post a meetup
+              </Link>
+              <Link href="/profile" className="nav-link hidden sm:inline-flex">
+                Me
+              </Link>
+              <Link href="/help" className="nav-link hidden sm:inline-flex">
+                Help
               </Link>
               {user.role === "ADMIN" && (
-                <Link href="/admin" className="hover:text-white font-semibold">
+                <Link href="/admin" className="nav-link font-bold">
                   Admin
                 </Link>
               )}
-              <LogoutButton />
+              <span className="hidden sm:inline-flex">
+                <LogoutButton />
+              </span>
             </>
           ) : (
-            // One button, because there's one way in: new and returning
-            // members both start here, and the screen works out which.
-            <Link href="/login" className="nav-signin">
-              Sign in
-            </Link>
+            <>
+              <Link href="/help" className="nav-link">
+                Help
+              </Link>
+              {/* One button, because there's one way in: new and returning
+                  members both start here, and the screen works out which. */}
+              <Link href="/login" className="nav-signin">
+                Sign in
+              </Link>
+            </>
           )}
         </nav>
       </div>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, safeNext } from "@/lib/auth";
 import Welcome from "@/components/Welcome";
 
 export const metadata = { title: "Sign in" };
@@ -10,9 +10,9 @@ export const metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  if (await getCurrentUser()) redirect("/");
-  const { error } = await searchParams;
-  return <Welcome startWithEmail error={error ?? null} />;
+  const { error, next } = await searchParams;
+  if (await getCurrentUser()) redirect(safeNext(next));
+  return <Welcome startWithEmail error={error ?? null} next={safeNext(next)} />;
 }

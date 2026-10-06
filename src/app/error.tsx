@@ -28,7 +28,7 @@ export default function Error({
         <Logo size={64} variant="white" className="lost-pin" />
       </div>
       <h1 className="text-2xl font-bold text-white drop-shadow">That didn&apos;t load</h1>
-      <p className="text-sm text-white/85 mt-3">
+      <p className="text-sm text-white mt-3">
         Something hiccuped on our side. It usually sorts itself out in a few seconds.
       </p>
       <div className="mt-6 flex flex-col items-center gap-3">

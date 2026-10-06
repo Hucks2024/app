@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
@@ -6,8 +7,9 @@ import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import Avatar from "@/components/Avatar";
 import JoinedBurst from "@/components/JoinedBurst";
 import LocalTime from "@/components/LocalTime";
+import ShareButton from "@/components/ShareButton";
 import SubmitButton from "@/components/SubmitButton";
-import Link from "next/link";
+import { SITE } from "@/lib/site";
 import {
   cancelActivityAction,
   joinActivityAction,
@@ -31,6 +33,11 @@ type Person = {
   role: string;
   memberVerifiedAt: Date | null;
 };
+
+/** "20261010T070000Z", the form calendar links want. */
+function calStamp(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
 
 export default async function ActivityDetailPage({
   params,
@@ -68,12 +75,15 @@ export default async function ActivityDetailPage({
   const waitlist = activity.participations.filter((p) => p.status === "WAITLIST");
   const cancelled = activity.cancelledAt != null;
   const happened = !cancelled && activity.startsAt <= new Date();
+  const full = activity.maxParticipants != null && joined.length >= activity.maxParticipants;
+  const going = myParticipation?.status === "JOINED";
   // Whether this viewer can hand out thumbs here: they were going, and
   // it's started.
-  const wasThere = happened && myParticipation?.status === "JOINED";
+  const wasThere = happened && going;
   // The host, or an admin tidying up: they can change it or call it off
   // until it starts.
   const canManage = (isHost || user.role === "ADMIN") && !cancelled && !happened;
+  const upcoming = !cancelled && !happened;
 
   const thumbs = await thumbsFor(prisma, [activity.hostId, ...joined.map((p) => p.userId)]);
   const givenByMe = new Set(
@@ -88,160 +98,233 @@ export default async function ActivityDetailPage({
   );
 
   const category = categoryFor(activity.category);
+  const hasPin = activity.latitude != null && activity.longitude != null;
+  const directions = hasPin
+    ? `https://www.google.com/maps/dir/?api=1&destination=${activity.latitude},${activity.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`;
+  const pageUrl = `${SITE.url}/activities/${activity.id}`;
+  const end = new Date(activity.startsAt.getTime() + 2 * 60 * 60 * 1000);
+  const googleCalendar =
+    "https://calendar.google.com/calendar/render?" +
+    new URLSearchParams({
+      action: "TEMPLATE",
+      text: activity.title,
+      dates: `${calStamp(activity.startsAt)}/${calStamp(end)}`,
+      location: activity.location,
+      details: `${activity.findUs ? `How to find us: ${activity.findUs}\n\n` : ""}${pageUrl}`,
+    });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    // Room at the bottom on a phone for the action bar pinned there.
+    <div className="mx-auto max-w-2xl px-4 pt-6 pb-36 sm:pb-10">
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
+        <p role="alert" className="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-base px-4 py-3">
           {error}
         </p>
       )}
       {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
       {saved && (
-        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
+        <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
           Saved. Everyone going sees the new details.
         </p>
       )}
       {reported && (
-        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          Thanks for telling us. A moderator will look at it, and three red flags from different
+        <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
+          Thanks for telling us. A moderator will look at it. Three red flags from different
           people means a lifetime ban.
         </p>
       )}
 
       <div className="card">
-        <span className="badge-slate mb-2 inline-flex">
+        <span className="badge-slate mb-2 inline-flex !text-sm">
           {category.emoji} {category.label}
         </span>
-        <h1 className="text-2xl font-bold">{activity.title}</h1>
-        <p className="text-slate-600 mt-1 font-medium">
-          <LocalTime iso={activity.startsAt.toISOString()} />
-        </p>
-        <p className="text-slate-600">
-          {activity.latitude != null && activity.longitude != null ? (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${activity.latitude},${activity.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-brand-700"
-            >
-              📍 {activity.location} ↗
-            </a>
-          ) : (
-            <>📍 {activity.location}</>
+        <h1 className="text-2xl font-bold leading-tight">{activity.title}</h1>
+
+        {/* The three things people come to a meetup page for, big and in
+            this order: when, where, and how to spot the group. */}
+        <dl className="mt-4 space-y-3 text-base">
+          <div className="flex gap-3">
+            <dt className="w-7 flex-none text-xl" aria-label="When">
+              🗓️
+            </dt>
+            <dd className="font-semibold text-slate-900">
+              <LocalTime iso={activity.startsAt.toISOString()} />
+            </dd>
+          </div>
+          <div className="flex gap-3">
+            <dt className="w-7 flex-none text-xl" aria-label="Where">
+              📍
+            </dt>
+            <dd className="text-slate-800">{activity.location}</dd>
+          </div>
+          {activity.findUs && (
+            <div className="flex gap-3">
+              <dt className="w-7 flex-none text-xl" aria-label="How to find the group">
+                👀
+              </dt>
+              <dd className="text-slate-800">
+                <span className="font-semibold">How to find us: </span>
+                {activity.findUs}
+              </dd>
+            </div>
           )}
-        </p>
-        {activity.afterSpot && (
-          <p className="text-slate-600 mt-1">🍻 Afterwards: {activity.afterSpot}</p>
+          {activity.afterSpot && (
+            <div className="flex gap-3">
+              <dt className="w-7 flex-none text-xl" aria-label="Afterwards">
+                🍻
+              </dt>
+              <dd className="text-slate-800">
+                <span className="font-semibold">Afterwards: </span>
+                {activity.afterSpot}
+              </dd>
+            </div>
+          )}
+          {(activity.distanceKm || activity.pace) && (
+            <div className="flex gap-3">
+              <dt className="w-7 flex-none text-xl" aria-label="Distance and pace">
+                📏
+              </dt>
+              <dd className="text-slate-800">
+                {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? `${activity.pace} pace` : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </dd>
+            </div>
+          )}
+        </dl>
+
+        {/* Big, labelled, and in thumb reach: the things people do with a
+            meetup once they've decided to go. */}
+        {upcoming && (
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
+              <span aria-hidden="true">🧭</span>
+              Directions
+            </a>
+            <a href={`/activities/${activity.id}/calendar`} className="tool-btn">
+              <span aria-hidden="true">📆</span>
+              Add to calendar
+            </a>
+            <ShareButton url={pageUrl} title={activity.title} />
+          </div>
         )}
-        {(activity.distanceKm || activity.pace) && (
-          <p className="text-slate-500 text-sm mt-1">
-            {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? `${activity.pace} pace` : null]
-              .filter(Boolean)
-              .join(" · ")}
+        {upcoming && (
+          <p className="mt-2 text-sm text-slate-600">
+            Use Google Calendar?{" "}
+            <a href={googleCalendar} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline">
+              Add it there instead
+            </a>
           </p>
         )}
+
         {activity.description && (
-          <p className="mt-4 whitespace-pre-wrap text-slate-700">{activity.description}</p>
+          <p className="mt-5 whitespace-pre-wrap text-base text-slate-800">{activity.description}</p>
         )}
         {activity.stravaUrl && (
           <a
             href={activity.stravaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-700"
+            className="mt-3 inline-flex min-h-11 items-center gap-1 text-base font-medium text-orange-700 underline"
           >
-            🧡 View route on Strava
+            🧡 See the route on Strava
           </a>
         )}
 
-        <div className="mt-4 flex items-center gap-2 text-sm">
-          <span className="text-slate-500">Hosted by</span>
-          <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} size={6} />
-          <span className="font-medium">{activity.host.name}</span>
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
+          <span className="text-slate-600">Hosted by</span>
+          <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} size={8} />
+          <span className="font-semibold">{activity.host.name}</span>
           <TrustMarks person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
         </div>
 
-        <div className="mt-6">
-          {cancelled ? (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              ❌ This meetup has been cancelled.
+        {canManage && (
+          <div className="mt-4 flex flex-wrap items-start gap-3">
+            <Link href={`/activities/${activity.id}/edit`} className="btn-secondary min-h-11">
+              ✏️ Change details
+            </Link>
+            {/* Two taps: calling a meetup off can't be undone. */}
+            <details>
+              <summary className="btn-secondary min-h-11 cursor-pointer list-none !text-red-700">
+                Cancel meetup
+              </summary>
+              <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
+                <input type="hidden" name="activityId" value={activity.id} />
+                <p className="text-sm text-slate-700 mb-3">
+                  It comes off the map, and everyone going sees it&apos;s cancelled. You can&apos;t
+                  undo this.
+                </p>
+                <SubmitButton className="btn-danger w-full min-h-11" pending="Cancelling…">
+                  Yes, cancel it
+                </SubmitButton>
+              </form>
+            </details>
+          </div>
+        )}
+      </div>
+
+      {/* The one thing to do on this page, pinned to the bottom of a phone
+          screen above the tab bar, so it's always in thumb's reach however
+          far down you've scrolled. On a bigger screen it sits in the page. */}
+      <div className="action-bar">
+        {cancelled ? (
+          <p className="action-bar-note text-red-700">❌ This meetup has been cancelled.</p>
+        ) : happened ? (
+          wasThere ? (
+            <a href="#people" className="btn-primary w-full min-h-12 text-base">
+              👍 Thumbs up the people you met
+            </a>
+          ) : (
+            <p className="action-bar-note">This meetup has finished.</p>
+          )
+        ) : isHost ? (
+          <p className="action-bar-note">You&apos;re hosting this one. {joined.length - 1 > 0 ? `${joined.length - 1} going so far.` : "Nobody else yet, share it!"}</p>
+        ) : activity.host.accountStatus !== "ACTIVE" ? (
+          <p className="action-bar-note">This host has been removed.</p>
+        ) : !myParticipation ? (
+          <form action={joinActivityAction} className="w-full">
+            <input type="hidden" name="activityId" value={activity.id} />
+            <SubmitButton className="btn-primary w-full min-h-12 text-lg" pending="Saving your place…">
+              {full ? "It's full: join the waitlist" : "I'm in 🙌"}
+            </SubmitButton>
+            <p className="mt-1 text-center text-sm text-slate-600">
+              Free. {joined.length > 0 ? `${joined.length} going.` : "Be the first to say yes."}
             </p>
-          ) : happened ? (
-            <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              {wasThere
-                ? "This one's happened. Give a 👍 to the people you met, below."
-                : "This one's already happened."}
-            </p>
-          ) : isHost ? (
-            <p className="text-sm text-slate-500">You&apos;re hosting this one.</p>
-          ) : activity.host.accountStatus !== "ACTIVE" ? (
-            <p className="text-sm text-slate-500">This host has been removed.</p>
-          ) : !myParticipation ? (
-            <form action={joinActivityAction}>
+          </form>
+        ) : going ? (
+          <div className="flex w-full items-center gap-3">
+            <p className="flex-1 text-base font-semibold text-brand-800">✓ You&apos;re going</p>
+            <form action={leaveActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
-              <SubmitButton className="btn-primary w-full sm:w-auto !py-3 !px-8 text-base" pending="Saving your spot…">
-                I&apos;m in 🙌
+              <SubmitButton className="btn-secondary min-h-11" pending="Saving…">
+                I can&apos;t go now
               </SubmitButton>
             </form>
-          ) : myParticipation.status === "JOINED" ? (
-            <div className="flex items-center gap-3">
-              <span className="badge-green !text-sm !py-1">You&apos;re in ✓</span>
-              <form action={leaveActivityAction}>
-                <input type="hidden" name="activityId" value={activity.id} />
-                <SubmitButton className="btn-secondary !py-1.5 text-sm" pending="Leaving…">
-                  Can&apos;t make it
-                </SubmitButton>
-              </form>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <span className="badge-amber">You&apos;re on the waitlist</span>
-              <form action={leaveActivityAction}>
-                <input type="hidden" name="activityId" value={activity.id} />
-                <SubmitButton className="btn-secondary !py-1.5 text-sm" pending="Leaving…">
-                  Leave waitlist
-                </SubmitButton>
-              </form>
-            </div>
-          )}
-
-          {canManage && (
-            <div className="mt-5 flex flex-wrap items-start gap-3 border-t border-slate-100 pt-4">
-              <Link href={`/activities/${activity.id}/edit`} className="btn-secondary !py-1.5 text-sm">
-                ✏️ Edit
-              </Link>
-              {/* Two taps: calling a meetup off can't be undone. */}
-              <details>
-                <summary className="btn-secondary !py-1.5 text-sm cursor-pointer list-none !text-red-700">
-                  Cancel meetup
-                </summary>
-                <form action={cancelActivityAction} className="mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3">
-                  <input type="hidden" name="activityId" value={activity.id} />
-                  <p className="text-xs text-slate-600 mb-2">
-                    It comes off the map, and everyone going sees it&apos;s cancelled. This
-                    can&apos;t be undone.
-                  </p>
-                  <SubmitButton className="btn-danger w-full !py-1.5 text-sm" pending="Cancelling…">
-                    Yes, cancel it
-                  </SubmitButton>
-                </form>
-              </details>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex w-full items-center gap-3">
+            <p className="flex-1 text-base font-semibold text-amber-800">You&apos;re on the waitlist</p>
+            <form action={leaveActivityAction}>
+              <input type="hidden" name="activityId" value={activity.id} />
+              <SubmitButton className="btn-secondary min-h-11" pending="Saving…">
+                Leave waitlist
+              </SubmitButton>
+            </form>
+          </div>
+        )}
       </div>
 
       <div id="people" className="card mt-6 scroll-mt-20">
-        <h2 className="font-semibold mb-1">
+        <h2 className="text-lg font-bold mb-1">
           {happened ? "Who came" : "Who's going"} ({joined.length}
-          {activity.maxParticipants && !happened ? ` / ${activity.maxParticipants}` : ""})
+          {activity.maxParticipants && !happened ? ` of ${activity.maxParticipants}` : ""})
         </h2>
-        <p className="text-xs text-slate-500 mb-4">
-          ✓ means they&apos;ve been to a meetup before. 👍 is how many thumbs up they&apos;ve had
-          from people they met.
+        <p className="text-sm text-slate-600 mb-4">
+          ✓ means they&apos;ve been to a meetup before. 👍 is how many thumbs up people they met
+          have given them.
         </p>
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {joined.map((p) => (
             <ParticipantRow
               key={p.id}
@@ -257,10 +340,10 @@ export default async function ActivityDetailPage({
 
         {waitlist.length > 0 && !happened && (
           <>
-            <h3 className="font-semibold mt-5 mb-3 text-sm text-slate-600">
-              Waitlist ({waitlist.length})
+            <h3 className="font-semibold mt-6 mb-3 text-base text-slate-700">
+              Waiting for a place ({waitlist.length})
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {waitlist.map((p) => (
                 <ParticipantRow
                   key={p.id}
@@ -275,15 +358,25 @@ export default async function ActivityDetailPage({
             </ul>
           </>
         )}
-
-        {/* Said plainly, because it's the reason people pick an app like
-            this: there's no inbox here for anyone to pester you through. */}
-        <p className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
-          There are no messages on packmates, on purpose. Everything you need is up top: when,
-          where and who&apos;s coming. If somebody&apos;s out of line, give them a 🚩: three from
-          different people and they&apos;re banned for life.
-        </p>
       </div>
+
+      {/* Meeting people you don't know yet: the few things worth doing,
+          one tap away and out of the way otherwise. */}
+      <details className="card mt-6">
+        <summary className="cursor-pointer select-none text-base font-semibold text-slate-900 min-h-11 flex items-center">
+          🛟 Staying safe
+        </summary>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-base text-slate-700">
+          <li>Meet in the busy, public spot the host gave. Don&apos;t go off on your own with someone you&apos;ve just met.</li>
+          <li>Tell a friend where you&apos;re going and when you&apos;ll be back.</li>
+          <li>Get there and home your own way.</li>
+          <li>If something feels wrong, leave. You don&apos;t owe anyone an explanation.</li>
+          <li>If someone is out of line, tap <strong>Report</strong> next to their name. It&apos;s private.</li>
+        </ul>
+        <p className="mt-3 text-sm text-slate-600">
+          There are no private messages on {SITE.name}, on purpose. Nobody can message you.
+        </p>
+      </details>
     </div>
   );
 }
@@ -291,17 +384,17 @@ export default async function ActivityDetailPage({
 /** The ✓ (been to a meetup) or "new", and the 👍 count. */
 function TrustMarks({ person, thumbs }: { person: Person; thumbs: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs">
+    <span className="inline-flex items-center gap-1.5 text-sm">
       {isVerifiedMember(person) ? (
-        <span className="badge-green !px-1.5" title="Verified: has been to a meetup">
-          ✓
+        <span className="badge-green" title="Has been to a meetup before">
+          ✓ Been before
         </span>
       ) : (
         <span className="badge-amber" title="Hasn't been to a meetup yet">
-          new
+          New
         </span>
       )}
-      <span className="font-semibold text-slate-600" title={`${thumbs} thumbs up`}>
+      <span className="font-semibold text-slate-700" title={`${thumbs} thumbs up`}>
         👍 {thumbs}
       </span>
     </span>
@@ -324,20 +417,20 @@ function ParticipantRow({
   thumbed: boolean;
 }) {
   return (
-    <li className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
-        <Avatar userId={person.id} hasPhoto={!!person.profilePhotoType} size={9} />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium">
-            {person.name}
-            {person.id === viewer && <span className="text-slate-400 font-normal"> (you)</span>}
-          </p>
-          <TrustMarks person={person} thumbs={thumbs} />
+    <li>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar userId={person.id} hasPhoto={!!person.profilePhotoType} size={10} />
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold">
+              {person.name}
+              {person.id === viewer && <span className="text-slate-500 font-normal"> (you)</span>}
+            </p>
+            <TrustMarks person={person} thumbs={thumbs} />
+          </div>
         </div>
-      </div>
-      <div className="flex flex-none items-center gap-2">
         {canThumb && (
-          <form action={toggleThumbsUpAction}>
+          <form action={toggleThumbsUpAction} className="flex-none">
             <input type="hidden" name="activityId" value={activityId} />
             <input type="hidden" name="toId" value={person.id} />
             <SubmitButton
@@ -349,39 +442,36 @@ function ParticipantRow({
             </SubmitButton>
           </form>
         )}
-        {person.id !== viewer && (
-          <details className="relative text-sm">
-            <summary
-              className="cursor-pointer list-none rounded-full px-2 py-1 text-slate-400 hover:text-red-600"
-              title={`Red-flag ${person.name}`}
-            >
-              🚩
-            </summary>
-            <form
-              action={reportUserAction}
-              className="absolute right-0 z-10 mt-2 flex w-60 flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg"
-            >
-              <p className="text-xs text-slate-500">
-                Red flags are private: only moderators see them. Three from different people
-                who&apos;ve met {person.name} at meetups is a lifetime ban.
-              </p>
-              <input type="hidden" name="reportedUserId" value={person.id} />
-              <input type="hidden" name="activityId" value={activityId} />
-              <textarea
-                name="reason"
-                className="input"
-                rows={2}
-                placeholder="What happened?"
-                required
-                minLength={5}
-              />
-              <SubmitButton className="btn-danger !py-1 !text-xs" pending="Sending…">
-                🚩 Red-flag {person.name}
-              </SubmitButton>
-            </form>
-          </details>
-        )}
       </div>
+      {person.id !== viewer && (
+        <details className="mt-1 pl-[3.25rem]">
+          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-slate-600 underline hover:text-red-700">
+            🚩 Report {person.name}
+          </summary>
+          <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
+            <p className="text-sm text-slate-700">
+              Only moderators see this. Three reports from different people who&apos;ve met{" "}
+              {person.name} at meetups is a lifetime ban.
+            </p>
+            <input type="hidden" name="reportedUserId" value={person.id} />
+            <input type="hidden" name="activityId" value={activityId} />
+            <label htmlFor={`reason-${person.id}`} className="text-sm font-semibold text-slate-800">
+              What happened?
+            </label>
+            <textarea
+              id={`reason-${person.id}`}
+              name="reason"
+              className="input !text-base"
+              rows={3}
+              required
+              minLength={5}
+            />
+            <SubmitButton className="btn-danger min-h-11" pending="Sending…">
+              Send report
+            </SubmitButton>
+          </form>
+        </details>
+      )}
     </li>
   );
 }

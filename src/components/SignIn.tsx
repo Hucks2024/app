@@ -58,6 +58,7 @@ export default function SignIn({
   canEmail,
   startWithEmail = false,
   error: outsideError,
+  next = "/",
 }: {
   providers: { apple: boolean; google: boolean };
   // Whether this site can send email, which is what decides how a
@@ -67,6 +68,7 @@ export default function SignIn({
   // only way in anyway: one fewer tap to get to the thing you came for.
   startWithEmail?: boolean;
   error?: string | null;
+  next?: string;
 }) {
   const anyProvider = providers.apple || providers.google;
   const [step, setStep] = useState<Step>(startWithEmail && !anyProvider ? "email" : "start");
@@ -181,7 +183,7 @@ export default function SignIn({
         setLookupError(null);
         setResetError(null);
       }}
-      className="text-sm font-medium text-white/85 underline underline-offset-2"
+      className="text-sm font-medium text-white underline underline-offset-2"
     >
       {step === "email"
         ? "← Other ways in"
@@ -208,16 +210,17 @@ export default function SignIn({
     return (
       <form onSubmit={submitWith(resetAction)} className="space-y-3">
         <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="next" value={next} />
         <input type="email" value={email} autoComplete="username" readOnly hidden />
         <p className="text-center text-white">
           <span className="block text-lg font-bold">Check your email 📬</span>
-          <span className="text-sm text-white/85">
+          <span className="text-sm text-white">
             We sent a code to <strong className="text-white">{email}</strong>
           </span>
         </p>
         {errorBox}
-        <label htmlFor="reset-code" className="sr-only">
-          The six-digit code
+        <label htmlFor="reset-code" className="field-label">
+          The six-digit code from the email
         </label>
         <input
           id="reset-code"
@@ -228,10 +231,9 @@ export default function SignIn({
           maxLength={7}
           required
           autoFocus
-          placeholder="Six-digit code"
           className="pill-input text-center tracking-[0.3em]"
         />
-        <label htmlFor="reset-password" className="sr-only">
+        <label htmlFor="reset-password" className="field-label">
           New password
         </label>
         <input
@@ -241,9 +243,12 @@ export default function SignIn({
           autoComplete="new-password"
           required
           minLength={8}
-          placeholder="New password (8+ characters)"
+          aria-describedby="reset-password-hint"
           className="pill-input"
         />
+        <p id="reset-password-hint" className="field-hint">
+          At least 8 letters, numbers or symbols.
+        </p>
         <button type="submit" disabled={resetting} className="pill-btn pill-black">
           {resetting && <Spinner />}
           Save and sign in
@@ -257,7 +262,7 @@ export default function SignIn({
     return (
       <form onSubmit={lookUp} className="space-y-3">
         {errorBox}
-        <label htmlFor="signin-email" className="sr-only">
+        <label htmlFor="signin-email" className="field-label">
           Your email
         </label>
         <input
@@ -272,7 +277,6 @@ export default function SignIn({
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Your email"
           className="pill-input"
         />
         <button type="submit" disabled={looking} className="pill-btn pill-black">
@@ -289,6 +293,7 @@ export default function SignIn({
     <form onSubmit={submitWith(formAction)} className="space-y-3">
       <input type="hidden" name="mode" value={creating ? "signup" : "login"} />
       <input type="hidden" name="email" value={email} />
+      <input type="hidden" name="next" value={next} />
       {/* Lets the browser's password manager file the new password under
           the right address. */}
       <input type="email" value={email} autoComplete="username" readOnly hidden />
@@ -297,14 +302,14 @@ export default function SignIn({
         {creating ? (
           <>
             <span className="block text-lg font-bold">Nice to meet you 👋</span>
-            <span className="text-sm text-white/85">
+            <span className="text-sm text-white">
               Making a new account for <strong className="text-white">{email}</strong>
             </span>
           </>
         ) : (
           <>
             <span className="block text-lg font-bold">Welcome back 🙌</span>
-            <span className="text-sm text-white/85">
+            <span className="text-sm text-white">
               Signing in as <strong className="text-white">{email}</strong>
             </span>
           </>
@@ -335,7 +340,7 @@ export default function SignIn({
             aria-hidden="true"
             className="absolute -left-[9999px] h-px w-px opacity-0"
           />
-          <label htmlFor="signin-name" className="sr-only">
+          <label htmlFor="signin-name" className="field-label">
             Your first name
           </label>
           <input
@@ -346,12 +351,11 @@ export default function SignIn({
             minLength={2}
             maxLength={80}
             autoFocus
-            placeholder="Your first name"
             className="pill-input"
           />
         </>
       )}
-      <label htmlFor="signin-password" className="sr-only">
+      <label htmlFor="signin-password" className="field-label">
         {creating ? "Choose a password" : "Your password"}
       </label>
       <input
@@ -362,9 +366,14 @@ export default function SignIn({
         required
         minLength={creating ? 8 : 1}
         autoFocus={!creating}
-        placeholder={creating ? "Choose a password (8+ characters)" : "Your password"}
+        aria-describedby={creating ? "signin-password-hint" : undefined}
         className="pill-input"
       />
+      {creating && (
+        <p id="signin-password-hint" className="field-hint">
+          At least 8 letters, numbers or symbols.
+        </p>
+      )}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">
         {submitting && <Spinner />}
         {creating ? "Create my account" : "Sign in"}
@@ -376,7 +385,7 @@ export default function SignIn({
             type="button"
             onClick={forgot}
             disabled={sendingReset}
-            className="text-sm font-medium text-white/85 underline underline-offset-2"
+            className="text-sm font-medium text-white underline underline-offset-2"
           >
             {sendingReset ? "Sending…" : "Forgot your password?"}
           </button>

@@ -21,9 +21,12 @@ export async function meetupsComingUp(): Promise<number> {
 export default async function Welcome({
   startWithEmail = false,
   error,
+  next = "/",
 }: {
   startWithEmail?: boolean;
   error?: string | null;
+  // Where to land after signing in (see safeNext).
+  next?: string;
 }) {
   const count = await meetupsComingUp();
 
@@ -38,10 +41,10 @@ export default async function Welcome({
       <h1 className="font-wordmark mt-6 text-[clamp(22px,7.4vw,34px)] font-bold leading-tight lowercase">
         welcome to packmates
       </h1>
-      <p className="font-wordmark mt-1 text-lg font-semibold text-white/90">
+      <p className="font-wordmark mt-1 text-lg font-semibold text-white">
         your guide to the galaxy
       </p>
-      <p className="mt-3 text-[15px] leading-snug text-white/85">
+      <p className="mt-3 text-[15px] leading-snug text-white">
         Real meetups with real people. Find one on the map, turn up, make friends.
       </p>
 
@@ -62,10 +65,11 @@ export default async function Welcome({
           canEmail={emailVerificationEnabled()}
           startWithEmail={startWithEmail}
           error={error}
+          next={next}
         />
       </div>
 
-      <p className="mt-4 text-xs text-white/75">Free for everyone. No invite needed.</p>
+      <p className="mt-4 text-sm text-white">Free for everyone. No invite needed.</p>
     </section>
   );
 }

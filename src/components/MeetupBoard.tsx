@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { categoryFor } from "@/lib/categories";
@@ -21,18 +19,12 @@ const ActivitiesMap = dynamic(() => import("@/components/ActivitiesMap"), {
   ssr: false,
   loading: () => (
     <div className="map-shell w-full rounded-2xl border border-slate-200 bg-slate-100 shadow-sm flex items-center justify-center">
-      <p className="text-sm text-slate-500">Rounding everyone up… 🗺️</p>
+      <p className="text-base text-slate-600">Loading the map… 🗺️</p>
     </div>
   ),
 });
 
 type Day = "ANY" | "TODAY" | "WEEK";
-
-const DAYS: { value: Day; label: string }[] = [
-  { value: "ANY", label: "Any day" },
-  { value: "TODAY", label: "Today" },
-  { value: "WEEK", label: "This week" },
-];
 
 function matchesDay(iso: string, day: Day): boolean {
   if (day === "ANY") return true;
@@ -41,11 +33,11 @@ function matchesDay(iso: string, day: Day): boolean {
   return isWithinInterval(d, { start: startOfDay(new Date()), end: addDays(new Date(), 7) });
 }
 
-/** The whole browse experience: filter, then map or list.
+/** The whole browse experience: filter, the map, and the list under it.
  *
- * One component rather than filters-beside-a-map, because both views show
- * the same filtered set and a filter that only applied to one of them
- * would be a bug waiting to happen.
+ * One component, because the map and the list show the same filtered set
+ * and a filter that only applied to one of them would be a bug waiting to
+ * happen.
  */
 export default function MeetupBoard({
   activities,
@@ -55,28 +47,20 @@ export default function MeetupBoard({
   stage = "fill",
 }: {
   activities: MapActivity[];
+  // The logged-out preview: blurred pins, no filters, no list.
   restricted?: boolean;
-  // "fill" gives the map everything the viewport has left, which is what
-  // the members' screen wants. "preview" is a fixed slice, for the front
-  // door, where the map is the hook rather than the whole app and the
-  // page is meant to keep scrolling past it.
+  // "fill" is the members' screen (map, then the list). "preview" is the
+  // front door's fixed slice of map.
   stage?: "fill" | "preview";
-  // Where "post a meetup" goes, and what this club calls one. Absent on
-  // the logged-out map, where there's nothing to post yet.
+  // Where "post a meetup" goes, offered on an empty map.
   post?: { href: string; label: string };
   // A tip floating over the bottom of the map (see MapNotice).
   notice?: React.ReactNode;
 }) {
   const [category, setCategory] = useState<string>("ALL");
   const [day, setDay] = useState<Day>("ANY");
-  // Seeded from ?view=list so the choice survives a reload and can be
-  // linked to. Read through useSearchParams rather than window.location,
-  // which would give the server "map" and the browser "list" and leave
-  // React reconciling a mismatch on every load.
-  const params = useSearchParams();
-  const [view, setView] = useState<"map" | "list">(
-    params.get("view") === "list" ? "list" : "map"
-  );
+  // Set once the viewer taps "Near me" and allows it; adds distances.
+  const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
 
   // Only categories that actually have something in them get a chip: a row
   // of filters that all lead to "nothing here" is just clutter.
@@ -108,89 +92,86 @@ export default function MeetupBoard({
 
   const total = activities.filter((a) => matchesDay(a.startsAt, day)).length;
 
+  if (restricted) {
+    return (
+      <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
+        <ActivitiesMap activities={filtered} restricted />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Not rendered at all for a visitor who can't read the pins
-          anyway. Hiding it with a class doesn't work: .chip-row sets its
-          own display, and filtering a blur is busywork regardless. */}
-      {!restricted && (
-      <div className="chip-row mb-2">
+      {/* Plain buttons rather than a dropdown: with this few options, every
+          one visible is quicker than opening a menu to find them. */}
+      <div className="chip-row mb-3" role="group" aria-label="Filter meetups">
         <button
           type="button"
-          onClick={() => setCategory("ALL")}
-          className={`chip ${category === "ALL" ? "chip-on" : ""}`}
+          onClick={() => {
+            setCategory("ALL");
+            setDay("ANY");
+          }}
+          className={`chip ${category === "ALL" && day === "ANY" ? "chip-on" : ""}`}
+          aria-pressed={category === "ALL" && day === "ANY"}
         >
-          All ({total})
+          All ({activities.length})
         </button>
-        {/* One control rather than a chip each: three of the row's limited
-            width went on a filter most people never touch. */}
-        <label className={`chip ${day === "ANY" ? "" : "chip-on"}`}>
-          <span aria-hidden="true">📅</span>
-          <select
-            value={day}
-            onChange={(e) => setDay(e.target.value as Day)}
-            className="bg-transparent border-0 p-0 pr-1 font-semibold text-inherit focus:outline-none cursor-pointer"
-            aria-label="Which days"
-          >
-            {DAYS.map((d) => (
-              <option key={d.value} value={d.value} className="text-slate-900">
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <button
+          type="button"
+          onClick={() => setDay(day === "TODAY" ? "ANY" : "TODAY")}
+          className={`chip ${day === "TODAY" ? "chip-on" : ""}`}
+          aria-pressed={day === "TODAY"}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          onClick={() => setDay(day === "WEEK" ? "ANY" : "WEEK")}
+          className={`chip ${day === "WEEK" ? "chip-on" : ""}`}
+          aria-pressed={day === "WEEK"}
+        >
+          This week
+        </button>
         {categoryChips.map((c) => (
           <button
             key={c.value}
             type="button"
             onClick={() => setCategory(category === c.value ? "ALL" : c.value)}
             className={`chip ${category === c.value ? "chip-on" : ""}`}
+            aria-pressed={category === c.value}
           >
             <span aria-hidden="true">{c.emoji}</span>
             {c.label} ({c.count})
           </button>
         ))}
       </div>
-      )}
 
-      {/* The map fills whatever's left of the screen, and the two controls
-          float on top of it rather than taking a row each underneath. On a
-          phone those rows were the difference between a map you can read
-          and a letterbox. */}
-      <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
-        {view === "map" ? (
-          // Never swapped out for a card. The map handles having nothing
-          // on it, and taking it away because a filter matched nothing
-          // makes the app look broken rather than quiet.
-          <ActivitiesMap activities={filtered} restricted={restricted} post={post} />
-        ) : filtered.length === 0 ? (
-          <div className="card text-sm text-slate-600">
-            Nothing doing on that one. Try another day, or clear the filter. 🤷
+      <div className="board-stage board-stage-split relative">
+        {/* Never swapped out for a card. The map handles having nothing on
+            it, and taking it away because a filter matched nothing makes
+            the app look broken rather than quiet. */}
+        <ActivitiesMap
+          activities={filtered}
+          post={post}
+          onLocated={(lat, lng) => setHere({ lat, lng })}
+        />
+        {notice}
+      </div>
+
+      <section className="mt-5" aria-labelledby="coming-up">
+        <h2 id="coming-up" className="mb-3 text-lg font-bold text-white">
+          {day === "TODAY" ? "On today" : day === "WEEK" ? "On this week" : "Coming up"} (
+          {filtered.length}
+          {filtered.length !== total ? ` of ${total}` : ""})
+        </h2>
+        {filtered.length === 0 ? (
+          <div className="card text-base text-slate-700">
+            Nothing on for that. Try another day, or tap <strong>All</strong>.
           </div>
         ) : (
-          <div className="h-full overflow-y-auto pb-20">
-            <MeetupList activities={filtered} restricted={restricted} />
-          </div>
+          <MeetupList activities={filtered} here={here} />
         )}
-
-        {!restricted && (
-          <button
-            type="button"
-            onClick={() => setView(view === "map" ? "list" : "map")}
-            className="chip board-toggle"
-          >
-            {view === "map" ? "☰ List" : "🗺️ Map"}
-          </button>
-        )}
-
-        {notice}
-
-        {post && (
-          <Link href={post.href} className="board-fab" aria-label={post.label} title={post.label}>
-            +
-          </Link>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

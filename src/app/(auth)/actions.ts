@@ -10,6 +10,7 @@ import {
   isPaidUp,
   needsEmailCheck,
   passwordChangeStamp,
+  safeNext,
   verifyPassword,
 } from "@/lib/auth";
 import { ensureMembership } from "@/lib/invite";
@@ -110,7 +111,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
       console.error("Signup verification email failed, letting them in:", sent.error);
       await prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
     }
-    redirect("/");
+    redirect(safeNext(formData.get("next")));
   }
 
   const parsed = loginSchema.safeParse({
@@ -150,7 +151,8 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
   }
 
   await createSession(user.id);
-  redirect(nextStepFor(user));
+  const step = nextStepFor(user);
+  redirect(step === "/" ? safeNext(formData.get("next")) : step);
 }
 
 /** Forgot your password, step one: email a code to the address. Only
@@ -220,7 +222,7 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   await createSession(user.id);
   // Home sorts out anything still owed (the code just confirmed the
   // address, so it won't be that).
-  redirect("/");
+  redirect(safeNext(formData.get("next")));
 }
 
 /** Where a signed-in member should land: confirm the email if one is

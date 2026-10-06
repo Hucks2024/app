@@ -50,11 +50,11 @@ export default function InstallHint() {
   }
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-50 card !p-3 shadow-lg flex items-start gap-3">
+    <div className="install-hint card !p-3 shadow-lg flex items-start gap-3" role="status">
       <span aria-hidden className="text-xl leading-none">
-        🏃
+        📲
       </span>
-      <p className="text-sm text-slate-700 flex-1">
+      <p className="text-base text-slate-700 flex-1">
         Add {SITE.name} to your home screen: tap{" "}
         <span aria-hidden>⬆️</span> <strong>Share</strong>, then{" "}
         <strong>Add to Home Screen</strong>.
@@ -62,8 +62,8 @@ export default function InstallHint() {
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Dismiss"
-        className="text-slate-400 hover:text-slate-600 text-lg leading-none px-1"
+        aria-label="Close"
+        className="-m-1 flex h-11 w-11 flex-none items-center justify-center rounded-full text-2xl leading-none text-slate-500 hover:bg-slate-100"
       >
         ×
       </button>

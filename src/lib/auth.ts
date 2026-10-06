@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
@@ -89,8 +90,10 @@ export function hasOwnPassword(
  * /api/photos/profile/[userId] only when something actually shows it. */
 export type CurrentUser = Omit<User, "profilePhoto">;
 
-/** Returns the logged-in user or null. Does not redirect. */
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+/** Returns the logged-in user or null. Does not redirect. Remembered for
+ * the rest of the request (cache), since the layout, the nav and the page
+ * all ask. */
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await getSession();
   if (!session) return null;
   const prisma = await getPrisma();
@@ -104,13 +107,24 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   // session a password change is meant to end.
   if (user.passwordChangedAt && session.issuedAt < user.passwordChangedAt.getTime()) return null;
   return user;
-}
+});
 
 /** Requires any logged-in, non-suspended user. Redirects to /login otherwise. */
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   return user;
+}
+
+/** Where to go after signing in: a path on this site, or home. Anything
+ * else (another site, "//evil.com", a backslash trick) is ignored, so a
+ * link can't use our sign-in page to send people somewhere else. */
+export function safeNext(raw: unknown): string {
+  const next = typeof raw === "string" ? raw : "";
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\") || next.startsWith("/login")) {
+    return "/";
+  }
+  return next;
 }
 
 /** Whether the membership fee is being charged at all.

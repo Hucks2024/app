@@ -11,15 +11,16 @@ import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES } from "@/lib/categories";
 
 const createSchema = z.object({
-  title: z.string().trim().min(3, "Give your meetup a name").max(120),
+  title: z.string().trim().min(3, "Give your meetup a name, at least 3 letters.").max(120),
   category: z
     .string()
     .refine((v) => CATEGORY_VALUES.includes(v), "Pick what kind of meetup this is")
     .default("RUN"),
   afterSpot: z.string().trim().max(200).optional(),
+  findUs: z.string().trim().max(200).optional(),
   description: z.string().trim().max(2000).optional(),
-  location: z.string().trim().min(3, "Where does it start?").max(200),
-  startsAt: z.string().min(1, "Pick a date and time"),
+  location: z.string().trim().min(3, "Type where people should meet.").max(200),
+  startsAt: z.string().min(1, "Pick a day and a time."),
   distanceKm: z.coerce.number().positive().max(500).optional(),
   pace: z.string().trim().max(40).optional(),
   maxParticipants: z.coerce.number().int().positive().max(500).optional(),
@@ -43,6 +44,7 @@ function readMeetupForm(formData: FormData) {
     title: formData.get("title"),
     category: formData.get("category") || "RUN",
     afterSpot: formData.get("afterSpot") || undefined,
+    findUs: formData.get("findUs") || undefined,
     description: formData.get("description") || undefined,
     location: formData.get("location"),
     startsAt: formData.get("startsAt"),
@@ -129,6 +131,7 @@ export async function saveMeetupAction(
     title: parsed.data.title,
     category: parsed.data.category,
     afterSpot: parsed.data.afterSpot ?? null,
+    findUs: parsed.data.findUs ?? null,
     description: parsed.data.description ?? null,
     location: parsed.data.location,
     latitude,

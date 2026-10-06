@@ -12,7 +12,7 @@ export default function NotFound() {
         <Logo size={72} variant="white" className="h-16 w-auto lost-pin" />
       </div>
       <h1 className="text-3xl font-bold text-white drop-shadow">Nothing here</h1>
-      <p className="text-sm text-white/85 mt-3">
+      <p className="text-sm text-white mt-3">
         Wrong turn. Even the pin looks confused. 🧭
       </p>
       <Link href="/" className="btn-primary mt-6 inline-flex">

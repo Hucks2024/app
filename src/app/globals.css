@@ -197,6 +197,15 @@ body {
   height: calc(100svh - 185px);
   min-height: 300px;
 }
+/* The members' map with the list under it: tall enough to read the pins
+   and pan about, short enough that the first meetups in the list peek up
+   from below, which is what tells people there's more to scroll to. */
+.board-stage-split {
+  height: 50vh;
+  height: 50svh;
+  min-height: 300px;
+  max-height: 560px;
+}
 /* The front door's map sits under a hero, so it takes a fixed slice
    instead of the whole remaining viewport, which would have pushed it off
    the bottom of the screen entirely. */
@@ -209,59 +218,6 @@ body {
    pages that use a map outside one (the club front doors). */
 .board-stage .map-shell {
   height: 100%;
-}
-
-/* The two things you do on the map screen, floating over it rather than
-   each taking a row underneath. Above Leaflet's own panes (z 400-700) and
-   its controls (z 800), below the location-error dialog (z 2000). */
-.chip.board-toggle {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1001;
-  background: rgb(15 23 42 / 0.82);
-  border-color: rgb(255 255 255 / 0.2);
-  color: #fff;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 14px rgb(15 23 42 / 0.3);
-}
-.chip.board-toggle:hover {
-  background: rgb(15 23 42 / 0.92);
-}
-.chip.board-toggle:active {
-  transform: translateX(-50%) scale(0.94);
-}
-
-/* Big, round, thumb-reachable, and the only pink thing on the screen, so
-   the one action a member is here to take can't be missed. */
-.board-fab {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  z-index: 1001;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1;
-  color: #fff;
-  background: #db2777;
-  box-shadow: 0 6px 18px rgb(219 39 119 / 0.5);
-  transition:
-    transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background-color 0.15s ease;
-}
-.board-fab:hover {
-  background: #be185d;
-  transform: scale(1.07);
-}
-.board-fab:active {
-  transform: scale(0.94);
 }
 
 /* The logged-out popup's details: legible as "there's a time, a place and
@@ -290,9 +246,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  min-height: 44px;
+  padding: 0 16px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -479,11 +436,14 @@ a:active > .meetup-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px 0 11px;
   border-radius: 999px;
   background: #6d28d9;
   color: #fff;
+  font-size: 15px;
+  font-weight: 700;
   box-shadow:
     0 6px 16px rgb(109 40 217 / 0.45),
     inset 0 0 0 1px rgb(255 255 255 / 0.2);
@@ -728,7 +688,6 @@ button[aria-busy="true"] {
   }
   .meetup-row,
   .chip,
-  .board-fab,
   .leaflet-container .leaflet-control-zoom.leaflet-bar a,
   .locate-btn,
   .pill-btn,
@@ -776,13 +735,13 @@ button[aria-busy="true"] {
   transform: scale(0.95);
 }
 
-/* MapNotice: a card over the bottom of the map, above the List toggle and
-   the + button, where nomad-style apps put their "tap + to…" tips. */
+/* MapNotice: a card over the bottom of the map, where travel apps put
+   their "tap + to…" tips. */
 .map-notice {
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 82px;
+  bottom: 12px;
   z-index: 1002;
   display: flex;
   align-items: flex-start;
@@ -820,13 +779,13 @@ button[aria-busy="true"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 12px;
+  height: 44px;
+  padding: 0 14px;
   border-radius: 999px;
   border: 1px solid rgb(var(--slate-200));
   background: #fff;
   color: rgb(var(--slate-700));
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
   transition:
@@ -879,4 +838,277 @@ button[aria-busy="true"] {
    extra .leaflet-container. */
 .leaflet-container .leaflet-popup-content a {
   color: #6d28d9;
+}
+
+/* The phone's bottom tab bar (BottomBar.tsx). White, so it reads as the
+   app's controls rather than more of the page, with room under it for the
+   iPhone's home bar. Tabs are 56px tall, well over the 44px a fingertip
+   needs. */
+@layer components {
+  .bottom-bar {
+    display: flex;
+  }
+}
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1500;
+  background: rgb(255 255 255 / 0.97);
+  border-top: 1px solid rgb(var(--slate-200));
+  box-shadow: 0 -6px 20px rgb(46 16 101 / 0.12);
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(8px);
+}
+.bottom-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 60px;
+  color: rgb(var(--slate-600));
+  font-size: 13px;
+  font-weight: 600;
+}
+.bottom-tab:active {
+  background: #f5f3ff;
+}
+.bottom-tab-on {
+  color: #6d28d9;
+}
+.bottom-tab-on span {
+  font-weight: 800;
+}
+/* Page room for the bar, so the last thing on a page never sits under it. */
+.has-bottom-bar {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  .has-bottom-bar {
+    padding-bottom: 0;
+  }
+}
+
+/* In the components layer, so Tailwind's own display utilities (hidden,
+   sm:inline-flex) on the same element still win. Plain CSS here would
+   beat them and show every link on a phone. */
+@layer components {
+/* Links in the top bar: 44px tall, so they're easy to hit, not just the
+   height of the words. */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: #fff;
+}
+.nav-link:hover {
+  background: rgb(255 255 255 / 0.14);
+}
+}
+
+/* "Add to your home screen" (InstallHint): above the bottom bar when there
+   is one, and above the map's own layers either way. */
+.install-hint {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 1450;
+}
+.has-bottom-bar .install-hint {
+  bottom: calc(76px + env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  .has-bottom-bar .install-hint {
+    bottom: 12px;
+  }
+}
+
+/* For keyboard and screen reader users: the first Tab on any page offers
+   to jump past the top bar. Invisible until it has focus. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 2000;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #fff;
+  color: #4c1d95;
+  font-weight: 700;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/* Labels above the big sign-in boxes, always visible: a label inside the
+   box vanishes as soon as you type, and people lose track of what the box
+   was for. */
+.field-label {
+  display: block;
+  margin-bottom: -4px;
+  padding-left: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.field-hint {
+  margin-top: -4px;
+  padding-left: 6px;
+  font-size: 15px;
+  color: #fff;
+}
+
+/* Directions / Add to calendar / Share on a meetup: three equal, square-ish
+   buttons with the word under the emoji, comfortably over a fingertip. */
+.tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 6px;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--slate-200));
+  background: #faf5ff;
+  color: #4c1d95;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tool-btn span {
+  font-size: 22px;
+  line-height: 1;
+}
+.tool-btn:active {
+  transform: scale(0.95);
+}
+
+/* The meetup page's main action. Pinned above the tab bar on a phone, so
+   "I'm in" is always under your thumb; an ordinary card on bigger screens. */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  z-index: 1450;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid rgb(var(--slate-200));
+  box-shadow: 0 -8px 24px rgb(46 16 101 / 0.15);
+}
+@media (min-width: 640px) {
+  .action-bar {
+    position: static;
+    margin-top: 24px;
+    border: 1px solid rgb(var(--slate-200));
+    border-radius: 16px;
+    box-shadow: none;
+  }
+}
+.action-bar-note {
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgb(var(--slate-700));
+}
+
+/* "What are you doing?": every choice on show as a big picture button,
+   two to a row on a phone. Fourteen options in a dropdown means opening a
+   menu and reading a list; a grid of pictures is one look and one tap. */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (min-width: 520px) {
+  .type-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 84px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  border: 2px solid rgb(var(--slate-200));
+  background: #fff;
+  color: rgb(var(--slate-900));
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.type-btn:active {
+  transform: scale(0.96);
+}
+.type-btn-on {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  color: #4c1d95;
+}
+
+/* "Which day?": a scrolling row of day buttons. */
+.day-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  scrollbar-width: none;
+}
+.day-row::-webkit-scrollbar {
+  display: none;
+}
+.day-btn {
+  flex: none;
+  min-width: 76px;
+  min-height: 60px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid rgb(var(--slate-200));
+  background: #fff;
+  color: rgb(var(--slate-900));
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.25;
+}
+.day-btn-on {
+  border-color: #7c3aed;
+  background: #7c3aed;
+  color: #fff;
+}
+
+/* Help questions: the + turns into a − when an answer is open. */
+.help-item[open] .help-chevron {
+  transform: rotate(45deg);
+}
+.help-chevron {
+  transition: transform 0.15s ease;
+}
+.help-item summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Browsers let a fieldset grow to fit its widest child, so the scrolling
+   row of day buttons pushed the whole form wider than the screen. This
+   keeps every fieldset to the width it's given. */
+fieldset {
+  min-width: 0;
 }
