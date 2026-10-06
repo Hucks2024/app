@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import LocalTime from "@/components/LocalTime";
 import { categoryFor } from "@/lib/categories";
@@ -10,8 +11,8 @@ import type { MapActivity } from "@/components/ActivitiesMap";
  * A countdown is the difference between a listing and something about to
  * happen, so it shows up inside the day and goes quiet beyond it, where
  * "in 6 days" tells you nothing the date didn't. */
-function countdown(iso: string): string | null {
-  const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+function countdown(iso: string, now: number): string | null {
+  const minutes = Math.round((new Date(iso).getTime() - now) / 60000);
   if (minutes < 0) return "Happening now";
   if (minutes < 5) return "Starting now";
   if (minutes < 60) return `In ${minutes} min`;
@@ -32,7 +33,15 @@ export function kmBetween(a: { lat: number; lng: number }, b: { lat: number; lng
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 }
 
+/** "1.2 km away", or "0.8 miles away" where people think in miles (the
+ * US and the UK). Only ever runs in the browser, after "Near me". */
 function away(km: number): string {
+  const miles = typeof navigator !== "undefined" && /^en-(US|GB)/i.test(navigator.language);
+  if (miles) {
+    const mi = km / 1.609344;
+    if (mi < 0.1) return "Very close";
+    return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mile${mi >= 0.95 && mi < 1.05 ? "" : "s"} away`;
+  }
   if (km < 1) return `${Math.max(50, Math.round((km * 1000) / 50) * 50)} m away`;
   if (km < 10) return `${km.toFixed(1)} km away`;
   return `${Math.round(km)} km away`;
@@ -50,11 +59,22 @@ export default function MeetupList({
   // Where the viewer is, once they've tapped "Near me": adds "1.2 km away".
   here: { lat: number; lng: number } | null;
 }) {
+  // The clock only runs in the browser (the server's minute and the
+  // phone's needn't agree), and ticks so "In 5 min" doesn't go stale on a
+  // page left open.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <ul className="space-y-3">
       {activities.map((a) => {
         const category = categoryFor(a.category);
-        const soon = countdown(a.startsAt);
+        const soon = now == null ? null : countdown(a.startsAt, now);
         const going = a.joinedCount;
         return (
           <li key={a.id}>

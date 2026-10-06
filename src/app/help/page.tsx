@@ -75,6 +75,22 @@ export default async function HelpPage() {
           ),
         },
         {
+          id: "reminder",
+          q: "Will I get a reminder?",
+          a: canEmail ? (
+            <p>
+              Yes. We email you the day before, and straight away if the meetup changes or is
+              cancelled. You can turn these emails off on your <strong>Me</strong> page. Tapping{" "}
+              <strong>Add to calendar</strong> on the meetup gets your phone to remind you too.
+            </p>
+          ) : (
+            <p>
+              Tap <strong>Add to calendar</strong> on the meetup. Your phone will remind you an hour
+              before.
+            </p>
+          ),
+        },
+        {
           id: "find",
           q: "How do I find the group when I get there?",
           a: (
@@ -249,6 +265,39 @@ export default async function HelpPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-3xl font-bold text-white drop-shadow">Help</h1>
       <p className="mt-2 text-lg text-white">Quick answers. Tap a question to see the answer.</p>
+
+      {/* The rules, up top and always open: short enough to read in ten
+          seconds, and the thing everyone agrees to when they join. */}
+      <section id="rules" className="card mt-6 scroll-mt-20" aria-labelledby="rules-heading">
+        <h2 id="rules-heading" className="text-xl font-bold text-slate-900">
+          House rules
+        </h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-base text-slate-800">
+          <li>
+            <strong>Be kind.</strong> Everyone is welcome, whatever their speed, size, age or
+            background.
+          </li>
+          <li>
+            <strong>Meet in public.</strong> Hosts pick busy, easy-to-find places.
+          </li>
+          <li>
+            <strong>Turn up, or say you can&apos;t.</strong> Tap &ldquo;I can&apos;t go now&rdquo;
+            so someone else can have your place.
+          </li>
+          <li>
+            <strong>No selling, no promoting, no pressure.</strong> This is for meeting people, not
+            for sales or dates.
+          </li>
+          <li>
+            <strong>No means no.</strong> If someone doesn&apos;t want to swap numbers or carry on
+            afterwards, leave it there.
+          </li>
+        </ol>
+        <p className="mt-3 text-base text-slate-700">
+          Break them and people can report you. If three different people who met you report
+          you, you&apos;re banned for life.
+        </p>
+      </section>
 
       {sections.map((section) => (
         <section key={section.title} className="mt-8" aria-labelledby={`h-${section.title}`}>

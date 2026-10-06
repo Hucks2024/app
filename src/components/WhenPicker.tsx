@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { clientPrefs, clockTime, type TimePrefs } from "@/components/LocalTime";
 
 // "When?" for posting a meetup: a row of days to tap, then a time.
 //
@@ -26,16 +27,18 @@ function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function timeLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+/** A time of day as this reader writes it: "07:00" or "7:00 AM". */
+function timeLabel(minutes: number, prefs: TimePrefs): string {
+  const d = new Date(2000, 0, 1, Math.floor(minutes / 60), minutes % 60);
+  return clockTime(d, { ...prefs, zone: undefined });
 }
+
+const SERVER_PREFS: TimePrefs = { locale: "en-GB", hour12: false };
+const subscribe = () => () => {};
 
 const TIMES = Array.from({ length: 96 }, (_, i) => i * 15);
 
-export function describeWhen(day: string, minutes: number): string {
+export function describeWhen(day: string, minutes: number, prefs: TimePrefs = clientPrefs()): string {
   const [y, mo, d] = day.split("-").map(Number);
   const date = new Date(y, mo - 1, d, Math.floor(minutes / 60), minutes % 60);
   const today = startOfDay(new Date());
@@ -45,8 +48,8 @@ export function describeWhen(day: string, minutes: number): string {
       ? "Today"
       : diff === 1
         ? "Tomorrow"
-        : date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  return `${dayWords} at ${timeLabel(minutes)}`;
+        : date.toLocaleDateString(prefs.locale, { weekday: "long", day: "numeric", month: "long" });
+  return `${dayWords} at ${timeLabel(minutes, prefs)}`;
 }
 
 export default function WhenPicker({
@@ -57,8 +60,10 @@ export default function WhenPicker({
   // Told the chosen moment (or null while it's in the past / unset).
   onChange?: (when: Date | null) => void;
 }) {
-  // Everything here depends on this device's clock and zone, which the
-  // server can't know, so it's worked out once the page is running.
+  // Everything here depends on this device's clock, zone and habits,
+  // which the server can't know, so it's worked out once the page is
+  // running (the first render matches the server's).
+  const prefs = useSyncExternalStore(subscribe, clientPrefs, () => SERVER_PREFS);
   const [now, setNow] = useState<Date | null>(null);
   const [day, setDay] = useState<string>("");
   const [minutes, setMinutes] = useState<number>(10 * 60);
@@ -82,11 +87,11 @@ export default function WhenPicker({
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
       return {
         key: dayKey(d),
-        top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-GB", { weekday: "short" }),
-        bottom: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+        top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString(prefs.locale, { weekday: "short" }),
+        bottom: d.toLocaleDateString(prefs.locale, { day: "numeric", month: "short" }),
       };
     });
-  }, [now]);
+  }, [now, prefs]);
 
   const when = useMemo(() => {
     if (!day) return null;
@@ -174,7 +179,7 @@ export default function WhenPicker({
         >
           {TIMES.map((t) => (
             <option key={t} value={t}>
-              {timeLabel(t)}
+              {timeLabel(t, prefs)}
             </option>
           ))}
         </select>
@@ -187,7 +192,7 @@ export default function WhenPicker({
           }`}
           aria-live="polite"
         >
-          {inPast ? "That time has already gone. Pick a later one." : `🗓️ ${describeWhen(day, minutes)}`}
+          {inPast ? "That time has already gone. Pick a later one." : `🗓️ ${describeWhen(day, minutes, prefs)}`}
         </p>
       )}
     </div>

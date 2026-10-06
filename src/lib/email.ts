@@ -2,7 +2,9 @@
 // scale (3,000 a month, 100 a day) with no card and no server to run. It's
 // one fetch to one endpoint, so swapping to Postmark, SES or anything else
 // later means rewriting this file and nothing above it.
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
+// Overridable only so the emails can be tested against a stand-in; in
+// real use it's always Resend's own address.
+const RESEND_ENDPOINT = process.env.RESEND_API_URL ?? "https://api.resend.com/emails";
 
 /** Whether outbound email is configured at all.
  *

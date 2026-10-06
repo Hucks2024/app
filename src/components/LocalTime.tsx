@@ -2,65 +2,97 @@
 
 import { useSyncExternalStore } from "react";
 
-// Meetup times in the time zone of whoever is looking.
+// Meetup times in the time zone, and the clock, of whoever is looking.
 //
-// The server has no idea where the reader is, and used to print UTC, so
-// the meetup page said 7:00 while the map said 8:00 all summer. This
-// renders London time on the server (where most meetups are, so most
-// people see no change at all) and switches to the device's own zone the
-// moment it's running in the browser. useSyncExternalStore is what makes
-// that switch without a hydration mismatch: the first client render uses
-// the server's answer, then the real one follows.
+// The server has no idea where the reader is, so it renders London time
+// on a 24-hour clock, and the browser switches to its own zone and its own
+// habits the moment it's running: 7:00 AM in the US, 07:00 almost
+// everywhere else. Reading times in an unfamiliar format means converting
+// every one in your head. useSyncExternalStore is what makes the switch
+// without a hydration mismatch: the first render in the browser matches
+// the server's, then the real one follows.
 
-const SERVER_ZONE = "Europe/London";
-const subscribe = () => () => {};
+export type TimePrefs = { zone?: string; locale: "en-GB" | "en-US"; hour12: boolean };
 
-type Style = "long" | "short";
+const SERVER_PREFS: TimePrefs = { zone: "Europe/London", locale: "en-GB", hour12: false };
+let clientCache: TimePrefs | null = null;
 
-function parts(d: Date, zone: string | undefined) {
-  const out: Record<string, string> = {};
-  for (const p of new Intl.DateTimeFormat("en-GB", {
-    timeZone: zone,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).formatToParts(d)) {
-    out[p.type] = p.value;
+/** This device's own: its zone, US or British English wording, and
+ * whether its locale reads a 12-hour clock. */
+export function clientPrefs(): TimePrefs {
+  if (clientCache) return clientCache;
+  if (typeof navigator === "undefined") return SERVER_PREFS;
+  const lang = navigator.language || "en-GB";
+  const hour12 = new Intl.DateTimeFormat(lang, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
+  clientCache = { zone: undefined, locale: /^en-US/i.test(lang) ? "en-US" : "en-GB", hour12 };
+  return clientCache;
+}
+
+// Built from the pieces Intl gives back rather than its finished string,
+// because the punctuation in that string changes between ICU versions
+// ("Fri 9 Oct" on the server, "Fri, 9 Oct" in Chrome), and the first
+// render in the browser has to match the server's letter for letter.
+function parts(d: Date, prefs: TimePrefs, options: Intl.DateTimeFormatOptions) {
+  const out: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {};
+  for (const part of new Intl.DateTimeFormat(prefs.locale, { timeZone: prefs.zone, ...options }).formatToParts(d)) {
+    out[part.type] = part.value;
   }
   return out;
 }
 
-function dayKey(d: Date, zone: string | undefined) {
-  const p = parts(d, zone);
-  return `${p.year}-${p.month}-${p.day}`;
+/** "07:00" or "7:00 AM", as this reader would write it. */
+export function clockTime(d: Date, prefs: TimePrefs = clientPrefs()): string {
+  const p = parts(d, prefs, {
+    hour: prefs.hour12 ? "numeric" : "2-digit",
+    minute: "2-digit",
+    hour12: prefs.hour12,
+  });
+  // Some engines write midnight on a 24-hour clock as "24".
+  const hour = !prefs.hour12 && p.hour === "24" ? "00" : p.hour;
+  return prefs.hour12 ? `${hour}:${p.minute} ${p.dayPeriod}` : `${hour}:${p.minute}`;
 }
 
-export function formatWhen(iso: string, style: Style, zone?: string): string {
-  const d = new Date(iso);
-  const p = parts(d, zone);
-  const time = `${p.hour}:${p.minute} ${p.dayPeriod?.toLowerCase() ?? ""}`.trim();
+function dayKey(d: Date, zone: string | undefined) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
 
+type Style = "long" | "short";
+
+export function formatWhen(iso: string, style: Style, prefs: TimePrefs = clientPrefs()): string {
+  const d = new Date(iso);
+  const time = clockTime(d, prefs);
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  if (dayKey(d, zone) === dayKey(now, zone)) return `Today · ${time}`;
-  if (dayKey(d, zone) === dayKey(tomorrow, zone)) return `Tomorrow · ${time}`;
+  if (dayKey(d, prefs.zone) === dayKey(now, prefs.zone)) return `Today · ${time}`;
+  if (dayKey(d, prefs.zone) === dayKey(tomorrow, prefs.zone)) return `Tomorrow · ${time}`;
 
-  const thisYear = p.year === parts(now, zone).year;
-  if (style === "short") {
-    return `${p.weekday.slice(0, 3)} ${p.day} ${p.month.slice(0, 3)} · ${time}`;
-  }
-  return `${p.weekday} ${p.day} ${p.month}${thisYear ? "" : ` ${p.year}`} · ${time}`;
+  const sameYear =
+    new Intl.DateTimeFormat("en", { timeZone: prefs.zone, year: "numeric" }).format(d) ===
+    new Intl.DateTimeFormat("en", { timeZone: prefs.zone, year: "numeric" }).format(now);
+  const p = parts(d, prefs, {
+    weekday: style === "short" ? "short" : "long",
+    day: "numeric",
+    month: style === "short" ? "short" : "long",
+    year: "numeric",
+  });
+  const withYear = !sameYear && style !== "short";
+  // "Friday 9 October" in Britain and most places, "Friday, October 9" in the US.
+  const day =
+    prefs.locale === "en-US"
+      ? `${p.weekday}, ${p.month} ${p.day}${withYear ? `, ${p.year}` : ""}`
+      : `${p.weekday} ${p.day} ${p.month}${withYear ? ` ${p.year}` : ""}`;
+  return `${day} · ${time}`;
 }
 
+const subscribe = () => () => {};
+
 export default function LocalTime({ iso, style = "long" }: { iso: string; style?: Style }) {
-  const zone = useSyncExternalStore(
-    subscribe,
-    () => undefined,
-    () => SERVER_ZONE
+  const prefs = useSyncExternalStore(subscribe, clientPrefs, () => SERVER_PREFS);
+  // suppressHydrationWarning only as a backstop: if some browser still
+  // words a date differently, that's not worth re-rendering the page over.
+  return (
+    <time dateTime={iso} suppressHydrationWarning>
+      {formatWhen(iso, style, prefs)}
+    </time>
   );
-  return <time dateTime={iso}>{formatWhen(iso, style, zone)}</time>;
 }

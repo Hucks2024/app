@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import type { PrismaClient } from "@prisma/client";
+import { emailCancelled, emailGotAPlace } from "@/lib/notify";
 
 // Three red flags and you're out for good.
 //
@@ -69,9 +71,7 @@ export async function banIfFlagged(prisma: PrismaClient, userId: string): Promis
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "BANNED" } });
 
   // Off everything still to come, so nobody turns up to meet them, and
-  // whoever was first on each waitlist gets their place. Meetups they
-  // were hosting drop off the map on their own (see liveMeetup in
-  // src/lib/meetups.ts).
+  // whoever was first on each waitlist gets their place.
   const upcoming = await prisma.participation.findMany({
     where: {
       userId,
@@ -84,14 +84,34 @@ export async function banIfFlagged(prisma: PrismaClient, userId: string): Promis
     await prisma.participation.update({ where: { id: p.id }, data: { status: "CANCELLED" } });
     await promoteWaitlist(prisma, p.activityId);
   }
+
+  // Meetups they were hosting are called off, and everyone going is told,
+  // rather than them silently vanishing from the map.
+  const hosting = await prisma.runActivity.findMany({
+    where: { hostId: userId, cancelledAt: null, startsAt: { gt: new Date() } },
+  });
+  for (const m of hosting) {
+    await prisma.runActivity.update({ where: { id: m.id }, data: { cancelledAt: new Date() } });
+    after(() => emailCancelled(prisma, m, userId));
+  }
   return true;
 }
 
-/** If a meetup with a cap has room, the earliest person waiting gets in. */
+/** If a meetup with a cap has room, the earliest person waiting gets in,
+ * and is emailed to say so (after the response, so nobody waits on it). */
 export async function promoteWaitlist(prisma: PrismaClient, activityId: string): Promise<void> {
   const activity = await prisma.runActivity.findUnique({
     where: { id: activityId },
-    select: { maxParticipants: true },
+    select: {
+      id: true,
+      title: true,
+      location: true,
+      findUs: true,
+      startsAt: true,
+      latitude: true,
+      longitude: true,
+      maxParticipants: true,
+    },
   });
   if (!activity?.maxParticipants) return;
   const joined = await prisma.participation.count({ where: { activityId, status: "JOINED" } });
@@ -102,5 +122,6 @@ export async function promoteWaitlist(prisma: PrismaClient, activityId: string):
   });
   if (next) {
     await prisma.participation.update({ where: { id: next.id }, data: { status: "JOINED" } });
+    after(() => emailGotAPlace(prisma, activity, next.userId));
   }
 }

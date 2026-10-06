@@ -123,6 +123,24 @@ export default async function ActivityDetailPage({
         </p>
       )}
       {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
+      {justJoined && going && (
+        // Right when they've said yes is when people act on a nudge: a
+        // calendar entry is what reminds them on the day, and a face is
+        // how the group knows who to look out for.
+        <div className="card mb-4 !p-4">
+          <p className="text-base font-bold text-slate-900">Two quick things so you don&apos;t miss it</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <a href={`/activities/${activity.id}/calendar`} className="btn-primary min-h-12 flex-1 text-base">
+              📆 Add to my calendar
+            </a>
+            {!user.profilePhotoType && (
+              <Link href="/profile#photo" className="btn-secondary min-h-12 flex-1 text-base">
+                🙂 Add a photo so people know you
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
       {saved && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
           Saved. Everyone going sees the new details.
@@ -450,7 +468,11 @@ function ParticipantRow({
           </summary>
           <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
             <p className="text-sm text-slate-700">
-              Only moderators see this. Three reports from different people who&apos;ve met{" "}
+              For anyone who broke the{" "}
+              <a href="/help#rules" className="font-semibold underline">
+                house rules
+              </a>
+              . Only moderators see this. Three reports from different people who&apos;ve met{" "}
               {person.name} at meetups is a lifetime ban.
             </p>
             <input type="hidden" name="reportedUserId" value={person.id} />

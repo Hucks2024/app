@@ -101,6 +101,11 @@ model User {
   // every other phone and browser, including whoever guessed the old one.
   passwordChangedAt DateTime?
 
+  // The day-before reminder email, and the emails saying a meetup you're
+  // going to has changed or been called off. On unless switched off on
+  // the Me page.
+  emailReminders Boolean @default(true)
+
   createdAt DateTime @default(now())
 
   verification      VerificationRequest?
@@ -240,6 +245,10 @@ model Participation {
   status String @default("JOINED")
 
   joinedAt DateTime @default(now())
+
+  // When the day-before reminder went to this person for this meetup, so
+  // the daily job never sends it twice however often it runs.
+  reminderSentAt DateTime?
 
   @@unique([activityId, userId])
 }

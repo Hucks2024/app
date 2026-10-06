@@ -374,6 +374,15 @@ export default function SignIn({
           At least 8 letters, numbers or symbols.
         </p>
       )}
+      {creating && (
+        <p className="field-hint">
+          By joining you agree to our five{" "}
+          <a href="/help#rules" target="_blank" rel="noopener" className="font-semibold underline">
+            house rules
+          </a>
+          : be kind, meet in public, turn up or say you can&apos;t, no selling, no means no.
+        </p>
+      )}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">
         {submitting && <Spinner />}
         {creating ? "Create my account" : "Sign in"}

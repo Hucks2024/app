@@ -2,12 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import { requireUser, requireMember } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
+import { emailCancelled, emailChanged } from "@/lib/notify";
 import { CATEGORY_VALUES } from "@/lib/categories";
 
 const createSchema = z.object({
@@ -144,7 +146,12 @@ export async function saveMeetupAction(
   };
 
   if (existing) {
-    await prisma.runActivity.update({ where: { id: existing.id }, data: fields });
+    const updated = await prisma.runActivity.update({ where: { id: existing.id }, data: fields });
+    // The two things that send somebody to the wrong place at the wrong
+    // time: tell everyone going.
+    if (existing.startsAt.getTime() !== startsAt.getTime() || existing.location !== updated.location) {
+      after(() => emailChanged(prisma, updated, user.id));
+    }
     // A bigger cap may have room for whoever was waiting.
     await promoteWaitlist(prisma, existing.id);
     redirect(`/activities/${existing.id}?saved=1`);
@@ -171,6 +178,7 @@ export async function cancelActivityAction(formData: FormData) {
   if (!activity || (activity.hostId !== user.id && user.role !== "ADMIN")) redirect("/");
   if (!activity.cancelledAt && activity.startsAt > new Date()) {
     await prisma.runActivity.update({ where: { id: activityId }, data: { cancelledAt: new Date() } });
+    after(() => emailCancelled(prisma, activity, user.id));
   }
   redirect(`/activities/${activityId}`);
 }

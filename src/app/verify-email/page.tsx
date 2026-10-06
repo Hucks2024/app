@@ -1,71 +1,86 @@
 import { redirect } from "next/navigation";
-import { requireUser, needsEmailCheck } from "@/lib/auth";
+import { requireUser, needsEmailCheck, safeNext } from "@/lib/auth";
 import { confirmEmailAction, resendCodeAction } from "@/app/verify-email/actions";
 import LogoutButton from "@/components/LogoutButton";
 
+export const metadata = { title: "Check your email" };
+
+// The one extra step after joining, when email is switched on. Kept to a
+// single box and a single button, with the two things that go wrong
+// (the email is slow, or in spam; the address was mistyped) answered
+// right there rather than on a help page.
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string }>;
+  searchParams: Promise<{ error?: string; sent?: string; next?: string }>;
 }) {
-  const { error, sent } = await searchParams;
+  const { error, sent, next: rawNext } = await searchParams;
   const user = await requireUser();
+  const next = safeNext(rawNext);
 
   // Already done, or email checks aren't switched on: nothing to ask for.
-  if (!needsEmailCheck(user)) redirect("/activities");
+  if (!needsEmailCheck(user)) redirect(next);
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="text-2xl font-bold mb-2 text-white drop-shadow">Check your email</h1>
-      <p className="text-sm text-white mb-6">
-        We sent a six-digit code to <strong className="text-white">{user.email}</strong>. Pop it in
-        below and you&apos;re in.
+    <div className="mx-auto max-w-sm px-4 py-12">
+      <p className="text-center text-5xl" aria-hidden="true">
+        📬
+      </p>
+      <h1 className="mt-3 text-center text-3xl font-bold text-white drop-shadow">Check your email</h1>
+      <p className="mt-3 text-center text-lg text-white">
+        We sent a 6-digit code to
+        <br />
+        <strong className="break-all">{user.email}</strong>
       </p>
 
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
+        <p role="alert" className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-base font-medium text-red-800">
           {error}
         </p>
       )}
       {sent && (
-        <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          New code sent.
+        <p role="status" className="mt-5 rounded-2xl bg-white px-4 py-3 text-base font-medium text-brand-800">
+          ✓ We sent a new code. Use the newest one.
         </p>
       )}
 
-      <form action={confirmEmailAction} className="card space-y-4">
-        <div>
-          <label className="label" htmlFor="code">
-            Your code
-          </label>
-          <input
-            className="input text-center text-2xl tracking-[0.4em] font-mono"
-            id="code"
-            name="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={6}
-            placeholder="000000"
-            required
-            autoFocus
-          />
-          <p className="text-sm text-slate-500 mt-1">It expires in 15 minutes.</p>
-        </div>
-        <button type="submit" className="btn-primary w-full">
-          Confirm
+      <form action={confirmEmailAction} className="mt-6 space-y-3">
+        <input type="hidden" name="next" value={next} />
+        <label htmlFor="code" className="field-label">
+          The code from the email
+        </label>
+        <input
+          className="pill-input text-center font-mono !text-2xl tracking-[0.35em]"
+          id="code"
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9 ]*"
+          maxLength={7}
+          placeholder="123456"
+          required
+          autoFocus
+          aria-describedby="code-hint"
+        />
+        <p id="code-hint" className="field-hint">
+          It can take a minute to arrive. Not there? Look in your spam or junk folder.
+        </p>
+        <button type="submit" className="pill-btn pill-black">
+          Continue
         </button>
       </form>
 
-      <form action={resendCodeAction} className="mt-4 text-center">
-        <button type="submit" className="text-sm text-white underline">
-          Didn&apos;t get it? Send another
+      <form action={resendCodeAction} className="mt-6 text-center">
+        <input type="hidden" name="next" value={next} />
+        <button type="submit" className="min-h-11 text-base font-medium text-white underline underline-offset-2">
+          Send me a new code
         </button>
       </form>
 
-      <div className="text-sm text-white text-center mt-6 flex items-center justify-center gap-1">
-        <span>Wrong address? Log out and sign up again.</span>
-        <LogoutButton />
+      <div className="mt-4 text-center text-base text-white">
+        <p>Wrong email address?</p>
+        <LogoutButton className="min-h-11 font-medium underline underline-offset-2" />
+        <p className="text-sm">then join again with the right one.</p>
       </div>
     </div>
   );

@@ -369,7 +369,14 @@ export default function ActivitiesMap({
         <Tiles />
         <LocateControl onLocated={onLocated} />
         {activities.map((a) => (
-          <Marker key={a.id} position={[a.latitude, a.longitude]} icon={icons.get(a.id)}>
+          <Marker
+            key={a.id}
+            position={[a.latitude, a.longitude]}
+            icon={icons.get(a.id)}
+            // Read out by screen readers and shown on hover: the pin is
+            // otherwise just a picture.
+            title={restricted ? `${categoryFor(a.category).label} meetup` : a.title}
+          >
             <Popup>
               {restricted ? (
                 // What kind of thing it is, in the clear (the pin already

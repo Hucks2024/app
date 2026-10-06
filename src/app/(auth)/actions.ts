@@ -102,7 +102,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 
     if (emailVerificationEnabled()) {
       const sent = await sendVerificationCode(prisma, user);
-      if (sent.ok) redirect("/verify-email");
+      if (sent.ok) redirect(verifyEmailFor(formData.get("next")));
       // The email didn't go (a lapsed key, an unverified sending domain,
       // the provider being down). Holding everyone at "check your inbox"
       // for a code that will never come would stop the app taking new
@@ -152,7 +152,13 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 
   await createSession(user.id);
   const step = nextStepFor(user);
-  redirect(step === "/" ? safeNext(formData.get("next")) : step);
+  redirect(
+    step === "/"
+      ? safeNext(formData.get("next"))
+      : step === "/verify-email"
+        ? verifyEmailFor(formData.get("next"))
+        : step
+  );
 }
 
 /** Forgot your password, step one: email a code to the address. Only
@@ -231,6 +237,12 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
 function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerifiedAt: Date | null }) {
   if (needsEmailCheck(user)) return "/verify-email";
   return isPaidUp(user) ? "/" : "/subscribe";
+}
+
+/** The code step, remembering where they were going afterwards. */
+function verifyEmailFor(rawNext: unknown): string {
+  const next = safeNext(rawNext);
+  return next === "/" ? "/verify-email" : `/verify-email?next=${encodeURIComponent(next)}`;
 }
 
 export async function logoutAction() {

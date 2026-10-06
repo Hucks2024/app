@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
 import { categoryFor } from "@/lib/categories";
-import MeetupList from "@/components/MeetupList";
+import MeetupList, { kmBetween } from "@/components/MeetupList";
 import type { MapActivity } from "@/components/ActivitiesMap";
+
+const SITE_NAME = "packmates";
 
 // Leaflet reaches for `window` the moment it's imported, which is fatal on
 // the server: any page rendering the map directly returns a 500 before a
@@ -92,6 +94,14 @@ export default function MeetupBoard({
 
   const total = activities.filter((a) => matchesDay(a.startsAt, day)).length;
 
+  // Once we know where they are: how far the nearest meetup is. Far away
+  // means this app hasn't reached them yet, which is worth saying plainly
+  // rather than leaving them to work out why London is on their map.
+  const nearestKm = useMemo(() => {
+    if (!here || activities.length === 0) return null;
+    return Math.min(...activities.map((a) => kmBetween(here, { lat: a.latitude, lng: a.longitude })));
+  }, [here, activities]);
+
   if (restricted) {
     return (
       <div className={`board-stage relative ${stage === "preview" ? "board-stage-preview" : ""}`}>
@@ -164,6 +174,15 @@ export default function MeetupBoard({
           {filtered.length}
           {filtered.length !== total ? ` of ${total}` : ""})
         </h2>
+        {nearestKm != null && nearestKm > 50 && (
+          <div className="card mb-3 !p-4 text-base text-slate-700">
+            <p className="font-bold text-slate-900">Nothing near you yet 🌍</p>
+            <p className="mt-1">
+              {SITE_NAME} is new where you are. Know people nearby who&apos;d come along? Send them the
+              link, and the first meetup near you could be yours.
+            </p>
+          </div>
+        )}
         {filtered.length === 0 ? (
           <div className="card text-base text-slate-700">
             Nothing on for that. Try another day, or tap <strong>All</strong>.

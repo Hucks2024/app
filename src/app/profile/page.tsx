@@ -5,7 +5,11 @@ import { ensureMembership, formatMemberNumber } from "@/lib/invite";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
-import { deleteAccountAction, updateProfileAction } from "@/app/profile/actions";
+import {
+  deleteAccountAction,
+  setEmailRemindersAction,
+  updateProfileAction,
+} from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
 import CopyableField from "@/components/CopyableField";
 import LocalTime from "@/components/LocalTime";
@@ -166,7 +170,7 @@ export default async function ProfilePage({
           />
         </div>
         <div>
-          <label className="label" htmlFor="profilePhoto">
+          <label id="photo" className="label scroll-mt-24" htmlFor="profilePhoto">
             Profile photo
           </label>
           <PhotoInput />
@@ -186,6 +190,21 @@ export default async function ProfilePage({
             : "So you can also sign in with your email."}
         </p>
         <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
+      </div>
+
+      <div id="emails" className="card mt-4 scroll-mt-20">
+        <p className="font-semibold mb-1">Emails</p>
+        <p className="text-base text-slate-700 mb-3">
+          {user.emailReminders
+            ? "We email you the day before a meetup you're going to, and straight away if it changes or is cancelled."
+            : "Reminder emails are off. You won't hear if a meetup you're going to changes or is cancelled."}
+        </p>
+        <form action={setEmailRemindersAction}>
+          <input type="hidden" name="on" value={user.emailReminders ? "0" : "1"} />
+          <SubmitButton className={`${user.emailReminders ? "btn-secondary" : "btn-primary"} min-h-11`} pending="Saving…">
+            {user.emailReminders ? "Turn these emails off" : "Turn reminder emails on"}
+          </SubmitButton>
+        </form>
       </div>
 
       <div className="card mt-4 flex items-center justify-between gap-3">
