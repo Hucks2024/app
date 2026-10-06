@@ -1,0 +1,22 @@
+name: Add "how to find us" to meetups (database)
+
+# One-time schema change (see prisma/migrations/20261006100000_find_us).
+# Turso speaks HTTP rather than the wire protocol prisma migrate deploy
+# needs, so the change is applied by a small idempotent script instead.
+# Safe to re-run. Run this BEFORE the deploy that reads the column.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: node scripts/add-find-us.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
