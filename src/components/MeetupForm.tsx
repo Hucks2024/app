@@ -88,17 +88,17 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
   async function next() {
     setStepError(null);
-    if (step === 0 && !category) return setStepError("Tap what you're doing.");
+    if (step === 0 && !category) return setStepError("Pick one.");
     if (step === 1) {
       const text = locationText();
-      if (text.length < 3) return setStepError("Type where people should meet.");
+      if (text.length < 3) return setStepError("Type where to meet.");
       const found = await lookUp(text);
       if (found.status === "not_found") {
-        return setStepError(`We can't find "${text}" on the map. Add the area or a postcode, like "Hyde Park, London".`);
+        return setStepError(`Can't find "${text}". Add the town, like "Hyde Park, London".`);
       }
       suggestTitle(found.status === "found" ? found.label : undefined);
     }
-    if (step === 2 && !when) return setStepError("Pick a day and a time that's still to come.");
+    if (step === 2 && !when) return setStepError("Pick a day and time.");
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -117,7 +117,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         e.preventDefault();
         setEdited(false);
         if (!editing && step < STEPS.length - 1) return next();
-        if (!when) return setStepError("Pick a day and a time that's still to come.");
+        if (!when) return setStepError("Pick a day and time.");
         const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
@@ -186,13 +186,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {/* 2. Where */}
       <fieldset hidden={!show(1)} className="space-y-4">
-        <legend className="mb-1 text-xl font-bold text-slate-900">Where should people meet?</legend>
+        <legend className="mb-1 text-xl font-bold text-slate-900">Where?</legend>
         <div>
           <label className="label !text-base" htmlFor="location">
             Meeting place
           </label>
           <p id="location-hint" className="text-sm text-slate-600 mb-2">
-            Somewhere easy to find, and the area. For example: Hyde Park Corner, London.
+            e.g. Hyde Park Corner, London
           </p>
           <input
             className="input !text-base min-h-12"
@@ -205,21 +205,21 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             onBlur={(e) => void lookUp(e.target.value.trim())}
           />
           <p id="location-check" className="mt-2 text-base" aria-live="polite">
-            {place.status === "checking" && <span className="text-slate-600">Finding it on the map…</span>}
+            {place.status === "checking" && <span className="text-slate-600">Finding it…</span>}
             {place.status === "found" && (
               <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
             )}
             {place.status === "not_found" && (
-              <span className="font-medium text-amber-800">Can&apos;t find that on the map. Add the area or a postcode.</span>
+              <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
             )}
           </p>
         </div>
         <div>
           <label className="label !text-base" htmlFor="findUs">
-            How will people spot you? <span className="font-normal text-slate-600">(optional)</span>
+            How to spot you <span className="font-normal text-slate-600">(optional)</span>
           </label>
           <p id="findUs-hint" className="text-sm text-slate-600 mb-2">
-            For example: &ldquo;Yellow jacket, by the big gate.&rdquo;
+            e.g. Yellow jacket, by the gate
           </p>
           <input
             className="input !text-base min-h-12"
@@ -234,18 +234,18 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {/* 3. When */}
       <fieldset hidden={!show(2)}>
-        <legend className="mb-3 text-xl font-bold text-slate-900">When is it?</legend>
+        <legend className="mb-3 text-xl font-bold text-slate-900">When?</legend>
         <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
       </fieldset>
 
       {/* 4. Name and extras */}
       <fieldset hidden={!show(3)} className="space-y-4">
         <legend className="mb-1 text-xl font-bold text-slate-900">
-          {editing ? "Name" : "Last thing: give it a name"}
+          {editing ? "Name" : "Name it"}
         </legend>
         <div>
           <label className="label !text-base" htmlFor="title">
-            Name of your meetup
+            Meetup name
           </label>
           <input
             className="input !text-base min-h-12"
@@ -259,7 +259,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             maxLength={120}
           />
           {!editing && (
-            <p className="mt-1 text-sm text-slate-600">We&apos;ve suggested one. Change it if you like.</p>
+            <p className="mt-1 text-sm text-slate-600">Change it if you like.</p>
           )}
         </div>
 
@@ -271,12 +271,12 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           )}
         >
           <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-brand-700">
-            More details (you can skip these)
+            More (optional)
           </summary>
           <div className="space-y-4 py-3">
             <div>
               <label className="label !text-base" htmlFor="description">
-                Anything people should know?
+                Notes
               </label>
               <textarea
                 className="input !text-base"
@@ -289,7 +289,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             </div>
             <div>
               <label className="label !text-base" htmlFor="afterSpot">
-                Going somewhere after? Where?
+                After, we&apos;ll go to
               </label>
               <input
                 className="input !text-base min-h-12"
@@ -301,7 +301,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             </div>
             <div>
               <label className="label !text-base" htmlFor="maxParticipants">
-                Most people who can come
+                Max people
               </label>
               <input
                 className="input !text-base min-h-12"
@@ -315,7 +315,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 aria-describedby="max-hint"
               />
               <p id="max-hint" className="mt-1 text-sm text-slate-600">
-                Leave it empty for no limit.
+                Empty = no limit
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -362,7 +362,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 aria-describedby="strava-hint"
               />
               <p id="strava-hint" className="mt-1 text-sm text-amber-800">
-                Set the route to Public in Strava, or nobody else can open it.
+                Set the route to Public.
               </p>
             </div>
           </div>
@@ -393,7 +393,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                   ? "Finding it…"
                   : "Next"
                 : saving
-                  ? "Putting it on the map…"
+                  ? "Posting…"
                   : "Post meetup 🎉"}
           </button>
         )}

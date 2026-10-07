@@ -185,22 +185,15 @@ export default function SignIn({
       }}
       className="text-sm font-medium text-white underline underline-offset-2"
     >
-      {step === "email"
-        ? "← Other ways in"
-        : step === "reset" || step === "no-reset"
-          ? "← Back to signing in"
-          : "← Use a different email"}
+      {step === "email" || step === "reset" || step === "no-reset" ? "← Back" : "← Other email"}
     </button>
   );
 
   if (step === "no-reset") {
     return (
       <div className="space-y-3 text-center text-white">
-        <p className="text-lg font-bold">Forgotten it? 🔑</p>
-        <p className="rounded-2xl bg-white/15 px-4 py-3 text-sm">
-          Ask a packmates admin to reset it. They&apos;ll give you a temporary password to sign in
-          with, and you can change it on your profile straight after.
-        </p>
+        <p className="text-lg font-bold">Forgot it? 🔑</p>
+        <p className="rounded-2xl bg-white/15 px-4 py-3 text-base">Ask an admin to reset it.</p>
         <div className="pt-1">{back}</div>
       </div>
     );
@@ -220,7 +213,7 @@ export default function SignIn({
         </p>
         {errorBox}
         <label htmlFor="reset-code" className="field-label">
-          The six-digit code from the email
+          Code from the email
         </label>
         <input
           id="reset-code"
@@ -247,7 +240,7 @@ export default function SignIn({
           className="pill-input"
         />
         <p id="reset-password-hint" className="field-hint">
-          At least 8 letters, numbers or symbols.
+          8 or more characters.
         </p>
         <button type="submit" disabled={resetting} className="pill-btn pill-black">
           {resetting && <Spinner />}
@@ -303,14 +296,14 @@ export default function SignIn({
           <>
             <span className="block text-lg font-bold">Nice to meet you 👋</span>
             <span className="text-sm text-white">
-              Making a new account for <strong className="text-white">{email}</strong>
+              <strong className="text-white">{email}</strong>
             </span>
           </>
         ) : (
           <>
             <span className="block text-lg font-bold">Welcome back 🙌</span>
             <span className="text-sm text-white">
-              Signing in as <strong className="text-white">{email}</strong>
+              <strong className="text-white">{email}</strong>
             </span>
           </>
         )}
@@ -320,8 +313,7 @@ export default function SignIn({
 
       {!creating && joinedWith && (
         <p className="rounded-2xl bg-white/15 px-4 py-2.5 text-sm text-white">
-          You joined with {joinedWith === "apple" ? "Apple" : "Google"}, so there&apos;s no password
-          on this account.{" "}
+          You joined with {joinedWith === "apple" ? "Apple" : "Google"}.{" "}
           <a href={`/auth/${joinedWith}`} className="font-semibold underline">
             Continue with {joinedWith === "apple" ? "Apple" : "Google"}
           </a>
@@ -371,16 +363,16 @@ export default function SignIn({
       />
       {creating && (
         <p id="signin-password-hint" className="field-hint">
-          At least 8 letters, numbers or symbols.
+          8 or more characters.
         </p>
       )}
       {creating && (
         <p className="field-hint">
-          By joining you agree to our five{" "}
+          Joining means you agree to the{" "}
           <a href="/help#rules" target="_blank" rel="noopener" className="font-semibold underline">
             house rules
           </a>
-          : be kind, meet in public, turn up or say you can&apos;t, no selling, no means no.
+          .
         </p>
       )}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">

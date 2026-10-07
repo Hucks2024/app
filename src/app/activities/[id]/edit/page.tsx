@@ -17,10 +17,7 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Edit meetup</h1>
-      <p className="text-sm text-white mb-6">
-        Everyone going sees the change straight away on the meetup.
-      </p>
+      <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">Edit meetup</h1>
       <MeetupForm
         initial={{
           id: a.id,

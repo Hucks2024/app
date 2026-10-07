@@ -45,7 +45,7 @@ export default async function Welcome({
         your guide to the galaxy
       </p>
       <p className="mt-3 text-[15px] leading-snug text-white">
-        Real meetups with real people. Find one on the map, turn up, make friends.
+        Find a meetup. Turn up. Make friends.
       </p>
 
       {count > 0 && (
@@ -69,7 +69,7 @@ export default async function Welcome({
         />
       </div>
 
-      <p className="mt-4 text-sm text-white">Free for everyone. No invite needed.</p>
+      <p className="mt-4 text-sm text-white">Free. No invite needed.</p>
     </section>
   );
 }

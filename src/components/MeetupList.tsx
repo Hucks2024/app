@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import LocalTime from "@/components/LocalTime";
+import LocalTime, { deviceLanguage } from "@/components/LocalTime";
 import { categoryFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
@@ -36,7 +36,7 @@ export function kmBetween(a: { lat: number; lng: number }, b: { lat: number; lng
 /** "1.2 km away", or "0.8 miles away" where people think in miles (the
  * US and the UK). Only ever runs in the browser, after "Near me". */
 function away(km: number): string {
-  const miles = typeof navigator !== "undefined" && /^en-(US|GB)/i.test(navigator.language);
+  const miles = /^en-(US|GB)/i.test(deviceLanguage());
   if (miles) {
     const mi = km / 1.609344;
     if (mi < 0.1) return "Very close";
@@ -96,7 +96,7 @@ export default function MeetupList({
                     )}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {going > 1 ? `${going} going` : going === 1 ? "1 going so far" : "Be the first to go"}
+                    {going > 1 ? `${going} going` : going === 1 ? "1 going" : "Be the first"}
                     {a.host && (
                       <>
                         {" · "}Host {a.host.name} 👍 {a.host.thumbs}

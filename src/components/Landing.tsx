@@ -16,17 +16,17 @@ const STEPS = [
   {
     emoji: "📍",
     title: "Find a meetup",
-    body: "Runs, walks, coffee, a pint. Each one is a pin on the map.",
+    body: "Run, walk, coffee, pint.",
   },
   {
     emoji: "🙌",
-    title: "Tap “I'm in” and go",
-    body: "That's all. No messages. No swiping. No browsing people.",
+    title: "Tap “I'm in”",
+    body: "Then turn up. That's it.",
   },
   {
     emoji: "👍",
-    title: "Give a thumbs up",
-    body: "Thank the people you met. After one meetup, you can post your own.",
+    title: "Post your own",
+    body: "After your first meetup.",
   },
 ];
 
@@ -96,7 +96,7 @@ export default async function Landing() {
         {/* The house rule, said up front: it's part of what this place is,
             and the people it's meant to put off should read it first. */}
         <p className="mt-3 text-center text-sm font-medium text-white">
-          🚩 If three people you&apos;ve met report you, you&apos;re banned for life.
+          🚩 3 reports = banned for life.
         </p>
       </section>
 
@@ -109,7 +109,7 @@ export default async function Landing() {
         </h2>
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
         <p className="text-base text-white text-center mt-3">
-          Pins show roughly where. Sign in to see exactly where and when.
+          Sign in to see where and when.
         </p>
       </section>
     </div>

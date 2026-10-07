@@ -53,12 +53,7 @@ function link(m: { id: string }) {
   return `${SITE.url}/activities/${m.id}`;
 }
 
-const FOOTER = [
-  "",
-  "—",
-  `You're getting this because you said you'd go to a meetup on ${SITE.name}.`,
-  `Turn these emails off on your Me page: ${SITE.url}/profile`,
-].join("\n");
+const FOOTER = ["", "—", `Stop these emails: ${SITE.url}/profile`].join("\n");
 
 type Person = { id: string; email: string; name: string };
 
@@ -91,10 +86,10 @@ export async function emailCancelled(prisma: PrismaClient, m: Meetup, byUserId: 
     [
       `Hi ${p.name},`,
       ``,
-      `Sorry, ${m.title} (${whenAtMeetup(m)}) has been called off.`,
-      `You don't need to do anything.`,
+      `Sorry, ${m.title} is cancelled.`,
+      `It was on ${whenAtMeetup(m)}.`,
       ``,
-      `Find another meetup: ${SITE.url}/`,
+      `Find another: ${SITE.url}/`,
     ].join("\n")
   );
 }
@@ -105,14 +100,14 @@ export async function emailChanged(prisma: PrismaClient, m: Meetup, byUserId: st
     [
       `Hi ${p.name},`,
       ``,
-      `The details for ${m.title} have changed. It's now:`,
+      `${m.title} has changed.`,
       ``,
       `When:  ${whenAtMeetup(m)}`,
       `Where: ${m.location}`,
       ...(m.findUs ? [`How to find us: ${m.findUs}`] : []),
       ``,
       `See it: ${link(m)}`,
-      `Can't make it now? Open the meetup and tap "I can't go now", so someone else can have your place.`,
+      `Can't go? Open it and tap "I can't go now".`,
     ].join("\n")
   );
 }
@@ -127,14 +122,14 @@ export async function emailGotAPlace(prisma: PrismaClient, m: Meetup, userId: st
     [
       `Hi ${p.name},`,
       ``,
-      `Good news: a place opened up, and it's yours.`,
+      `Good news: you're in!`,
       ``,
       `${m.title}`,
       `When:  ${whenAtMeetup(m)}`,
       `Where: ${m.location}`,
       ``,
       `See it: ${link(m)}`,
-      `Can't go any more? Open the meetup and tap "I can't go now".`,
+      `Can't go? Open it and tap "I can't go now".`,
     ].join("\n")
   );
 }
@@ -182,16 +177,16 @@ export async function sendReminders(prisma: PrismaClient, limit = 80): Promise<{
         [
           `Hi ${row.user.name},`,
           ``,
-          `A reminder that you're going to ${m.title}.`,
+          `You're going to ${m.title}.`,
           ``,
           `When:  ${whenAtMeetup(m)}`,
           `Where: ${m.location}`,
           ...(m.findUs ? [`How to find us: ${m.findUs}`] : []),
           ``,
           `Directions: ${directions}`,
-          `The meetup: ${link(m)}`,
+          `See it: ${link(m)}`,
           ``,
-          `Can't go any more? Open the meetup and tap "I can't go now", so someone else can have your place.`,
+          `Can't go? Open it and tap "I can't go now".`,
         ].join("\n") +
         "\n" +
         FOOTER,

@@ -12,7 +12,7 @@ export async function finishSignIn(provider: Provider, identity: Identity | null
   const back = (error: string) =>
     NextResponse.redirect(`${SITE.url}/login?error=${encodeURIComponent(error)}`, 303);
 
-  if (!identity) return back("That sign in didn't go through. Give it another go.");
+  if (!identity) return back("Sign in didn't work. Try again.");
 
   const result = await signInWithIdentity(provider, identity);
   if (!result.ok) return back(result.error);

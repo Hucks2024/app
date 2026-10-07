@@ -82,12 +82,12 @@ function emojiIcon(emoji: string, going: number, face?: Face) {
 // gets a much more specific, actionable message than the rest.
 function locationErrorMessage(code: number | undefined): string {
   if (code === 1) {
-    return "Location is blocked for this site. On iPhone: Settings → Privacy & Security → Location Services → Safari Websites should be \"While Using\", then tap the \"AA\" icon in Safari's address bar → Website Settings → Location → Allow, and try again.";
+    return "Location is blocked. Allow it in your phone's Settings, then try again.";
   }
   if (code === 3) {
-    return "Finding your location took too long, try again, ideally outdoors or near a window.";
+    return "Took too long. Try again.";
   }
-  return "Couldn't get your location right now, try again in a moment.";
+  return "Couldn't find you. Try again.";
 }
 
 // A real popup dialog, not just a small note tucked next to the button, so
@@ -394,9 +394,9 @@ export default function ActivitiesMap({
                   <div className="relative">
                     <div aria-hidden="true" className="popup-blur space-y-1">
                       <p className="font-semibold">A meetup near here</p>
-                      <p className="text-sm text-slate-600">Sign in to see the day and time</p>
-                      <p className="text-sm text-slate-600 underline">Sign in to see where ↗</p>
-                      <p className="text-sm text-slate-500">Sign in to see who&apos;s in 🙌</p>
+                      <p className="text-sm text-slate-600">Day and time</p>
+                      <p className="text-sm text-slate-600 underline">Where ↗</p>
+                      <p className="text-sm text-slate-500">Who&apos;s in 🙌</p>
                     </div>
                     <Link
                       href="/login"
@@ -470,7 +470,7 @@ export default function ActivitiesMap({
         <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg">
             <p className="text-sm text-slate-600">
-              Nothing on right now. Somebody has to go first 🤞
+              Nothing on yet 🤞
             </p>
             {/* An empty map is the moment a new member most needs telling
                 what to do next, so the one useful action is right here

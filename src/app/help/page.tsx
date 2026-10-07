@@ -24,28 +24,17 @@ export default async function HelpPage() {
         {
           id: "what",
           q: `What is ${SITE.name}?`,
-          a: (
-            <p>
-              A map of meetups near you: runs, walks, bike rides, coffee, a pint. You pick one, say
-              you&apos;re going, and turn up. That&apos;s it.
-            </p>
-          ),
+          a: <p>A map of meetups. Pick one. Turn up.</p>,
         },
         {
           id: "free",
           q: "Does it cost anything?",
-          a: <p>No. It&apos;s free for everyone, and you don&apos;t need an invite.</p>,
+          a: <p>No. It&apos;s free.</p>,
         },
         {
           id: "messages",
           q: "Can people message me?",
-          a: (
-            <p>
-              No. There are no messages on {SITE.name}, on purpose. Nobody can contact you through
-              the app, and there&apos;s no way to browse people. Everything you need is on the
-              meetup page: when, where, and who&apos;s going.
-            </p>
-          ),
+          a: <p>No. Nobody can message you here.</p>,
         },
       ],
     },
@@ -57,20 +46,18 @@ export default async function HelpPage() {
           q: "How do I go to a meetup?",
           a: (
             <ol className="list-decimal space-y-1 pl-5">
-              <li>Tap <strong>Map</strong> at the bottom of the screen.</li>
-              <li>Tap a meetup on the map, or one in the list under it.</li>
+              <li>Tap <strong>Map</strong>.</li>
+              <li>Tap a meetup.</li>
               <li>Tap <strong>I&apos;m in</strong>.</li>
-              <li>Tap <strong>Add to calendar</strong> so your phone reminds you.</li>
             </ol>
           ),
         },
         {
           id: "near",
-          q: "How do I see what's near me?",
+          q: "What's near me?",
           a: (
             <p>
-              Tap <strong>Near me</strong> on the map and allow your location. The map moves to
-              where you are, and the list shows how far away each meetup is.
+              Tap <strong>Near me</strong> on the map.
             </p>
           ),
         },
@@ -78,35 +65,28 @@ export default async function HelpPage() {
           id: "reminder",
           q: "Will I get a reminder?",
           a: canEmail ? (
-            <p>
-              Yes. We email you the day before, and straight away if the meetup changes or is
-              cancelled. You can turn these emails off on your <strong>Me</strong> page. Tapping{" "}
-              <strong>Add to calendar</strong> on the meetup gets your phone to remind you too.
-            </p>
+            <p>Yes. We email you the day before.</p>
           ) : (
             <p>
-              Tap <strong>Add to calendar</strong> on the meetup. Your phone will remind you an hour
-              before.
+              Tap <strong>Add to calendar</strong> on the meetup.
             </p>
           ),
         },
         {
           id: "find",
-          q: "How do I find the group when I get there?",
+          q: "How do I find the group?",
           a: (
             <p>
-              Look on the meetup page for <strong>How to find us</strong>, for example &ldquo;yellow
-              jacket, by the gate&rdquo;. Tap <strong>Directions</strong> to get there.
+              Look for <strong>How to find us</strong> on the meetup.
             </p>
           ),
         },
         {
           id: "cant-go",
-          q: "I can't go any more. What do I do?",
+          q: "I can't go any more",
           a: (
             <p>
-              Open the meetup and tap <strong>I can&apos;t go now</strong>. If there&apos;s a
-              waiting list, the next person gets your place.
+              Open the meetup. Tap <strong>I can&apos;t go now</strong>.
             </p>
           ),
         },
@@ -115,81 +95,64 @@ export default async function HelpPage() {
           q: "How do I stay safe?",
           a: (
             <ul className="list-disc space-y-1 pl-5">
-              <li>Meet in the public place the host gave.</li>
-              <li>Tell a friend where you&apos;re going.</li>
-              <li>Get there and home your own way.</li>
-              <li>If something feels wrong, leave.</li>
+              <li>Stay in public.</li>
+              <li>Tell a friend where you are.</li>
+              <li>Get home your own way.</li>
+              <li>Feels wrong? Leave.</li>
             </ul>
           ),
         },
         {
           id: "report",
-          q: "Someone was out of line. What can I do?",
+          q: "Someone was rude",
           a: (
             <p>
-              On the meetup page, tap <strong>🚩 Report</strong> under their name and say what
-              happened. Only moderators see it. If three different people who met them report them,
-              they are banned for life.
+              Tap <strong>🚩 Report</strong> under their name.
             </p>
           ),
         },
       ],
     },
     {
-      title: "Posting your own meetup",
+      title: "Posting a meetup",
       items: [
         {
           id: "post",
           q: "How do I post a meetup?",
           a: (
             <p>
-              Tap <strong>Post</strong> at the bottom of the screen and answer four quick questions:
-              what, where, when, and a name.
+              Tap <strong>Post</strong>. Answer 4 questions.
             </p>
           ),
         },
         {
           id: "locked",
           q: "Why can't I post yet?",
-          a: (
-            <p>
-              Everyone goes to one meetup before they can post their own. It keeps things friendly:
-              every host has turned up and met people. Once a meetup you said you&apos;d go to has
-              happened, you can post. It can be a meetup anywhere, for example while you&apos;re
-              travelling, and after that you can post anywhere, even somewhere with no meetups yet.
-            </p>
-          ),
+          a: <p>Go to one meetup first. Any meetup, anywhere.</p>,
         },
         {
           id: "change",
-          q: "How do I change or cancel my meetup?",
+          q: "How do I change or cancel it?",
           a: (
             <p>
-              Open your meetup and tap <strong>Change details</strong> or{" "}
-              <strong>Cancel meetup</strong>. Everyone going sees the change.
+              Open it. Tap <strong>Change details</strong> or <strong>Cancel meetup</strong>.
             </p>
           ),
         },
       ],
     },
     {
-      title: "Ticks and thumbs up",
+      title: "✓ and 👍",
       items: [
         {
           id: "tick",
           q: "What does ✓ Been before mean?",
-          a: <p>That person has been to a meetup before. People who haven&apos;t yet show as New.</p>,
+          a: <p>They&apos;ve been to a meetup.</p>,
         },
         {
           id: "thumbs",
           q: "What is 👍?",
-          a: (
-            <p>
-              After a meetup, the people who were there can give each other a thumbs up. The number
-              next to someone&apos;s name is how many they&apos;ve had. Open a meetup that has
-              finished to give yours.
-            </p>
-          ),
+          a: <p>Thumbs up from people they met.</p>,
         },
       ],
     },
@@ -201,62 +164,48 @@ export default async function HelpPage() {
           q: "I forgot my password",
           a: canEmail ? (
             <p>
-              On the sign in screen, type your email, then tap{" "}
-              <strong>Forgot your password?</strong>. We&apos;ll email you a code to choose a new
-              one.
+              On sign in, tap <strong>Forgot your password?</strong>
             </p>
           ) : (
-            <p>
-              Ask a {SITE.name} admin. They can give you a temporary password, and you can change it
-              on your profile straight after.
-            </p>
+            <p>Ask an admin.</p>
           ),
         },
         {
           id: "profile",
-          q: "How do I change my name, photo or password?",
+          q: "Change my name, photo or password",
           a: (
             <p>
-              Tap <strong>Me</strong> at the bottom of the screen. Everything is on that page.
+              Tap <strong>Me</strong>.
             </p>
           ),
         },
         {
           id: "delete",
-          q: "How do I delete my account?",
+          q: "Delete my account",
           a: (
             <p>
-              Tap <strong>Me</strong>, scroll to the bottom, and tap{" "}
-              <strong>Delete my account</strong>. It&apos;s deleted for good.
+              Tap <strong>Me</strong>. Scroll down. Tap <strong>Delete my account</strong>.
             </p>
           ),
         },
         {
           id: "home-screen",
-          q: "Can I put it on my phone like an app?",
+          q: "Put it on my phone",
           a: (
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                <strong>iPhone:</strong> in Safari, tap the Share button, then{" "}
-                <strong>Add to Home Screen</strong>.
+                <strong>iPhone:</strong> Share → <strong>Add to Home Screen</strong>
               </li>
               <li>
-                <strong>Android:</strong> in Chrome, tap the ⋮ menu, then{" "}
-                <strong>Add to Home screen</strong> or <strong>Install app</strong>.
+                <strong>Android:</strong> ⋮ → <strong>Add to Home screen</strong>
               </li>
             </ul>
           ),
         },
         {
           id: "language",
-          q: "Can I read it in my language?",
-          a: (
-            <p>
-              Yes. Your phone can translate the whole site. In Safari, tap the{" "}
-              <strong>aA</strong> button and <strong>Translate</strong>. In Chrome, tap{" "}
-              <strong>Translate</strong> when it offers, or find it in the ⋮ menu.
-            </p>
-          ),
+          q: "Read it in my language",
+          a: <p>Use your browser&apos;s Translate button.</p>,
         },
       ],
     },
@@ -265,7 +214,7 @@ export default async function HelpPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-3xl font-bold text-white drop-shadow">Help</h1>
-      <p className="mt-2 text-lg text-white">Quick answers. Tap a question to see the answer.</p>
+      <p className="mt-2 text-lg text-white">Tap a question.</p>
 
       {/* The rules, up top and always open: short enough to read in ten
           seconds, and the thing everyone agrees to when they join. */}
@@ -274,35 +223,20 @@ export default async function HelpPage() {
           House rules
         </h2>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-base text-slate-800">
+          <li>Be kind.</li>
+          <li>Meet in public.</li>
           <li>
-            <strong>Be kind.</strong> Everyone is welcome, whatever their speed, size, age or
-            background.
+            Can&apos;t go? Tap <strong>I can&apos;t go now</strong>.
           </li>
-          <li>
-            <strong>Meet in public.</strong> Hosts pick busy, easy-to-find places.
-          </li>
-          <li>
-            <strong>Turn up, or say you can&apos;t.</strong> Tap &ldquo;I can&apos;t go now&rdquo;
-            so someone else can have your place.
-          </li>
-          <li>
-            <strong>No selling, no promoting, no pressure.</strong> This is for meeting people, not
-            for sales or dates.
-          </li>
-          <li>
-            <strong>No means no.</strong> If someone doesn&apos;t want to swap numbers or carry on
-            afterwards, leave it there.
-          </li>
+          <li>No selling.</li>
+          <li>No means no.</li>
         </ol>
-        <p className="mt-3 text-base text-slate-700">
-          Break them and people can report you. If three different people who met you report
-          you, you&apos;re banned for life.
-        </p>
+        <p className="mt-3 text-base font-semibold text-slate-900">🚩 3 reports = banned for life.</p>
       </section>
 
-      {sections.map((section) => (
-        <section key={section.title} className="mt-8" aria-labelledby={`h-${section.title}`}>
-          <h2 id={`h-${section.title}`} className="mb-3 text-xl font-bold text-white">
+      {sections.map((section, i) => (
+        <section key={section.title} className="mt-8" aria-labelledby={`help-h${i}`}>
+          <h2 id={`help-h${i}`} className="mb-3 text-xl font-bold text-white">
             {section.title}
           </h2>
           <div className="space-y-3">
@@ -322,9 +256,9 @@ export default async function HelpPage() {
       ))}
 
       <div className="card mt-10 text-center">
-        <p className="text-lg font-semibold text-slate-900">Ready to go?</p>
+        <p className="text-lg font-semibold text-slate-900">Ready?</p>
         <Link href={user ? "/" : "/login"} className="btn-primary mt-3 min-h-12 px-8 text-lg">
-          {user ? "Back to the map" : "Sign in or join free"}
+          {user ? "Back to the map" : "Join free"}
         </Link>
       </div>
     </div>

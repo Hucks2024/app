@@ -122,20 +122,20 @@ export default async function ActivityDetailPage({
           {error}
         </p>
       )}
-      {justJoined && <JoinedBurst label="You're in! See you there 🙌" />}
+      {justJoined && <JoinedBurst label="You're in! 🙌" />}
       {justJoined && going && (
         // Right when they've said yes is when people act on a nudge: a
         // calendar entry is what reminds them on the day, and a face is
         // how the group knows who to look out for.
         <div className="card mb-4 !p-4">
-          <p className="text-base font-bold text-slate-900">Two quick things so you don&apos;t miss it</p>
+          <p className="text-base font-bold text-slate-900">Don&apos;t miss it</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <a href={`/activities/${activity.id}/calendar`} className="btn-primary min-h-12 flex-1 text-base">
-              📆 Add to my calendar
+              📆 Add to calendar
             </a>
             {!user.profilePhotoType && (
               <Link href="/profile#photo" className="btn-secondary min-h-12 flex-1 text-base">
-                🙂 Add a photo so people know you
+                🙂 Add your photo
               </Link>
             )}
           </div>
@@ -143,13 +143,12 @@ export default async function ActivityDetailPage({
       )}
       {saved && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Saved. Everyone going sees the new details.
+          ✓ Saved.
         </p>
       )}
       {reported && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Thanks for telling us. A moderator will look at it. Three red flags from different
-          people means a lifetime ban.
+          Thanks. A moderator will look.
         </p>
       )}
 
@@ -229,9 +228,8 @@ export default async function ActivityDetailPage({
         )}
         {upcoming && (
           <p className="mt-2 text-sm text-slate-600">
-            Use Google Calendar?{" "}
             <a href={googleCalendar} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline">
-              Add it there instead
+              Or add to Google Calendar
             </a>
           </p>
         )}
@@ -246,12 +244,12 @@ export default async function ActivityDetailPage({
             rel="noopener noreferrer"
             className="mt-3 inline-flex min-h-11 items-center gap-1 text-base font-medium text-orange-700 underline"
           >
-            🧡 See the route on Strava
+            🧡 Route on Strava
           </a>
         )}
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
-          <span className="text-slate-600">Hosted by</span>
+          <span className="text-slate-600">Host</span>
           <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} size={8} />
           <span className="font-semibold">{activity.host.name}</span>
           <TrustMarks person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
@@ -269,9 +267,8 @@ export default async function ActivityDetailPage({
               </summary>
               <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
                 <input type="hidden" name="activityId" value={activity.id} />
-                <p className="text-sm text-slate-700 mb-3">
-                  It comes off the map, and everyone going sees it&apos;s cancelled. You can&apos;t
-                  undo this.
+                <p className="text-base text-slate-700 mb-3">
+                  Everyone going will be told. You can&apos;t undo this.
                 </p>
                 <SubmitButton className="btn-danger w-full min-h-11" pending="Cancelling…">
                   Yes, cancel it
@@ -287,27 +284,27 @@ export default async function ActivityDetailPage({
           far down you've scrolled. On a bigger screen it sits in the page. */}
       <div className="action-bar">
         {cancelled ? (
-          <p className="action-bar-note text-red-700">❌ This meetup has been cancelled.</p>
+          <p className="action-bar-note text-red-700">❌ Cancelled</p>
         ) : happened ? (
           wasThere ? (
             <a href="#people" className="btn-primary w-full min-h-12 text-base">
-              👍 Thumbs up the people you met
+              👍 Give thumbs up
             </a>
           ) : (
-            <p className="action-bar-note">This meetup has finished.</p>
+            <p className="action-bar-note">This meetup is over.</p>
           )
         ) : isHost ? (
-          <p className="action-bar-note">You&apos;re hosting this one. {joined.length - 1 > 0 ? `${joined.length - 1} going so far.` : "Nobody else yet, share it!"}</p>
+          <p className="action-bar-note">You&apos;re the host. {joined.length - 1 > 0 ? `${joined.length - 1} going.` : "Share it!"}</p>
         ) : activity.host.accountStatus !== "ACTIVE" ? (
           <p className="action-bar-note">This host has been removed.</p>
         ) : !myParticipation ? (
           <form action={joinActivityAction} className="w-full">
             <input type="hidden" name="activityId" value={activity.id} />
-            <SubmitButton className="btn-primary w-full min-h-12 text-lg" pending="Saving your place…">
-              {full ? "It's full: join the waitlist" : "I'm in 🙌"}
+            <SubmitButton className="btn-primary w-full min-h-12 text-lg" pending="Saving…">
+              {full ? "Full: join waitlist" : "I'm in 🙌"}
             </SubmitButton>
             <p className="mt-1 text-center text-sm text-slate-600">
-              Free. {joined.length > 0 ? `${joined.length} going.` : "Be the first to say yes."}
+              Free · {joined.length > 0 ? `${joined.length} going` : "Be the first"}
             </p>
           </form>
         ) : going ? (
@@ -338,10 +335,7 @@ export default async function ActivityDetailPage({
           {happened ? "Who came" : "Who's going"} ({joined.length}
           {activity.maxParticipants && !happened ? ` of ${activity.maxParticipants}` : ""})
         </h2>
-        <p className="text-sm text-slate-600 mb-4">
-          ✓ means they&apos;ve been to a meetup before. 👍 is how many thumbs up people they met
-          have given them.
-        </p>
+        <p className="text-sm text-slate-600 mb-4">✓ = been before · 👍 = thumbs up</p>
         <ul className="space-y-4">
           {joined.map((p) => (
             <ParticipantRow
@@ -359,7 +353,7 @@ export default async function ActivityDetailPage({
         {waitlist.length > 0 && !happened && (
           <>
             <h3 className="font-semibold mt-6 mb-3 text-base text-slate-700">
-              Waiting for a place ({waitlist.length})
+              Waitlist ({waitlist.length})
             </h3>
             <ul className="space-y-4">
               {waitlist.map((p) => (
@@ -385,15 +379,12 @@ export default async function ActivityDetailPage({
           🛟 Staying safe
         </summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-base text-slate-700">
-          <li>Meet in the busy, public spot the host gave. Don&apos;t go off on your own with someone you&apos;ve just met.</li>
-          <li>Tell a friend where you&apos;re going and when you&apos;ll be back.</li>
-          <li>Get there and home your own way.</li>
-          <li>If something feels wrong, leave. You don&apos;t owe anyone an explanation.</li>
-          <li>If someone is out of line, tap <strong>Report</strong> next to their name. It&apos;s private.</li>
+          <li>Stay in public.</li>
+          <li>Tell a friend where you are.</li>
+          <li>Get home your own way.</li>
+          <li>Feels wrong? Leave.</li>
+          <li>Someone rude? Tap <strong>Report</strong>.</li>
         </ul>
-        <p className="mt-3 text-sm text-slate-600">
-          There are no private messages on {SITE.name}, on purpose. Nobody can message you.
-        </p>
       </details>
     </div>
   );
@@ -468,12 +459,7 @@ function ParticipantRow({
           </summary>
           <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
             <p className="text-sm text-slate-700">
-              For anyone who broke the{" "}
-              <a href="/help#rules" className="font-semibold underline">
-                house rules
-              </a>
-              . Only moderators see this. Three reports from different people who&apos;ve met{" "}
-              {person.name} at meetups is a lifetime ban.
+              Only moderators see this. 3 reports = banned for life.
             </p>
             <input type="hidden" name="reportedUserId" value={person.id} />
             <input type="hidden" name="activityId" value={activityId} />

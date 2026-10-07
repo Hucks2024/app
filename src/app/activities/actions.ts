@@ -13,16 +13,16 @@ import { emailCancelled, emailChanged } from "@/lib/notify";
 import { CATEGORY_VALUES } from "@/lib/categories";
 
 const createSchema = z.object({
-  title: z.string().trim().min(3, "Give your meetup a name, at least 3 letters.").max(120),
+  title: z.string().trim().min(3, "Give it a name.").max(120),
   category: z
     .string()
-    .refine((v) => CATEGORY_VALUES.includes(v), "Pick what kind of meetup this is")
+    .refine((v) => CATEGORY_VALUES.includes(v), "Pick a type.")
     .default("RUN"),
   afterSpot: z.string().trim().max(200).optional(),
   findUs: z.string().trim().max(200).optional(),
   description: z.string().trim().max(2000).optional(),
-  location: z.string().trim().min(3, "Type where people should meet.").max(200),
-  startsAt: z.string().min(1, "Pick a day and a time."),
+  location: z.string().trim().min(3, "Type where to meet.").max(200),
+  startsAt: z.string().min(1, "Pick a day and time."),
   distanceKm: z.coerce.number().positive().max(500).optional(),
   pace: z.string().trim().max(40).optional(),
   maxParticipants: z.coerce.number().int().positive().max(500).optional(),
@@ -58,8 +58,8 @@ function readMeetupForm(formData: FormData) {
 }
 
 const NOT_FOUND = (place: string) =>
-  `We couldn't find "${place}" on the map. Add the area or a postcode, like "Hyde Park, London".`;
-const LOOKUP_DOWN = "The map lookup isn't answering right now. Give it a minute and try again.";
+  `Can't find "${place}". Add the town, like "Hyde Park, London".`;
+const LOOKUP_DOWN = "Map search is down. Try again in a minute.";
 
 /** Posts a new meetup, or saves changes to one (when activityId is set).
  *
@@ -80,8 +80,8 @@ export async function saveMeetupAction(
     : null;
   if (editingId) {
     if (!existing || (existing.hostId !== user.id && user.role !== "ADMIN")) redirect("/");
-    if (existing.cancelledAt) return { error: "This meetup has been cancelled, so it can't be changed." };
-    if (existing.startsAt <= new Date()) return { error: "This meetup has already started, so it can't be changed." };
+    if (existing.cancelledAt) return { error: "This meetup is cancelled." };
+    if (existing.startsAt <= new Date()) return { error: "This meetup has started." };
   } else if (!(await refreshVerified(prisma, user)).verified) {
     // Posting is for verified members: somebody who's been to a meetup
     // themselves. The page explains how to get there; this is the lock.
@@ -89,7 +89,7 @@ export async function saveMeetupAction(
   }
 
   const parsed = createSchema.safeParse(readMeetupForm(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Something's not right there." };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Something's not right." };
 
   // The picker gives a wall-clock time with no zone ("2026-10-04T07:00"),
   // which the server would read as UTC: an hour out all summer in London.
@@ -97,9 +97,9 @@ export async function saveMeetupAction(
   // its own zone, and that's the one we keep when it's there.
   const fromBrowser = String(formData.get("startsAtUtc") ?? "");
   const startsAt = new Date(fromBrowser || parsed.data.startsAt);
-  if (Number.isNaN(startsAt.getTime())) return { error: "That date and time doesn't look right." };
+  if (Number.isNaN(startsAt.getTime())) return { error: "Check the day and time." };
   if (startsAt.getTime() < Date.now() - 5 * 60 * 1000) {
-    return { error: "That time has already gone. Pick one in the future." };
+    return { error: "That time has gone. Pick a later one." };
   }
 
   // Where the pin goes. The form found it from the host's own browser
@@ -282,10 +282,10 @@ export async function reportUserAction(formData: FormData) {
   const back = (query: string) => redirect(`/activities/${activityId}?${query}`);
 
   if (reportedUserId === user.id) {
-    back(`error=${encodeURIComponent("You can't red-flag yourself.")}`);
+    back(`error=${encodeURIComponent("You can't report yourself.")}`);
   }
   if (reason.length < 5) {
-    back(`error=${encodeURIComponent("Say a bit more about what happened, so a moderator can act on it.")}`);
+    back(`error=${encodeURIComponent("Say what happened.")}`);
   }
 
   const prisma = await getPrisma();

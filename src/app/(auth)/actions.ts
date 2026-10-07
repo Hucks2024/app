@@ -24,7 +24,7 @@ import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/l
 // anything, and a mistyped address shows up as "create your account"
 // instead of as a mystery second account later.
 
-const emailSchema = z.string().trim().toLowerCase().email("That doesn't look like an email address.");
+const emailSchema = z.string().trim().toLowerCase().email("Check the email address.");
 
 export type EmailLookup =
   | { kind: "existing"; provider: "apple" | "google" | null }
@@ -53,14 +53,14 @@ export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
 export type AuthState = { error: string | null };
 
 const signupSchema = z.object({
-  name: z.string().trim().min(2, "What should people call you? Two letters at least.").max(80),
+  name: z.string().trim().min(2, "Type your first name.").max(80),
   email: emailSchema,
-  password: z.string().min(8, "Your password needs at least 8 characters."),
+  password: z.string().min(8, "Password: 8 or more characters."),
 });
 
 const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, "Enter your password."),
+  password: z.string().min(1, "Type your password."),
 });
 
 /** Step two, either way round. Errors come back as state rather than a
@@ -73,7 +73,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     // A field people never see, so only a bot filling in every box
     // fills it in. Turned away with nothing that says why.
     if (String(formData.get("website") ?? "").length > 0) {
-      return { error: "Something went wrong there. Give it another go." };
+      return { error: "Something went wrong. Try again." };
     }
     const parsed = signupSchema.safeParse({
       name: formData.get("name"),
@@ -84,7 +84,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     const { name, email, password } = parsed.data;
 
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
-      return { error: "There's already an account with that email. Go back and sign in instead." };
+      return { error: "That email already has an account. Go back and sign in." };
     }
 
     const user = await prisma.user.create({
@@ -122,32 +122,32 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
   const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return { error: "That password isn't right. Try again." };
+  if (!user) return { error: "Wrong password. Try again." };
 
   const locked = minutesLocked(user);
   if (locked > 0) {
     return {
-      error: `Too many wrong passwords. Try again in ${locked} minute${locked === 1 ? "" : "s"}, or reset your password.`,
+      error: `Too many tries. Wait ${locked} minute${locked === 1 ? "" : "s"}.`,
     };
   }
   if (!(await verifyPassword(password, user.passwordHash))) {
     const left = await recordWrongPassword(prisma, user);
     if (left === 0) {
-      return { error: "Too many wrong passwords. Try again in 15 minutes, or reset your password." };
+      return { error: "Too many tries. Wait 15 minutes." };
     }
     return {
       error:
         left <= 2
-          ? `That password isn't right. ${left} more ${left === 1 ? "try" : "tries"} before a 15 minute wait.`
-          : "That password isn't right. Try again.",
+          ? `Wrong password. ${left} ${left === 1 ? "try" : "tries"} left.`
+          : "Wrong password. Try again.",
     };
   }
   if (user.failedLogins > 0) await clearWrongPasswords(prisma, user.id);
   if (user.accountStatus === "BANNED") {
-    return { error: "This account has been banned for good after three red flags." };
+    return { error: "This account is banned for life." };
   }
   if (user.accountStatus !== "ACTIVE") {
-    return { error: "This account has been suspended." };
+    return { error: "This account is on hold." };
   }
 
   await createSession(user.id);
@@ -165,7 +165,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
  * possible when email is set up; the screen says so when it isn't. */
 export async function startResetAction(raw: string): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!emailVerificationEnabled()) {
-    return { ok: false, error: "Password resets by email aren't switched on here yet." };
+    return { ok: false, error: "Ask an admin to reset it." };
   }
   const parsed = emailSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
@@ -184,9 +184,9 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
     // The cooldown message is worth showing; a provider error isn't.
     return {
       ok: false,
-      error: sent.error.startsWith("Hang on")
+      error: sent.error.startsWith("Wait")
         ? sent.error
-        : "We couldn't send the email just now. Try again in a minute.",
+        : "Email didn't send. Try again in a minute.",
     };
   }
   return { ok: true };
@@ -194,8 +194,8 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
 
 const resetSchema = z.object({
   email: emailSchema,
-  code: z.string().trim().min(1, "Enter the six digits from the email."),
-  password: z.string().min(8, "Your new password needs at least 8 characters."),
+  code: z.string().trim().min(1, "Type the code from the email."),
+  password: z.string().min(8, "Password: 8 or more characters."),
 });
 
 /** Forgot your password, step two: the code from the email and a new
@@ -211,7 +211,7 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user || user.accountStatus !== "ACTIVE") {
-    return { error: "That code has expired. Ask for a new one." };
+    return { error: "Code expired. Get a new one." };
   }
   const checked = await checkVerificationCode(prisma, user.id, parsed.data.code);
   if (!checked.ok) return { error: checked.error };

@@ -5,6 +5,7 @@ import { ensureMembership, formatMemberNumber } from "@/lib/invite";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
+import { emailVerificationEnabled } from "@/lib/email";
 import {
   deleteAccountAction,
   setEmailRemindersAction,
@@ -75,31 +76,27 @@ export default async function ProfilePage({
       )}
       {saved && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          Profile saved.
+          ✓ Saved.
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="card !p-4 text-center">
           <p className="text-3xl font-bold text-slate-900">👍 {thumbs}</p>
-          <p className="text-sm text-slate-500 mt-1">
-            thumbs up from people you&apos;ve met
-          </p>
+          <p className="text-sm text-slate-500 mt-1">thumbs up</p>
         </div>
         <div className="card !p-4 text-center">
           {verified ? (
             <>
               <p className="text-3xl font-bold text-brand-700">✓</p>
-              <p className="text-sm text-slate-500 mt-1">Verified. You can post meetups.</p>
+              <p className="text-sm text-slate-500 mt-1">You can post</p>
             </>
           ) : (
             <>
               <p className="text-3xl" aria-hidden="true">
                 🌱
               </p>
-              <p className="text-sm text-slate-500 mt-1">
-                New member. Go to one meetup to unlock posting.
-              </p>
+              <p className="text-sm text-slate-500 mt-1">Go to 1 meetup to post</p>
             </>
           )}
         </div>
@@ -109,16 +106,16 @@ export default async function ProfilePage({
         <p className="font-semibold mb-3">Your meetups</p>
         {upcoming.length === 0 && past.length === 0 ? (
           <p className="text-sm text-slate-600">
-            Nothing yet.{" "}
+            None yet.{" "}
             <Link href="/" className="font-medium text-brand-700 underline">
-              Find one on the map →
+              Find one →
             </Link>
           </p>
         ) : (
           <div className="space-y-4">
             {upcoming.length > 0 && <MeetupLinks label="Coming up" rows={upcoming} />}
             {past.length > 0 && (
-              <MeetupLinks label="Been to (give your 👍 here)" rows={past} toPeople />
+              <MeetupLinks label="Been to" rows={past} toPeople />
             )}
           </div>
         )}
@@ -126,9 +123,7 @@ export default async function ProfilePage({
 
       <div className="card mb-4">
         <p className="font-semibold mb-1">Bring a friend 🎒</p>
-        <p className="text-sm text-slate-600 mb-3">
-          It&apos;s free and there&apos;s no invite code. Send them this.
-        </p>
+        <p className="text-sm text-slate-600 mb-3">Send them this link.</p>
         <CopyableField value={SITE.url} />
       </div>
 
@@ -140,38 +135,8 @@ export default async function ProfilePage({
           <input className="input" id="name" name="name" defaultValue={user.name} required />
         </div>
         <div>
-          <label className="label" htmlFor="city">
-            City / area
-          </label>
-          <input className="input" id="city" name="city" defaultValue={user.city ?? ""} />
-        </div>
-        <div>
-          <label className="label" htmlFor="pace">
-            Typical pace
-          </label>
-          <input
-            className="input"
-            id="pace"
-            name="pace"
-            placeholder="e.g. 5:30 / km, easy conversational"
-            defaultValue={user.pace ?? ""}
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="bio">
-            Bio
-          </label>
-          <textarea
-            className="input"
-            id="bio"
-            name="bio"
-            rows={3}
-            defaultValue={user.bio ?? ""}
-          />
-        </div>
-        <div>
           <label id="photo" className="label scroll-mt-24" htmlFor="profilePhoto">
-            Profile photo
+            Photo
           </label>
           <PhotoInput />
         </div>
@@ -181,31 +146,25 @@ export default async function ProfilePage({
       </form>
 
       <div className="card mt-4">
-        <p className="font-semibold mb-1">
-          {hasOwnPassword(user) ? "Change your password" : "Set a password"}
-        </p>
-        <p className="text-sm text-slate-600 mb-4">
-          {hasOwnPassword(user)
-            ? "Changing it signs you out everywhere else."
-            : "So you can also sign in with your email."}
+        <p className="font-semibold mb-3">
+          {hasOwnPassword(user) ? "Change password" : "Set a password"}
         </p>
         <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
       </div>
 
-      <div id="emails" className="card mt-4 scroll-mt-20">
-        <p className="font-semibold mb-1">Emails</p>
-        <p className="text-base text-slate-700 mb-3">
-          {user.emailReminders
-            ? "We email you the day before a meetup you're going to, and straight away if it changes or is cancelled."
-            : "Reminder emails are off. You won't hear if a meetup you're going to changes or is cancelled."}
-        </p>
-        <form action={setEmailRemindersAction}>
-          <input type="hidden" name="on" value={user.emailReminders ? "0" : "1"} />
-          <SubmitButton className={`${user.emailReminders ? "btn-secondary" : "btn-primary"} min-h-11`} pending="Saving…">
-            {user.emailReminders ? "Turn these emails off" : "Turn reminder emails on"}
-          </SubmitButton>
-        </form>
-      </div>
+      {/* Only when email is set up: a switch for emails that never send is clutter. */}
+      {emailVerificationEnabled() && (
+        <div id="emails" className="card mt-4 scroll-mt-20">
+          <p className="font-semibold mb-1">Reminder emails</p>
+          <p className="text-base text-slate-700 mb-3">{user.emailReminders ? "On" : "Off"}</p>
+          <form action={setEmailRemindersAction}>
+            <input type="hidden" name="on" value={user.emailReminders ? "0" : "1"} />
+            <SubmitButton className={`${user.emailReminders ? "btn-secondary" : "btn-primary"} min-h-11`} pending="Saving…">
+              {user.emailReminders ? "Turn off" : "Turn on"}
+            </SubmitButton>
+          </form>
+        </div>
+      )}
 
       <div className="card mt-4 flex items-center justify-between gap-3">
         <p className="text-base text-slate-700">Signed in as {user.email}</p>
@@ -218,13 +177,10 @@ export default async function ProfilePage({
         <summary className="cursor-pointer select-none text-sm font-medium text-red-700">
           Delete my account
         </summary>
-        <p className="text-sm text-slate-600 mt-3">
-          This deletes your account for good: your profile, your thumbs up, your places on
-          meetups, and any meetups you&apos;re hosting. It can&apos;t be undone.
-        </p>
+        <p className="text-base text-slate-700 mt-3">Deletes everything. You can&apos;t undo it.</p>
         <form action={deleteAccountAction} className="mt-3">
           <SubmitButton className="btn-danger w-full" pending="Deleting…">
-            Yes, delete my account for good
+            Yes, delete it
           </SubmitButton>
         </form>
       </details>

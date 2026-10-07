@@ -84,10 +84,9 @@ async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boo
   if (justVerified) {
     return (
       <MapNotice id="verified">
-        <strong className="text-slate-900">🎉 You&apos;re verified ✓</strong>
+        <strong className="text-slate-900">🎉 You can post now</strong>
         <br />
-        You&apos;ve been to your first meetup, so now you can post your own. Tap{" "}
-        <strong>Post</strong> to start one.
+        Tap <strong>Post</strong> below.
       </MapNotice>
     );
   }
@@ -126,7 +125,7 @@ async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boo
       >
         <strong className="text-slate-900">How was {recent.activity.title}? 👍</strong>
         <br />
-        Give a thumbs up to the people you met there.
+        Thank the people you met.
       </MapNotice>
     );
   }
@@ -134,10 +133,9 @@ async function noticeFor(user: CurrentUser, verified: boolean, justVerified: boo
   if (!verified) {
     return (
       <MapNotice id="welcome">
-        <strong className="text-slate-900">👋 Welcome to packmates</strong>
+        <strong className="text-slate-900">👋 Welcome</strong>
         <br />
-        Tap a pin or a meetup in the list, then tap <strong>I&apos;m in</strong>. After your first
-        meetup, you can post your own.
+        Pick a meetup. Tap <strong>I&apos;m in</strong>.
       </MapNotice>
     );
   }

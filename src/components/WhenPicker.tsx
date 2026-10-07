@@ -192,7 +192,7 @@ export default function WhenPicker({
           }`}
           aria-live="polite"
         >
-          {inPast ? "That time has already gone. Pick a later one." : `🗓️ ${describeWhen(day, minutes, prefs)}`}
+          {inPast ? "That time has gone. Pick a later one." : `🗓️ ${describeWhen(day, minutes, prefs)}`}
         </p>
       )}
     </div>

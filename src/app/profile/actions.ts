@@ -15,7 +15,7 @@ import {
 import { readImageFile, ImageValidationError } from "@/lib/images";
 
 const profileSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2, "Type your first name.").max(80),
   city: z.string().trim().max(80).optional(),
   pace: z.string().trim().max(40).optional(),
   bio: z.string().trim().max(500).optional(),
@@ -32,14 +32,14 @@ export async function updateProfileAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid input")}`);
+    redirect(`/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Check your details.")}`);
   }
 
   let photo: { bytes: Uint8Array<ArrayBuffer>; type: string } | null = null;
   try {
     photo = await readImageFile(formData.get("profilePhoto") as File | null);
   } catch (err) {
-    const message = err instanceof ImageValidationError ? err.message : "Upload failed.";
+    const message = err instanceof ImageValidationError ? err.message : "Photo didn't upload. Try again.";
     redirect(`/profile?error=${encodeURIComponent(message)}`);
   }
 
@@ -74,11 +74,11 @@ export async function changePasswordAction(
   // password to type, so they set one without being asked for the old.
   if (hasOwnPassword(user)) {
     if (!(await verifyPassword(current, user.passwordHash))) {
-      return { error: "Your current password isn't right.", done: false };
+      return { error: "Current password is wrong.", done: false };
     }
   }
-  if (next.length < 8) return { error: "Your new password needs at least 8 characters.", done: false };
-  if (next !== confirm) return { error: "The two new passwords don't match.", done: false };
+  if (next.length < 8) return { error: "New password: 8 or more characters.", done: false };
+  if (next !== confirm) return { error: "The new passwords don't match.", done: false };
 
   const prisma = await getPrisma();
   await prisma.user.update({
@@ -105,7 +105,7 @@ export async function deleteAccountAction() {
     const admins = await prisma.user.count({ where: { role: "ADMIN", accountStatus: "ACTIVE" } });
     if (admins <= 1) {
       redirect(
-        `/profile?error=${encodeURIComponent("You're the only admin. Make someone else an admin first, so the app isn't left without one.")}`
+        `/profile?error=${encodeURIComponent("You're the only admin. Make someone else admin first.")}`
       );
     }
   }

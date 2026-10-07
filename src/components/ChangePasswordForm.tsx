@@ -28,7 +28,7 @@ export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boo
       )}
       {state.done && !pending && (
         <p role="status" className="rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          Password changed. Anywhere else you were signed in has been signed out.
+          ✓ Password changed.
         </p>
       )}
       {needsCurrent && (

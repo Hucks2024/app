@@ -8,7 +8,6 @@ import { categoryFor } from "@/lib/categories";
 import MeetupList, { kmBetween } from "@/components/MeetupList";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
-const SITE_NAME = "packmates";
 
 // Leaflet reaches for `window` the moment it's imported, which is fatal on
 // the server: any page rendering the map directly returns a 500 before a
@@ -183,26 +182,19 @@ export default function MeetupBoard({
             <p className="font-bold text-slate-900">Nothing near you yet 🌍</p>
             {canPost ? (
               <>
-                <p className="mt-1">
-                  {SITE_NAME} is new where you are. Be the first: post a meetup here and people nearby
-                  will see it.
-                </p>
+                <p className="mt-1">Be the first. Post one here.</p>
                 <Link href="/activities/new" className="btn-primary mt-3 min-h-12 w-full text-base">
                   Post the first meetup here
                 </Link>
               </>
             ) : (
-              <p className="mt-1">
-                {SITE_NAME} is new where you are, and you can start it. Go to one meetup anywhere
-                first, on a trip for example. After that you can post meetups anywhere, including
-                here.
-              </p>
+              <p className="mt-1">Go to one meetup anywhere. Then you can post one here.</p>
             )}
           </div>
         )}
         {filtered.length === 0 ? (
           <div className="card text-base text-slate-700">
-            Nothing on for that. Try another day, or tap <strong>All</strong>.
+            Nothing on. Tap <strong>All</strong>.
           </div>
         ) : (
           <MeetupList activities={filtered} here={here} />

@@ -30,7 +30,7 @@ export async function sendVerificationCode(
     const secondsSince = (Date.now() - existing.sentAt.getTime()) / 1000;
     if (secondsSince < RESEND_COOLDOWN_SECONDS) {
       const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSince);
-      return { ok: false, error: `Hang on ${wait} more second${wait === 1 ? "" : "s"} before asking for another code.` };
+      return { ok: false, error: `Wait ${wait} second${wait === 1 ? "" : "s"}, then try again.` };
     }
   }
 
@@ -43,17 +43,13 @@ export async function sendVerificationCode(
     text: [
       `Hi ${user.name},`,
       ``,
-      purpose === "reset"
-        ? `Here's your code to choose a new ${SITE.name} password:`
-        : `Your ${SITE.name} verification code is:`,
+      purpose === "reset" ? `Your code to reset your password:` : `Your code:`,
       ``,
       `    ${code}`,
       ``,
-      `It expires in ${CODE_TTL_MINUTES} minutes.`,
+      `It works for ${CODE_TTL_MINUTES} minutes.`,
       ``,
-      purpose === "reset"
-        ? `If you didn't ask to reset your password, ignore this. Your password stays as it is.`
-        : `If you didn't try to join ${SITE.name}, you can ignore this, nobody can use\nthe code but you.`,
+      `Didn't ask for this? Ignore it.`,
     ].join("\n"),
   });
 
@@ -81,19 +77,19 @@ export async function checkVerificationCode(
 ): Promise<CheckResult> {
   const code = typed.replace(/\D/g, "");
   if (code.length !== 6) {
-    return { ok: false, error: "Enter the six digits from the email." };
+    return { ok: false, error: "Type the code from the email." };
   }
 
   const record = await prisma.emailVerification.findUnique({ where: { userId } });
   if (!record) {
-    return { ok: false, error: "That code has expired. Ask for a new one." };
+    return { ok: false, error: "Code expired. Get a new one." };
   }
   if (record.expiresAt < new Date()) {
     await prisma.emailVerification.delete({ where: { userId } });
-    return { ok: false, error: "That code has expired. Ask for a new one." };
+    return { ok: false, error: "Code expired. Get a new one." };
   }
   if (record.attempts >= MAX_ATTEMPTS) {
-    return { ok: false, error: "Too many wrong tries. Ask for a new code." };
+    return { ok: false, error: "Too many tries. Get a new code." };
   }
 
   if (record.code !== code) {
@@ -103,8 +99,8 @@ export async function checkVerificationCode(
     return {
       ok: false,
       error: left > 0
-        ? `That code isn't right. ${left} ${left === 1 ? "try" : "tries"} left.`
-        : "Too many wrong tries. Ask for a new code.",
+        ? `Wrong code. ${left} ${left === 1 ? "try" : "tries"} left.`
+        : "Too many tries. Get a new code.",
     };
   }
 

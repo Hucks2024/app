@@ -28,7 +28,7 @@ export default async function VerifyEmailPage({
       </p>
       <h1 className="mt-3 text-center text-3xl font-bold text-white drop-shadow">Check your email</h1>
       <p className="mt-3 text-center text-lg text-white">
-        We sent a 6-digit code to
+        We sent a code to
         <br />
         <strong className="break-all">{user.email}</strong>
       </p>
@@ -40,14 +40,14 @@ export default async function VerifyEmailPage({
       )}
       {sent && (
         <p role="status" className="mt-5 rounded-2xl bg-white px-4 py-3 text-base font-medium text-brand-800">
-          ✓ We sent a new code. Use the newest one.
+          ✓ New code sent.
         </p>
       )}
 
       <form action={confirmEmailAction} className="mt-6 space-y-3">
         <input type="hidden" name="next" value={next} />
         <label htmlFor="code" className="field-label">
-          The code from the email
+          Code from the email
         </label>
         <input
           className="pill-input text-center font-mono !text-2xl tracking-[0.35em]"
@@ -63,7 +63,7 @@ export default async function VerifyEmailPage({
           aria-describedby="code-hint"
         />
         <p id="code-hint" className="field-hint">
-          It can take a minute to arrive. Not there? Look in your spam or junk folder.
+          Not there? Check spam.
         </p>
         <button type="submit" className="pill-btn pill-black">
           Continue
@@ -73,14 +73,13 @@ export default async function VerifyEmailPage({
       <form action={resendCodeAction} className="mt-6 text-center">
         <input type="hidden" name="next" value={next} />
         <button type="submit" className="min-h-11 text-base font-medium text-white underline underline-offset-2">
-          Send me a new code
+          Send a new code
         </button>
       </form>
 
       <div className="mt-4 text-center text-base text-white">
-        <p>Wrong email address?</p>
+        <p>Wrong email?</p>
         <LogoutButton className="min-h-11 font-medium underline underline-offset-2" />
-        <p className="text-sm">then join again with the right one.</p>
       </div>
     </div>
   );

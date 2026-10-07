@@ -29,10 +29,7 @@ export default function GlobalError({
       >
         <title>packmates</title>
         <div style={{ maxWidth: 340 }}>
-          <h1 style={{ fontSize: 26, margin: "0 0 12px" }}>That didn&apos;t load</h1>
-          <p style={{ margin: "0 0 24px", opacity: 0.85 }}>
-            Something hiccuped on our side. It usually sorts itself out in a few seconds.
-          </p>
+          <h1 style={{ fontSize: 26, margin: "0 0 24px" }}>That didn&apos;t load</h1>
           <button
             type="button"
             onClick={() => retry()}

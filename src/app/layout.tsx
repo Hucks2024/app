@@ -79,7 +79,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <footer className="border-t border-white/20 py-6 text-center text-sm text-white">
           <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <Link href="/help" className="underline underline-offset-2">
-              Help and questions
+              Help
             </Link>
             <a href={SITE.url} className="underline underline-offset-2" rel="noopener">
               {SITE.domain}

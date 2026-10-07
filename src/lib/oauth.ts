@@ -228,7 +228,7 @@ export async function signInWithIdentity(provider: Provider, id: Identity): Prom
     if (existing) {
       return {
         ok: false,
-        error: "You already have an account with that email. Continue with email and use your password.",
+        error: "That email already has an account. Use Continue with email.",
       };
     }
     user = await prisma.user.create({
@@ -246,10 +246,10 @@ export async function signInWithIdentity(provider: Provider, id: Identity): Prom
   }
 
   if (user.accountStatus === "BANNED") {
-    return { ok: false, error: "This account has been banned for good after three red flags." };
+    return { ok: false, error: "This account is banned for life." };
   }
   if (user.accountStatus !== "ACTIVE") {
-    return { ok: false, error: "This account has been suspended." };
+    return { ok: false, error: "This account is on hold." };
   }
   return { ok: true, user };
 }

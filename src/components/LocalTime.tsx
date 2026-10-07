@@ -22,10 +22,27 @@ let clientCache: TimePrefs | null = null;
 export function clientPrefs(): TimePrefs {
   if (clientCache) return clientCache;
   if (typeof navigator === "undefined") return SERVER_PREFS;
-  const lang = navigator.language || "en-GB";
-  const hour12 = new Intl.DateTimeFormat(lang, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
+  const lang = deviceLanguage();
+  let hour12 = false;
+  try {
+    hour12 = new Intl.DateTimeFormat(lang, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
+  } catch {
+    // A 24-hour clock is the safe guess.
+  }
   clientCache = { zone: undefined, locale: /^en-US/i.test(lang) ? "en-US" : "en-GB", hour12 };
   return clientCache;
+}
+
+/** The device's language as a tag Intl accepts. Some systems report
+ * things like "en-US@posix" or "en_US.UTF-8", which Intl throws on, and a
+ * date must never be what takes a page down. */
+export function deviceLanguage(): string {
+  const raw = (typeof navigator !== "undefined" && navigator.language) || "en-GB";
+  try {
+    return Intl.getCanonicalLocales(raw.split(/[@.]/)[0].replace(/_/g, "-"))[0] ?? "en-GB";
+  } catch {
+    return "en-GB";
+  }
 }
 
 // Built from the pieces Intl gives back rather than its finished string,
@@ -90,9 +107,16 @@ export default function LocalTime({ iso, style = "long" }: { iso: string; style?
   const prefs = useSyncExternalStore(subscribe, clientPrefs, () => SERVER_PREFS);
   // suppressHydrationWarning only as a backstop: if some browser still
   // words a date differently, that's not worth re-rendering the page over.
+  let text: string;
+  try {
+    text = formatWhen(iso, style, prefs);
+  } catch {
+    // Some odd device setting: show it the way the server does instead.
+    text = formatWhen(iso, style, SERVER_PREFS);
+  }
   return (
     <time dateTime={iso} suppressHydrationWarning>
-      {formatWhen(iso, style, prefs)}
+      {text}
     </time>
   );
 }

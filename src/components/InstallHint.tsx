@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SITE } from "@/lib/site";
 
 const DISMISSED_KEY = "installHintDismissed";
 
@@ -55,7 +54,7 @@ export default function InstallHint() {
         📲
       </span>
       <p className="text-base text-slate-700 flex-1">
-        Add {SITE.name} to your home screen: tap{" "}
+        Get the app: tap{" "}
         <span aria-hidden>⬆️</span> <strong>Share</strong>, then{" "}
         <strong>Add to Home Screen</strong>.
       </p>
