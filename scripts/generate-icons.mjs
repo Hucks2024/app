@@ -38,24 +38,42 @@ const PIN = { width: 240, height: 344, cx: 256, cy: 246 };
 
 /**
  * @param fill how much of the canvas height the drop should take, 0-1.
- * @param tile false drops the violet square: the pin stands on its own on
- *   a transparent background. That's the browser-tab version, where a
- *   solid square reads as a sticker and shrinks the mark to make room for
- *   its own padding.
+ * @param tile false drops the square: the pin stands on its own on a
+ *   transparent background. That's the browser-tab version, where a solid
+ *   square reads as a sticker and shrinks the mark to make room for its
+ *   own padding.
+ *
+ * The home-screen tile is dark, with the drop in the app's violet-to-pink
+ * and the pack in white. iPhones can't be given a separate dark-mode icon
+ * for a web app (apple-touch-icon has no dark variant), so the one icon has
+ * to sit right among dark icons, and a dark tile with a bright mark also
+ * reads well on a light home screen and in iOS's tinted mode, where a
+ * light tile turns to grey mush.
  */
 function markSvg(size, fill, tile) {
   const scale = (512 * fill) / PIN.height;
-  // Always the white drop with the violet pack: the same way round as the
-  // mark in the nav bar, so the tab and the page show one logo.
-  const pin = "#fff";
-  const pack = BRAND;
+  // On the tile: the gradient drop with a white pack. In the tab: the
+  // white drop with the violet pack, the same way round as the nav bar.
+  const pin = tile ? "url(#drop)" : "#fff";
+  const pack = tile ? "#fff" : BRAND;
   // Without the tile, a violet edge gives the white drop its shape. Tabs
   // are light in some browsers and near-black in others: on the dark ones
   // the white carries it, and on the light ones the edge does.
   const edge = tile ? "" : ` stroke="${BRAND}" stroke-width="20" stroke-linejoin="round"`;
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 512 512">
-       ${tile ? `<rect width="512" height="512" fill="${BRAND}"/>` : ""}
+       <defs>
+         <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0" stop-color="#2a1f45"/>
+           <stop offset="1" stop-color="#0f0b1c"/>
+         </linearGradient>
+         <linearGradient id="drop" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0" stop-color="#8b5cf6"/>
+           <stop offset="0.55" stop-color="#c026d3"/>
+           <stop offset="1" stop-color="#ec4899"/>
+         </linearGradient>
+       </defs>
+       ${tile ? `<rect width="512" height="512" fill="url(#tile)"/>` : ""}
        <g transform="translate(256 256) scale(${scale}) translate(${-PIN.cx} ${-PIN.cy})">
          <path d="${PIN_PATH}" fill="${pin}"${edge}/>
          ${person(256, 236, 0.62, pack)}
