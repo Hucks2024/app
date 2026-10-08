@@ -71,7 +71,14 @@ export default function SignIn({
   next?: string;
 }) {
   const anyProvider = providers.apple || providers.google;
-  const [step, setStep] = useState<Step>(startWithEmail && !anyProvider ? "email" : "start");
+  // With email the only way in, the box is right there: no "Continue with
+  // email" button to tap first.
+  const [step, setStep] = useState<Step>(anyProvider ? "start" : "email");
+  // Jump the cursor into the box only once they've asked for it (or came
+  // to the sign-in page for it): on the front page it would throw up the
+  // keyboard over everything before anyone's read a word.
+  const [focusEmail, setFocusEmail] = useState(startWithEmail);
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [joinedWith, setJoinedWith] = useState<"apple" | "google" | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
@@ -163,7 +170,10 @@ export default function SignIn({
         )}
         <button
           type="button"
-          onClick={() => setStep("email")}
+          onClick={() => {
+            setFocusEmail(true);
+            setStep("email");
+          }}
           // With no providers set up, email is the one big button, in the
           // black the Apple button would have had.
           className={`pill-btn ${anyProvider ? "pill-ghost" : "pill-black"}`}
@@ -229,16 +239,29 @@ export default function SignIn({
         <label htmlFor="reset-password" className="field-label">
           New password
         </label>
-        <input
-          id="reset-password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-          aria-describedby="reset-password-hint"
-          className="pill-input"
-        />
+        <div className="relative">
+          <input
+            id="reset-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            required
+            minLength={8}
+            aria-describedby="reset-password-hint"
+            className="pill-input !pr-24"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            aria-pressed={showPassword}
+            className="absolute right-2 top-1/2 h-11 -translate-y-1/2 rounded-full px-4 text-base font-semibold text-brand-700 hover:bg-brand-50"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
         <p id="reset-password-hint" className="field-hint">
           8 or more characters.
         </p>
@@ -267,7 +290,7 @@ export default function SignIn({
           autoCapitalize="none"
           spellCheck={false}
           required
-          autoFocus
+          autoFocus={focusEmail}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="pill-input"
@@ -276,7 +299,7 @@ export default function SignIn({
           {looking && <Spinner />}
           Continue
         </button>
-        {(anyProvider || !startWithEmail) && <div className="text-center pt-1">{back}</div>}
+        {anyProvider && <div className="text-center pt-1">{back}</div>}
       </form>
     );
   }
@@ -350,17 +373,32 @@ export default function SignIn({
       <label htmlFor="signin-password" className="field-label">
         {creating ? "Choose a password" : "Your password"}
       </label>
-      <input
-        id="signin-password"
-        name="password"
-        type="password"
-        autoComplete={creating ? "new-password" : "current-password"}
-        required
-        minLength={creating ? 8 : 1}
-        autoFocus={!creating}
-        aria-describedby={creating ? "signin-password-hint" : undefined}
-        className="pill-input"
-      />
+      {/* Show lets people check what they typed on a phone keyboard,
+          rather than finding out from "wrong password". */}
+      <div className="relative">
+        <input
+          id="signin-password"
+          name="password"
+          type={showPassword ? "text" : "password"}
+          autoComplete={creating ? "new-password" : "current-password"}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          required
+          minLength={creating ? 8 : 1}
+          autoFocus={!creating}
+          aria-describedby={creating ? "signin-password-hint" : undefined}
+          className="pill-input !pr-24"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          aria-pressed={showPassword}
+          className="absolute right-2 top-1/2 h-11 -translate-y-1/2 rounded-full px-4 text-base font-semibold text-brand-700 hover:bg-brand-50"
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
+      </div>
       {creating && (
         <p id="signin-password-hint" className="field-hint">
           8 or more characters.

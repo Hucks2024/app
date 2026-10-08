@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireUser, needsEmailCheck, safeNext } from "@/lib/auth";
 import { confirmEmailAction, resendCodeAction } from "@/app/verify-email/actions";
 import LogoutButton from "@/components/LogoutButton";
+import CodeInput from "@/components/CodeInput";
 
 export const metadata = { title: "Check your email" };
 
@@ -51,19 +52,7 @@ export default async function VerifyEmailPage({
         <label htmlFor="code" className="field-label">
           Code from the email
         </label>
-        <input
-          className="pill-input text-center font-mono !text-2xl tracking-[0.35em]"
-          id="code"
-          name="code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9 ]*"
-          maxLength={7}
-          placeholder="123456"
-          required
-          autoFocus
-          aria-describedby="code-hint"
-        />
+        <CodeInput describedBy="code-hint" />
         <p id="code-hint" className="field-hint">
           Not there? Check spam.
         </p>
