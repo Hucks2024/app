@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { errorQuery } from "@/lib/flash";
 import { getPrisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { readImageFile, ImageValidationError } from "@/lib/images";
@@ -18,11 +19,11 @@ export async function submitVerificationAction(formData: FormData) {
     idPhoto = await readImageFile(formData.get("idPhoto") as File | null);
   } catch (err) {
     const message = err instanceof ImageValidationError ? err.message : "Upload failed.";
-    redirect(`/verify?error=${encodeURIComponent(message)}`);
+    redirect(`/verify?${errorQuery(message)}`);
   }
 
   if (!selfie || !idPhoto) {
-    redirect(`/verify?error=${encodeURIComponent("Please upload both a selfie and a photo ID.")}`);
+    redirect(`/verify?${errorQuery("Please upload both a selfie and a photo ID.")}`);
   }
 
   const prisma = await getPrisma();

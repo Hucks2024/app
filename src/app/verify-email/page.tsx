@@ -1,3 +1,4 @@
+import { readError } from "@/lib/flash";
 import { redirect } from "next/navigation";
 import { requireUser, needsEmailCheck, safeNext } from "@/lib/auth";
 import { confirmEmailAction, resendCodeAction } from "@/app/verify-email/actions";
@@ -12,9 +13,10 @@ export const metadata = { title: "Check your email" };
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sent?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; sent?: string; next?: string }>;
 }) {
-  const { error, sent, next: rawNext } = await searchParams;
+  const { error: rawError, sig, sent, next: rawNext } = await searchParams;
+  const error = readError(rawError, sig);
   const user = await requireUser();
   const next = safeNext(rawNext);
 

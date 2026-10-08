@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { errorQuery } from "@/lib/flash";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
@@ -282,10 +283,10 @@ export async function reportUserAction(formData: FormData) {
   const back = (query: string) => redirect(`/activities/${activityId}?${query}`);
 
   if (reportedUserId === user.id) {
-    back(`error=${encodeURIComponent("You can't report yourself.")}`);
+    back(errorQuery("You can't report yourself."));
   }
   if (reason.length < 5) {
-    back(`error=${encodeURIComponent("Say what happened.")}`);
+    back(errorQuery("Say what happened."));
   }
 
   const prisma = await getPrisma();

@@ -10,6 +10,7 @@ import LocalTime from "@/components/LocalTime";
 import ShareButton from "@/components/ShareButton";
 import SubmitButton from "@/components/SubmitButton";
 import { SITE } from "@/lib/site";
+import { readError } from "@/lib/flash";
 import {
   cancelActivityAction,
   joinActivityAction,
@@ -44,11 +45,12 @@ export default async function ActivityDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; reported?: string; joined?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; reported?: string; joined?: string; saved?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { error, reported, joined: justJoined, saved } = await searchParams;
+  const { error: rawError, sig, reported, joined: justJoined, saved } = await searchParams;
+  const error = readError(rawError, sig);
   const prisma = await getPrisma();
 
   const activity = await prisma.runActivity.findUnique({

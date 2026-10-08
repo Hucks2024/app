@@ -1,3 +1,4 @@
+import { readError } from "@/lib/flash";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
@@ -6,9 +7,10 @@ import { submitVerificationAction } from "@/app/verify/actions";
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; submitted?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; submitted?: string }>;
 }) {
-  const { error, submitted } = await searchParams;
+  const { error: rawError, sig, submitted } = await searchParams;
+  const error = readError(rawError, sig);
   // Dormant route. Photo-ID verification is no longer part of getting in,
   // invite codes are (see src/lib/invite.ts), so nothing links or redirects
   // here anymore. Kept working, and reachable by URL, so the check can be

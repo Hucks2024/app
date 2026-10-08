@@ -66,7 +66,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     // and on a phone that row was costing the map about 90px to tell
     // members something they knew. Posting moved to the floating button,
     // where it's bigger and always within thumb reach.
-    <div className="mx-auto max-w-3xl px-4 pt-3 pb-8">
+    <>
       <h1 className="sr-only">Meetups near you</h1>
       <MeetupBoard
         activities={mapActivities}
@@ -74,7 +74,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
         canPost={verified}
         notice={await noticeFor(user, verified, justVerified)}
       />
-    </div>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { errorQuery } from "@/lib/flash";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
 import {
@@ -32,7 +33,7 @@ export async function updateProfileAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/profile?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Check your details.")}`);
+    redirect(`/profile?${errorQuery(parsed.error.issues[0]?.message ?? "Check your details.")}`);
   }
 
   let photo: { bytes: Uint8Array<ArrayBuffer>; type: string } | null = null;
@@ -40,7 +41,7 @@ export async function updateProfileAction(formData: FormData) {
     photo = await readImageFile(formData.get("profilePhoto") as File | null);
   } catch (err) {
     const message = err instanceof ImageValidationError ? err.message : "Photo didn't upload. Try again.";
-    redirect(`/profile?error=${encodeURIComponent(message)}`);
+    redirect(`/profile?${errorQuery(message)}`);
   }
 
   const prisma = await getPrisma();
@@ -105,7 +106,7 @@ export async function deleteAccountAction() {
     const admins = await prisma.user.count({ where: { role: "ADMIN", accountStatus: "ACTIVE" } });
     if (admins <= 1) {
       redirect(
-        `/profile?error=${encodeURIComponent("You're the only admin. Make someone else admin first.")}`
+        `/profile?${errorQuery("You're the only admin. Make someone else admin first.")}`
       );
     }
   }

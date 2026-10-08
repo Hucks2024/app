@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import Nav from "@/components/Nav";
 import BottomBar from "@/components/BottomBar";
 import { getCurrentUser } from "@/lib/auth";
 import InstallHint from "@/components/InstallHint";
-import ClaudeMark from "@/components/ClaudeMark";
 import { SITE } from "@/lib/site";
 
 // The stand-in for Segoe UI on devices that don't have it (see
@@ -72,35 +70,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </main>
         <InstallHint />
         {user && <BottomBar />}
-        {/* White rather than slate: the footer sits on the page gradient,
-            not on a card, and slate-on-magenta is close to invisible. */}
-        {/* Solid white, not faded: small text needs full contrast to be
-            readable at the pink end of the gradient. */}
-        <footer className="border-t border-white/20 py-6 text-center text-sm text-white">
-          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <Link href="/help" className="underline underline-offset-2">
-              Help
-            </Link>
-            <a href={SITE.url} className="underline underline-offset-2" rel="noopener">
-              {SITE.domain}
-            </a>
-          </p>
-          <p className="mt-2">
-            <a
-              href="https://claude.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline"
-            >
-              built with claude
-              {/* On a white disc: Claude's orange all but disappears into the
-                  pink end of the page gradient on its own. */}
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm">
-                <ClaudeMark size={13} />
-              </span>
-            </a>
-          </p>
-        </footer>
       </body>
     </html>
   );

@@ -735,14 +735,9 @@ button[aria-busy="true"] {
   transform: scale(0.95);
 }
 
-/* MapNotice: a card over the bottom of the map, where travel apps put
-   their "tap + to…" tips. */
+/* MapNotice: a card floating at the top of the map, under the filters,
+   where travel apps put their "tap + to…" tips. */
 .map-notice {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
-  z-index: 1002;
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -752,16 +747,10 @@ button[aria-busy="true"] {
   box-shadow: 0 10px 28px rgb(46 16 101 / 0.3);
   animation: notice-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@media (min-width: 640px) {
-  .map-notice {
-    left: auto;
-    width: 340px;
-  }
-}
 @keyframes notice-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(-12px);
   }
   to {
     opacity: 1;
@@ -1111,4 +1100,144 @@ button[aria-busy="true"] {
    keeps every fieldset to the width it's given. */
 fieldset {
   min-width: 0;
+}
+
+/* The members' map, full screen like a travel app: everything between the
+   56px top bar (plus its 1px line) and the bottom tabs. Fixed, so the page
+   never scrolls under it and nothing has to be measured. */
+.map-screen {
+  position: fixed;
+  top: 57px;
+  left: 0;
+  right: 0;
+  bottom: calc(61px + env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  .map-screen {
+    bottom: 0;
+  }
+}
+/* Nothing to scroll behind the map. */
+body:has(.map-screen) {
+  overflow: hidden;
+}
+.map-screen .map-shell {
+  height: 100%;
+}
+/* On a phone two fingers zoom; the + and - are for computers. */
+@media (max-width: 639px) {
+  .map-full .leaflet-control-zoom {
+    display: none;
+  }
+}
+/* The attribution stays (OpenStreetMap asks for it), just smaller. */
+.map-full .leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Filters and tips floating on the map. The strip lets taps through
+   wherever there's no button, so the map still drags under it. */
+.map-overlay-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1003;
+  pointer-events: none;
+}
+.map-overlay-top > * {
+  pointer-events: auto;
+}
+.chip-row-float {
+  padding: 12px 12px 10px;
+}
+.chip-row-float .chip {
+  background: #fff;
+  color: rgb(var(--slate-800));
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgb(46 16 101 / 0.22);
+}
+.chip-row-float .chip:hover {
+  background: #f5f3ff;
+}
+.chip-row-float .chip-on,
+.chip-row-float .chip-on:hover {
+  background: #6d28d9;
+  color: #fff;
+  /* A white ring, so it still stands out over the list's purple. */
+  box-shadow:
+    0 0 0 2px #fff,
+    0 4px 14px rgb(46 16 101 / 0.22);
+}
+.map-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px;
+}
+@media (min-width: 640px) {
+  .map-cards {
+    align-items: flex-end;
+  }
+  .map-cards > * {
+    width: 360px;
+  }
+}
+
+/* "Near me", bottom right, in thumb reach, above the List button's row. */
+.locate-float {
+  position: absolute;
+  right: 12px;
+  bottom: 84px;
+}
+
+/* The List / Map switch: one white pill, bottom centre, clear of the
+   map's attribution line under it. */
+.view-toggle {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  z-index: 1003;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #fff;
+  color: rgb(var(--slate-900));
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgb(46 16 101 / 0.28);
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.view-toggle:active {
+  transform: translateX(-50%) scale(0.94);
+}
+.view-toggle:focus-visible {
+  outline: 3px solid #6d28d9;
+  outline-offset: 2px;
+}
+
+/* The list, laid over the map on the page's own gradient. */
+.list-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1002;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: linear-gradient(180deg, #6d28d9 0%, #9333ea 45%, #c026d3 75%, #db2777 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .view-toggle {
+    transition: none;
+  }
+}
+
+/* A message never widens the page, however long a word in it is (a
+   pasted address, a place name with no spaces). */
+[role="alert"],
+[role="status"] {
+  overflow-wrap: anywhere;
 }

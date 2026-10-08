@@ -5,6 +5,7 @@ import { ensureMembership, formatMemberNumber } from "@/lib/invite";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
+import { readError } from "@/lib/flash";
 import { emailVerificationEnabled } from "@/lib/email";
 import {
   deleteAccountAction,
@@ -24,9 +25,10 @@ export const metadata = { title: "Profile" };
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; saved?: string }>;
 }) {
-  const { error, saved } = await searchParams;
+  const { error: rawError, sig, saved } = await searchParams;
+  const error = readError(rawError, sig);
   const user = await requireUser();
 
   const prisma = await getPrisma();

@@ -1,3 +1,4 @@
+import { readError } from "@/lib/flash";
 import { redirect } from "next/navigation";
 import { getCurrentUser, safeNext } from "@/lib/auth";
 import Welcome from "@/components/Welcome";
@@ -10,9 +11,9 @@ export const metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; next?: string }>;
 }) {
-  const { error, next } = await searchParams;
+  const { error, sig, next } = await searchParams;
   if (await getCurrentUser()) redirect(safeNext(next));
-  return <Welcome startWithEmail error={error ?? null} next={safeNext(next)} />;
+  return <Welcome startWithEmail error={readError(error, sig)} next={safeNext(next)} />;
 }

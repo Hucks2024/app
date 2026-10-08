@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSession } from "@/lib/auth";
 import { SITE } from "@/lib/site";
+import { errorQuery } from "@/lib/flash";
 import { signInWithIdentity, type Identity, type Provider } from "@/lib/oauth";
 
 /** The end of either provider's callback: an account, a session, and the
@@ -10,7 +11,7 @@ import { signInWithIdentity, type Identity, type Provider } from "@/lib/oauth";
  * would repeat that POST against the home page. */
 export async function finishSignIn(provider: Provider, identity: Identity | null) {
   const back = (error: string) =>
-    NextResponse.redirect(`${SITE.url}/login?error=${encodeURIComponent(error)}`, 303);
+    NextResponse.redirect(`${SITE.url}/login?${errorQuery(error)}`, 303);
 
   if (!identity) return back("Sign in didn't work. Try again.");
 

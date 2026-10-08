@@ -12,7 +12,8 @@ export default async function Nav() {
     // so the bar reads as the top of the page rather than a separate strip
     // sitting on it, and white text/marks have something to sit on.
     <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-[1400]">
-      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
+      {/* A fixed 56px, so the full-screen map knows exactly where it starts. */}
+      <div className="mx-auto max-w-5xl px-4 h-14 flex items-center justify-between gap-3">
         <Link
           href="/"
           className="font-bold text-lg text-white flex items-center gap-2 min-w-0 shrink"

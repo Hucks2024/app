@@ -1,3 +1,4 @@
+import { readError } from "@/lib/flash";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
@@ -10,10 +11,11 @@ export const metadata = { title: "Post a meetup" };
 export default async function NewActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string }>;
 }) {
   const user = await requireMember();
-  const { error } = await searchParams;
+  const { error: rawError, sig } = await searchParams;
+  const error = readError(rawError, sig);
   const prisma = await getPrisma();
 
   // Not unlocked yet: say how, and if they're already going to something,

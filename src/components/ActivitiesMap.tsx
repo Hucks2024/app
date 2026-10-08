@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
@@ -132,7 +132,14 @@ function LocationErrorModal({ message, onClose }: { message: string; onClose: ()
   );
 }
 
-function LocateControl({ onLocated }: { onLocated?: (lat: number, lng: number) => void }) {
+function LocateControl({
+  onLocated,
+  full = false,
+}: {
+  onLocated?: (lat: number, lng: number) => void;
+  // On the full-screen map it floats bottom right, in thumb reach.
+  full?: boolean;
+}) {
   const leafletMap = useMap();
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -187,7 +194,7 @@ function LocateControl({ onLocated }: { onLocated?: (lat: number, lng: number) =
     <>
       {/* 10px in, the same margin Leaflet gives the zoom capsule on the
           other side, so the two sit level. */}
-      <div ref={wrapRef} className="absolute top-[10px] right-[10px] z-[1000]">
+      <div ref={wrapRef} className={full ? "locate-float z-[1000]" : "absolute top-[10px] right-[10px] z-[1000]"}>
         <button
           type="button"
           onClick={() => {
@@ -298,8 +305,11 @@ export default function ActivitiesMap({
   restricted = false,
   post,
   onLocated,
+  full = false,
 }: {
   activities: MapActivity[];
+  // The members' full-screen map: edge to edge, no card around it.
+  full?: boolean;
   // Told where the viewer is when "Near me" finds them, so the list can
   // say how far away each meetup is.
   onLocated?: (lat: number, lng: number) => void;
@@ -356,18 +366,29 @@ export default function ActivitiesMap({
       : undefined;
 
   return (
-    <div className="map-shell relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+    <div
+      className={`map-shell relative h-full w-full overflow-hidden ${
+        full ? "map-full" : "rounded-2xl border border-slate-200 shadow-sm"
+      }`}
+    >
       <MapContainer
         // One or the other, never both: react-leaflet uses center + zoom
         // whenever it's given them and silently ignores bounds, which is
         // how "frame them all" used to open on the first meetup at a fixed
         // zoom with the rest of the week off the edges.
         {...(bounds ? { bounds } : { center, zoom: empty ? 10 : 11 })}
+        // Full screen, the filters float over the top and the buttons over
+        // the bottom: frame the pins inside what's left clear.
+        {...(bounds && full ? { boundsOptions: { paddingTopLeft: [24, 80], paddingBottomRight: [24, 120] } } : {})}
         scrollWheelZoom
+        // Full screen: + and - sit bottom left on a computer, and not at
+        // all on a phone, where two fingers do it.
+        zoomControl={!full}
         className="h-full w-full"
       >
         <Tiles />
-        <LocateControl onLocated={onLocated} />
+        {full && <ZoomControl position="bottomleft" />}
+        <LocateControl onLocated={onLocated} full={full} />
         {activities.map((a) => (
           <Marker
             key={a.id}
@@ -406,7 +427,7 @@ export default function ActivitiesMap({
                     </Link>
                   </div>
                   <Link href="/login" className="text-brand-600 underline text-sm font-medium block pt-1">
-                    Join free, no invite needed →
+                    Join free →
                   </Link>
                 </div>
               ) : (
@@ -433,14 +454,14 @@ export default function ActivitiesMap({
                   )}
                   {a.host && (
                     <p className="text-sm text-slate-500">
-                      Hosted by {a.host.name} · 👍 {a.host.thumbs}
+                      Host {a.host.name} · 👍 {a.host.thumbs}
                     </p>
                   )}
                   <Link
                     href={`/activities/${a.id}`}
                     className="text-brand-600 underline text-sm font-medium"
                   >
-                    See details and join →
+                    Open →
                   </Link>
                 </div>
               )}

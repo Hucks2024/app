@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { errorQuery } from "@/lib/flash";
 import { requireUser, safeNext } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { checkVerificationCode, sendVerificationCode } from "@/lib/email-verification";
@@ -21,7 +22,7 @@ export async function confirmEmailAction(formData: FormData) {
   const code = String(formData.get("code") ?? "").replace(/\s+/g, "");
   const result = await checkVerificationCode(prisma, user.id, code);
   if (!result.ok) {
-    redirect(withNext(`/verify-email?error=${encodeURIComponent(result.error)}`, next));
+    redirect(withNext(`/verify-email?${errorQuery(result.error)}`, next));
   }
 
   redirect(next);
@@ -34,7 +35,7 @@ export async function resendCodeAction(formData: FormData) {
 
   const sent = await sendVerificationCode(prisma, user);
   if (!sent.ok) {
-    redirect(withNext(`/verify-email?error=${encodeURIComponent(sent.error)}`, next));
+    redirect(withNext(`/verify-email?${errorQuery(sent.error)}`, next));
   }
 
   redirect(withNext("/verify-email?sent=1", next));
