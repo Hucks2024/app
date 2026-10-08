@@ -70,11 +70,11 @@ console.log(`  Last code sent: ${lastCode ? ago(lastCode) : "never"}`);
 console.log(`  Reminder emails sent in the last 7 days: ${reminders}`);
 console.log("");
 if (recent.length === 0) {
-  console.log("VERDICT: nobody has joined in 30 days, so there's nothing to tell from. Use /admin -> Send me a test email.");
+  console.log("VERDICT: nobody has joined in 30 days, so there's nothing to tell from. Use the Email steps at the top of /admin.");
 } else if (withCode.length + waiting.length > 0 && (noCode.length === 0 || lastCode > Math.max(...noCode.map((u) => u.created)))) {
   console.log("VERDICT: email is working. New members get their code.");
 } else if (withCode.length + waiting.length > 0) {
-  console.log("VERDICT: email worked for some and failed for others. Use /admin -> Send me a test email to see why.");
+  console.log("VERDICT: email worked for some and failed for others. Follow the Email steps at the top of /admin.");
 } else {
-  console.log("VERDICT: no code has gone out. Email is switched off or failing. Use /admin -> Send me a test email to see why.");
+  console.log("VERDICT: no code has gone out. Email is switched off or failing. Follow the Email steps at the top of /admin.");
 }

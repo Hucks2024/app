@@ -8,6 +8,8 @@ import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
 import { emailVerificationEnabled, explainEmailError, sendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
 import { processXrpPayments } from "@/lib/xrp";
+import { addDomainToResend, askResendToVerify } from "@/lib/email-setup";
+import { errorQuery } from "@/lib/flash";
 
 export async function approveVerificationAction(formData: FormData) {
   await requireAdmin();
@@ -206,4 +208,21 @@ export async function testEmailAction(): Promise<TestEmailState> {
     return { ok: true, message: `Sent to ${me.email}. If it isn't in your inbox in a minute, check spam.` };
   }
   return { ok: false, message: explainEmailError(sent.error), detail: sent.error };
+}
+
+/** "Add doyoulikepizza.com to Resend", the first step of email setup. */
+export async function addEmailDomainAction() {
+  await requireAdmin();
+  const result = await addDomainToResend();
+  revalidatePath("/admin");
+  redirect(result.ok ? "/admin#email" : `/admin?${errorQuery(result.message ?? "Resend said no.")}#email`);
+}
+
+/** "Check again": asks Resend to look for the DNS records now. */
+export async function checkEmailDomainAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (id) await askResendToVerify(id);
+  revalidatePath("/admin");
+  redirect("/admin?checked=1#email");
 }

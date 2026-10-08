@@ -1,3 +1,5 @@
+import { SITE } from "@/lib/site";
+
 // Sending email through Resend, chosen for being genuinely free at this
 // scale (3,000 a month, 100 a day) with no card and no server to run. It's
 // one fetch to one endpoint, so swapping to Postmark, SES or anything else
@@ -16,9 +18,11 @@ export function emailVerificationEnabled(): boolean {
 }
 
 export function fromAddress(): string {
-  // Resend only accepts a from-address on a domain you've verified with
-  // them, with onboarding@resend.dev as the exception for testing.
-  return process.env.EMAIL_FROM ?? "Packmates <onboarding@resend.dev>";
+  // Resend only sends from a domain that's verified with them, so this is
+  // an address on the site's own domain: verifying it (the steps on
+  // /admin) is the whole setup, with nothing else to set in Vercel.
+  // EMAIL_FROM still wins if it's set.
+  return process.env.EMAIL_FROM || `${SITE.name} <hello@${SITE.domain}>`;
 }
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -58,6 +62,13 @@ export async function sendEmail(opts: {
   }
 }
 
+/** A failure that's worth trying again in a minute (the network, a busy
+ * or rate-limited Resend), as opposed to one that will keep failing until
+ * something's set up. */
+export function isTemporaryEmailError(error: string): boolean {
+  return /returned (5\d\d|429)|fetch failed|timeout|timed out|network|aborted|ECONN/i.test(error);
+}
+
 /** What a failed send means, in words an admin can act on without anyone
  * to ask. Resend's own message is kept underneath for the rest. */
 export function explainEmailError(error: string): string {
@@ -66,10 +77,10 @@ export function explainEmailError(error: string): string {
     return "Resend doesn't recognise the API key. Copy it again from resend.com → API Keys into RESEND_API_KEY in Vercel, then redeploy.";
   }
   if (e.includes("domain is not verified") || e.includes("not verified")) {
-    return "The sending domain isn't verified in Resend yet. On resend.com → Domains, check doyoulikepizza.com says Verified. DNS changes can take a few hours to show up.";
+    return "The domain isn't verified in Resend yet. Follow the Email steps at the top of the admin page. New DNS records can take a few hours to show.";
   }
   if (e.includes("only send testing emails") || e.includes("testing emails to your own")) {
-    return "Resend is still in testing mode, so it only sends to your own address. Verify doyoulikepizza.com on resend.com → Domains, and set EMAIL_FROM to an address on it, e.g. Packmates <hello@doyoulikepizza.com>, then redeploy.";
+    return "Resend is still in testing mode, so it only sends to your own address. Follow the Email steps at the top of the admin page to verify the domain.";
   }
   if (e.includes("invalid `from`") || e.includes("invalid from")) {
     return 'EMAIL_FROM isn\'t in a form Resend accepts. Set it to exactly: Packmates <hello@doyoulikepizza.com>, then redeploy.';

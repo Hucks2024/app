@@ -3,8 +3,8 @@ import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import AdminResetPassword from "@/components/AdminResetPassword";
-import AdminEmailCheck from "@/components/AdminEmailCheck";
-import { emailVerificationEnabled, fromAddress } from "@/lib/email";
+import AdminEmailSetup from "@/components/AdminEmailSetup";
+import { readError } from "@/lib/flash";
 import { formatMemberNumber } from "@/lib/invite";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
@@ -22,10 +22,10 @@ import {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ xrpScan?: string }>;
+  searchParams: Promise<{ xrpScan?: string; error?: string; sig?: string; checked?: string }>;
 }) {
   const me = await requireAdmin();
-  const { xrpScan } = await searchParams;
+  const { xrpScan, error: rawError, sig, checked } = await searchParams;
   const prisma = await getPrisma();
 
   const [pending, openReports, users, xrpPayments] = await Promise.all([
@@ -74,27 +74,9 @@ export default async function AdminPage({
       {/* First on the page because it's the thing most likely to need a
           look: without working email, members can't reset their own
           passwords. */}
-      <section>
+      <section id="email" className="scroll-mt-20">
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Email</h2>
-        <div className="card space-y-3">
-          <p className="text-sm text-slate-700">
-            {emailVerificationEnabled() ? (
-              <>
-                Switched on. Sending from <strong>{fromAddress()}</strong>.
-                {!process.env.EMAIL_FROM && (
-                  <span className="text-amber-700">
-                    {" "}
-                    That&apos;s Resend&apos;s test address, which only delivers to the Resend
-                    account&apos;s own email. Set EMAIL_FROM in Vercel.
-                  </span>
-                )}
-              </>
-            ) : (
-              <>Switched off. Add RESEND_API_KEY in Vercel and redeploy to turn it on.</>
-            )}
-          </p>
-          <AdminEmailCheck />
-        </div>
+        <AdminEmailSetup error={readError(rawError, sig)} checked={checked === "1"} />
       </section>
 
       <section>
@@ -219,7 +201,7 @@ export default async function AdminPage({
             now&rdquo; above whenever you want to check for new ones.
           </p>
         ) : (
-          <div className="card overflow-x-auto">
+          <div className="card relative overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-slate-500 border-b border-slate-200">
@@ -252,7 +234,7 @@ export default async function AdminPage({
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
           Members ({users.length})
         </h2>
-        <div className="card overflow-x-auto">
+        <div className="card relative overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 border-b border-slate-200">

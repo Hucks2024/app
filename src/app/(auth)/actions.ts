@@ -14,7 +14,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { ensureMembership } from "@/lib/invite";
-import { emailVerificationEnabled } from "@/lib/email";
+import { emailVerificationEnabled, isTemporaryEmailError } from "@/lib/email";
 import { checkVerificationCode, sendVerificationCode } from "@/lib/email-verification";
 import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/lockout";
 
@@ -178,15 +178,19 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
 
   const sent = await sendVerificationCode(prisma, user, "reset");
   if (!sent.ok) {
-    // Into Vercel's logs; the admin page's "Send me a test email" says the
-    // same thing in plain words.
+    // Into Vercel's logs; the Email steps on /admin say the same thing in
+    // plain words.
     console.error("Password reset email failed:", sent.error);
-    // The cooldown message is worth showing; a provider error isn't.
+    // The cooldown message is worth showing; a provider error isn't. And
+    // "try again" only when trying again could help: a setup problem
+    // fails every time, so that sends them to someone who can help.
     return {
       ok: false,
       error: sent.error.startsWith("Wait")
         ? sent.error
-        : "Email didn't send. Try again in a minute.",
+        : isTemporaryEmailError(sent.error)
+          ? "Email didn't send. Try again in a minute."
+          : "Email isn't working yet. Ask an admin to reset your password.",
     };
   }
   return { ok: true };
