@@ -23,8 +23,10 @@ import { formatWhen } from "@/components/LocalTime";
 // duration used to hang underneath every pin as well; they belong in the
 // list, where there's room to read them, rather than on a map where eight
 // of them at once is just noise.
-const PIN_W = 44;
-const PIN_H = 63;
+// Big enough to spot at a glance and hit with a thumb; must match .map-pin
+// in globals.css.
+const PIN_W = 58;
+const PIN_H = 83;
 
 /** Who's going, for the faces on the pin. */
 export type Face = { userId: string; hasPhoto: boolean };
@@ -421,7 +423,7 @@ export default function ActivitiesMap({
                     </div>
                     <Link
                       href="/login"
-                      className="absolute inset-0 m-auto flex h-8 w-fit items-center rounded-full bg-slate-900/85 px-3 text-xs font-semibold !text-white shadow"
+                      className="absolute inset-0 m-auto flex h-9 w-fit items-center whitespace-nowrap rounded-full bg-slate-900/85 px-3 text-sm font-semibold !text-white shadow"
                     >
                       🔒 Sign in to see
                     </Link>

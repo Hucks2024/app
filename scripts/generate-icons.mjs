@@ -92,9 +92,11 @@ async function write(size, fill, out, { tile = true } = {}) {
 await mkdir("public", { recursive: true });
 
 console.log("Generating icons...");
-await write(192, 0.82, "public/icon-192.png");
-await write(512, 0.82, "public/icon-512.png");
-await write(180, 0.82, "src/app/apple-icon.png");
+// Nearly edge to edge, like the big marks on other apps' icons: the round
+// top and the point sit clear of iOS's rounded corners, so nothing clips.
+await write(192, 0.94, "public/icon-192.png");
+await write(512, 0.94, "public/icon-512.png");
+await write(180, 0.94, "src/app/apple-icon.png");
 // The browser tab: no tile, and the drop nearly the full height of the
 // canvas, since there's no square around it that needs a margin.
 await write(96, 0.9, "src/app/icon.png", { tile: false });

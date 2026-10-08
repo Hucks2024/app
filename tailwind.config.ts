@@ -7,6 +7,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Readable on a phone by anyone: nothing smaller than 14px, small
+      // print at 16px, and normal text at 17px, the iPhone's own default.
+      // Tailwind's stock 12px/14px were the sizes people squinted at.
+      fontSize: {
+        xs: ["0.875rem", { lineHeight: "1.25rem" }],
+        sm: ["1rem", { lineHeight: "1.5rem" }],
+        base: ["1.0625rem", { lineHeight: "1.625rem" }],
+      },
       colors: {
         // Violet, the colour of the nav, the pins and the app icon (see
         // BRAND in src/components/Logo.tsx). This used to be a green from

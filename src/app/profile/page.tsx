@@ -168,9 +168,12 @@ export default async function ProfilePage({
         </div>
       )}
 
-      <div className="card mt-4 flex items-center justify-between gap-3">
-        <p className="text-base text-slate-700">Signed in as {user.email}</p>
-        <LogoutButton className="btn-secondary min-h-11 flex-none" />
+      {/* Stacked, not side by side: a long email address pushed the
+          button off the card. */}
+      <div className="card mt-4">
+        <p className="text-base text-slate-700">Signed in as</p>
+        <p className="mb-3 break-all text-base font-semibold text-slate-900">{user.email}</p>
+        <LogoutButton className="btn-secondary min-h-12 w-full" />
       </div>
 
       {/* Folded away and two taps deep: it's for good, and it should take

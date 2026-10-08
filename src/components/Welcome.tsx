@@ -44,7 +44,7 @@ export default async function Welcome({
       <p className="font-wordmark mt-1 text-lg font-semibold text-white">
         your guide to the galaxy
       </p>
-      <p className="mt-3 text-[15px] leading-snug text-white">
+      <p className="mt-3 text-lg leading-snug text-white">
         Find a meetup. Turn up. Make friends.
       </p>
 

@@ -30,7 +30,7 @@ export default async function Nav() {
             {SITE.name}
           </span>
         </Link>
-        <nav className="flex items-center gap-1 text-[15px] font-medium text-white shrink-0" aria-label="Top">
+        <nav className="flex items-center gap-1 text-base font-medium text-white shrink-0" aria-label="Top">
           {user ? (
             <>
               {/* On a phone the bottom bar carries these, within thumb's

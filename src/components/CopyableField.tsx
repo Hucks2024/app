@@ -24,7 +24,7 @@ export default function CopyableField({ value }: { value: string }) {
       className="w-full flex items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-mono text-left hover:bg-slate-100"
     >
       <span className="break-all">{value}</span>
-      <span className="shrink-0 text-xs font-sans font-medium text-brand-600">
+      <span className="shrink-0 text-sm font-sans font-medium text-brand-600">
         {copied ? "Copied ✓" : "Copy"}
       </span>
     </button>

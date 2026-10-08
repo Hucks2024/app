@@ -216,7 +216,7 @@ export default async function ActivityDetailPage({
         {/* Big, labelled, and in thumb reach: the things people do with a
             meetup once they've decided to go. */}
         {upcoming && (
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="tool-grid mt-5 grid grid-cols-3 gap-2">
             <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
               <span aria-hidden="true">🧭</span>
               Directions

@@ -83,8 +83,9 @@ body {
    mounted outside React, so it needs a real stylesheet rule to target. */
 .map-pin {
   position: relative;
-  width: 44px;
-  height: 63px;
+  /* PIN_W and PIN_H in ActivitiesMap.tsx. */
+  width: 58px;
+  height: 83px;
   /* drop-shadow, not box-shadow: it follows the teardrop outline instead
      of casting a rectangle behind it. */
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
@@ -104,29 +105,29 @@ body {
   left: 50%;
   top: 35.5%;
   transform: translate(-50%, -50%);
-  font-size: 19px;
+  font-size: 26px;
   line-height: 1;
   pointer-events: none;
 }
 /* How many are going, centred just under the emoji, on the narrowing
-   part of the drop (the white disc ends 37px down and the drop is still
-   about 30px wide there). Only drawn when there's a group (see
+   part of the drop (the white disc ends 49px down and the drop is still
+   about 40px wide there). Only drawn when there's a group (see
    emojiIcon), so an empty meetup never announces itself. */
 .map-pin-count {
   position: absolute;
-  top: 33px;
+  top: 43px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 10px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
   background: #0f172a;
   color: #fff;
   border: 2px solid #fff;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 22px;
   text-align: center;
   pointer-events: none;
 }
@@ -136,10 +137,10 @@ body {
    which is the whole reason it's here. */
 .map-pin-face {
   position: absolute;
-  top: -3px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
+  top: -4px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid #fff;
@@ -147,7 +148,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1;
   pointer-events: none;
 }
@@ -249,7 +250,7 @@ body {
   min-height: 44px;
   padding: 0 16px;
   border-radius: 999px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -306,7 +307,7 @@ body {
   border-radius: 999px;
   background: #fde68a;
   color: #92400e;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -442,7 +443,7 @@ a:active > .meetup-row {
   border-radius: 999px;
   background: #6d28d9;
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   box-shadow:
     0 6px 16px rgb(109 40 217 / 0.45),
@@ -569,7 +570,7 @@ a:active > .meetup-row {
   border-radius: 999px;
   background: rgb(255 255 255 / 0.14);
   border: 1px solid rgb(255 255 255 / 0.25);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   backdrop-filter: blur(6px);
 }
@@ -774,7 +775,7 @@ button[aria-busy="true"] {
   border: 1px solid rgb(var(--slate-200));
   background: #fff;
   color: rgb(var(--slate-700));
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   white-space: nowrap;
   transition:
@@ -859,7 +860,7 @@ button[aria-busy="true"] {
   gap: 2px;
   height: 60px;
   color: rgb(var(--slate-600));
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .bottom-tab:active {
@@ -949,7 +950,7 @@ button[aria-busy="true"] {
 .field-hint {
   margin-top: -4px;
   padding-left: 6px;
-  font-size: 15px;
+  font-size: 16px;
   color: #fff;
 }
 
@@ -967,7 +968,7 @@ button[aria-busy="true"] {
   border: 1px solid rgb(var(--slate-200));
   background: #faf5ff;
   color: #4c1d95;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.15;
   text-align: center;
@@ -1074,7 +1075,7 @@ button[aria-busy="true"] {
   border: 2px solid rgb(var(--slate-200));
   background: #fff;
   color: rgb(var(--slate-900));
-  font-size: 15px;
+  font-size: 16px;
   text-align: center;
   line-height: 1.25;
 }
@@ -1130,9 +1131,15 @@ body:has(.map-screen) {
     display: none;
   }
 }
-/* The attribution stays (OpenStreetMap asks for it), just smaller. */
-.map-full .leaflet-control-attribution {
-  font-size: 10px;
+/* The attribution stays (OpenStreetMap asks for it), small but legible. */
+.leaflet-container .leaflet-control-attribution {
+  font-size: 13px;
+}
+/* Leaflet sets 12px on everything inside the map, popups included. */
+.leaflet-container,
+.leaflet-container .leaflet-popup-content {
+  font-size: 17px;
+  line-height: 1.45;
 }
 
 /* Filters and tips floating on the map. The strip lets taps through
@@ -1240,4 +1247,19 @@ body:has(.map-screen) {
 [role="alert"],
 [role="status"] {
   overflow-wrap: anywhere;
+}
+
+/* The smallest phones: three across leaves "Directions" no room, so the
+   meetup's buttons become full-width rows, icon then words. */
+@media (max-width: 359px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .tool-grid .tool-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 52px;
+    padding: 8px 16px;
+  }
 }
