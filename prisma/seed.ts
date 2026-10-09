@@ -26,7 +26,7 @@ const adapter = process.env.TURSO_DATABASE_URL
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@doyoulikepizza.com";
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@packmates.live";
   const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 

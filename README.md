@@ -51,8 +51,6 @@ The app runs on Vercel with a Turso database.
      `www.packmates.live`.
    - WordPress.com → Domains → `packmates.live` → Name servers → use
      `ns1.vercel-dns.com` and `ns2.vercel-dns.com`.
-   - Once it shows as valid, set `doyoulikepizza.com` to redirect to
-     `packmates.live` in the same Domains screen.
 4. For password reset emails, follow the Email steps on `/admin`.
 
 ## GitHub Actions
