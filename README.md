@@ -58,10 +58,20 @@ The app runs on Vercel with a Turso database.
    `GOOGLE_PLAY_URL` and redeploy: the download buttons appear on the
    front page and Me.
 
+## The iPhone app
+
+`mobile/` is the App Store app: packmates.live in a native shell
+(Capacitor), using the phone's own location, share sheet and haptics. The
+site knows it's in the app from the user agent (`src/lib/in-app.ts`) and
+reaches the phone through `src/lib/native.ts`. GitHub builds and uploads
+it, no Mac needed: see `docs/app-store.md`.
+
 ## GitHub Actions
 
 - **Health check**: read-only. Shows where the domains point, and member
   and meetup counts. Never prints emails.
 - **Make admin**: gives an existing member the admin role.
+- **iPhone app**: builds the app on GitHub's Macs and, once the App Store
+  Connect secrets are set, sends it to App Store Connect.
 - **Set a new admin password**: for a forgotten admin password while
   email isn't set up. Uses the `NEW_ADMIN_PASSWORD` repository secret.

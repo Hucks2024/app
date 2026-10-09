@@ -105,4 +105,23 @@ await write(96, 0.9, "src/app/icon.png", { tile: false });
 // across its diagonal, so 0.58 is what keeps the corners of it inside a
 // circular crop; anything near the 0.82 above would lose the tip.
 await write(512, 0.58, "public/icon-maskable-512.png");
+
+// The App Store app (mobile/). Its icon is the home-screen tile at full
+// size, flattened, since the App Store refuses an icon with any
+// transparency.
+const iosAssets = "mobile/ios/App/App/Assets.xcassets";
+await sharp(markSvg(1024, 0.94, true)).flatten({ background: "#0f0b1c" }).png().toFile(`${iosAssets}/AppIcon.appiconset/AppIcon-512@2x.png`);
+console.log(`  ${iosAssets}/AppIcon.appiconset/AppIcon-512@2x.png`);
+// Its launch screen: the white pin on the page's violet, small in the
+// middle, so it's the same on every screen size it's cropped to.
+const splash = Buffer.from(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732">
+     <rect width="2732" height="2732" fill="#6d28d9"/>
+     <image href="data:image/png;base64,${(await sharp(markSvg(560, 0.9, false)).png().toBuffer()).toString("base64")}" x="1086" y="1086" width="560" height="560"/>
+   </svg>`
+);
+for (const name of ["splash-2732x2732.png", "splash-2732x2732-1.png", "splash-2732x2732-2.png"]) {
+  await sharp(splash).flatten({ background: "#6d28d9" }).png().toFile(`${iosAssets}/Splash.imageset/${name}`);
+  console.log(`  ${iosAssets}/Splash.imageset/${name}`);
+}
 console.log("Done.");

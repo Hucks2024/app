@@ -74,6 +74,25 @@ email and password in the sign-in fields (not here).
 > Account deletion (5.1.1(v)): Me → Delete my account.
 > Location (5.1.5): only for "Near me" on the map; it stays on the device.
 
+## Building and sending the app (no Mac needed)
+
+GitHub builds it on its own Macs: `.github/workflows/ios.yml`. Until the
+four App Store Connect secrets are added it only checks the app builds;
+with them, each run signs the app and sends it to App Store Connect.
+
+1. App Store Connect → **Users and Access** → **Integrations** → **App Store
+   Connect API** → generate a key with the **Admin** role. Note its **Key
+   ID** and the **Issuer ID**, and download the `.p8` file (only once).
+2. developer.apple.com → **Account** → **Membership details**: the **Team ID**.
+3. GitHub → the repo → **Settings** → **Secrets and variables** → **Actions**:
+   add `APPLE_TEAM_ID`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, and `ASC_KEY` (the whole
+   `.p8` file, BEGIN and END lines included).
+4. App Store Connect → **Apps** → **+** → New App: iOS, name Packmates,
+   bundle ID `live.packmates.app`, SKU `packmates`.
+5. GitHub → **Actions** → **iPhone app** → **Run workflow**. A few minutes
+   later the build is in App Store Connect under **TestFlight**; add it to
+   the version and **Submit for Review**.
+
 ## Demo account (set up once, before submitting)
 
 1. Sign up on packmates.live with an email you control, name "App Review".
@@ -91,7 +110,7 @@ email and password in the sign-in fields (not here).
 | 1.2 / 1.5 Contact | hello@packmates.live on Info, Terms, Privacy and Me |
 | 1.1.4 / random chat | No messaging; not a dating or hookup app (in the Terms) |
 | 2.1 Demo account | See above |
-| 4.2 Minimum functionality | The App Store build adds native features (location, camera, share sheet) so it's more than a website |
+| 4.2 Minimum functionality | The app (mobile/) uses the phone's own location for Near me, share sheet, camera for the profile photo and haptics, has its own launch screen and offline screen, and leaves out website-only bits |
 | 4.8 Login services | Email and password; Google sign in only ever shows alongside Sign in with Apple |
 | 5.1.1(i) Privacy policy | /privacy, linked at sign up, Info and Me |
 | 5.1.1(ii) Consent | The sign up tick box; withdrawn by deleting the account |

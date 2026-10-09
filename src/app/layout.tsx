@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { inApp } from "@/lib/in-app";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
@@ -46,11 +47,16 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  // Tints the bar above the page when installed. Matched to the nav rather
-  // than the body gradient, so the two read as one surface.
-  themeColor: "#6d28d9",
-};
+export async function generateViewport(): Promise<Viewport> {
+  return {
+    // Tints the bar above the page when installed. Matched to the nav
+    // rather than the body gradient, so the two read as one surface.
+    themeColor: "#6d28d9",
+    // In the App Store app the page runs edge to edge, under the clock and
+    // the notch, and the header pads itself down by exactly that much.
+    ...((await inApp()) ? { viewportFit: "cover" as const } : {}),
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

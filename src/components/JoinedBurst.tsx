@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { callNative } from "@/lib/native";
 
 // A small burst when you've just joined something. CSS only, no confetti
 // library: a dozen spans on a keyframe cost nothing, and pulling in a
@@ -16,6 +17,8 @@ export default function JoinedBurst({ label }: { label: string }) {
   const [gone, setGone] = useState(false);
 
   useEffect(() => {
+    // In the app, the phone gives a little "done" tap as well.
+    callNative("Haptics", "notification", { type: "SUCCESS" })?.catch(() => {});
     const quiet = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const id = setTimeout(() => setGone(true), quiet ? 2500 : 4200);
     return () => clearTimeout(id);

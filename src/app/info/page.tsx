@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { canSendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
+import { inApp } from "@/lib/in-app";
 
 export const metadata = { title: "Info" };
 
@@ -17,6 +18,7 @@ type QA = { id: string; q: string; a: React.ReactNode };
 export default async function InfoPage() {
   const user = await getCurrentUser();
   const canEmail = canSendEmail();
+  const app = await inApp();
 
   const sections: { title: string; items: QA[] }[] = [
     {
@@ -202,25 +204,31 @@ export default async function InfoPage() {
             </p>
           ),
         },
-        {
-          id: "home-screen",
-          q: "Put it on my phone",
-          a: (
-            <ul className="list-disc space-y-1 pl-5">
-              <li>
-                <strong>iPhone:</strong> Share → <strong>Add to Home Screen</strong>
-              </li>
-              <li>
-                <strong>Android:</strong> ⋮ → <strong>Add to Home screen</strong>
-              </li>
-            </ul>
-          ),
-        },
-        {
-          id: "language",
-          q: "Read it in my language",
-          a: <p>Use your browser&apos;s Translate button.</p>,
-        },
+        // Website only: the app is already on the phone, and has no
+        // Translate button.
+        ...(app
+          ? []
+          : [
+              {
+                id: "home-screen",
+                q: "Put it on my phone",
+                a: (
+                  <ul className="list-disc space-y-1 pl-5">
+                    <li>
+                      <strong>iPhone:</strong> Share → <strong>Add to Home Screen</strong>
+                    </li>
+                    <li>
+                      <strong>Android:</strong> ⋮ → <strong>Add to Home screen</strong>
+                    </li>
+                  </ul>
+                ),
+              },
+              {
+                id: "language",
+                q: "Read it in my language",
+                a: <p>Use your browser&apos;s Translate button.</p>,
+              },
+            ]),
         {
           id: "privacy",
           q: "My data",

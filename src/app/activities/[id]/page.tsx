@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { blockedEitherWay } from "@/lib/blocks";
+import { inApp } from "@/lib/in-app";
 import Avatar from "@/components/Avatar";
 import JoinedBurst from "@/components/JoinedBurst";
 import LocalTime from "@/components/LocalTime";
@@ -137,9 +138,13 @@ export default async function ActivityDetailPage({
   // in whatever calendar the phone or computer uses.
   const android = /Android/i.test((await headers()).get("user-agent") ?? "");
   const calendarFile = `/activities/${activity.id}/calendar`;
+  // The app's web view can't open a calendar file itself; a new window is
+  // Safari, which hands it to Calendar.
   const addToCalendar = android
     ? { href: googleCalendar, target: "_blank", rel: "noopener noreferrer" }
-    : { href: calendarFile };
+    : (await inApp())
+      ? { href: `${SITE.url}${calendarFile}`, target: "_blank", rel: "noopener" }
+      : { href: calendarFile };
 
   return (
     // Room at the bottom on a phone for the action bar pinned there.

@@ -11,7 +11,8 @@ export default async function Nav() {
     // Violet-700 is the exact top stop of the body gradient (globals.css),
     // so the bar reads as the top of the page rather than a separate strip
     // sitting on it, and white text/marks have something to sit on.
-    <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-[1400]">
+    // Padded down past the clock and notch in the app (0 everywhere else).
+    <header className="border-b border-white/15 bg-violet-700/85 backdrop-blur sticky top-0 z-[1400] pt-[env(safe-area-inset-top)]">
       {/* A fixed 56px, so the full-screen map knows exactly where it starts. */}
       <div className="mx-auto max-w-5xl px-4 h-14 flex items-center justify-between gap-3">
         <Link

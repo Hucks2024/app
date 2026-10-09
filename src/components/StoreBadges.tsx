@@ -1,3 +1,5 @@
+import { inApp } from "@/lib/in-app";
+
 // The app in the App Store and Google Play. Each button shows once its
 // link is set in Vercel (APP_STORE_URL, GOOGLE_PLAY_URL), and only if it
 // really is a store link; with neither set, nothing shows.
@@ -18,9 +20,10 @@ export function storeLinks() {
   };
 }
 
-export default function StoreBadges({ className = "" }: { className?: string }) {
+export default async function StoreBadges({ className = "" }: { className?: string }) {
   const { apple, google } = storeLinks();
-  if (!apple && !google) return null;
+  // Not in the app itself, which is what they'd download.
+  if ((!apple && !google) || (await inApp())) return null;
   return (
     <div className={`flex flex-wrap items-center justify-center gap-3 ${className}`}>
       {apple && (

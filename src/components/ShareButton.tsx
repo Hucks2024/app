@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { callNative } from "@/lib/native";
 
 /** Share a meetup: the phone's own share sheet (WhatsApp, Messages, …)
  * where there is one, otherwise the link goes on the clipboard. Bringing a
@@ -10,6 +11,11 @@ export default function ShareButton({ url, title }: { url: string; title: string
 
   async function share() {
     try {
+      const native = callNative("Share", "share", { title, text: `Come along: ${title}`, url });
+      if (native) {
+        await native;
+        return;
+      }
       if (navigator.share) {
         await navigator.share({ title, text: `Come along: ${title}`, url });
         return;

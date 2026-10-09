@@ -1062,7 +1062,7 @@ fieldset {
    never scrolls under it and nothing has to be measured. */
 .map-screen {
   position: fixed;
-  top: 57px;
+  top: calc(57px + env(safe-area-inset-top));
   left: 0;
   right: 0;
   bottom: calc(61px + env(safe-area-inset-bottom));

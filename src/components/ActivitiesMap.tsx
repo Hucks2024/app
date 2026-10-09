@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from "rea
 import L from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
+import { callNative } from "@/lib/native";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 import { formatWhen } from "@/components/LocalTime";
@@ -189,6 +190,26 @@ function LocateControl({
           type="button"
           onClick={() => {
             setStatus("locating");
+            // In the app, the phone's own location (its permission prompt
+            // says why, and a "no" is remembered by the phone, not this
+            // site). Handed to the same handlers the browser's goes to.
+            const native = callNative<{ coords: { latitude: number; longitude: number; accuracy: number } }>(
+              "Geolocation",
+              "getCurrentPosition",
+              { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 }
+            );
+            if (native) {
+              native
+                .then(({ coords }) => {
+                  const latlng = L.latLng(coords.latitude, coords.longitude);
+                  leafletMap.setView(latlng, 15);
+                  leafletMap.fire("locationfound", { latlng, accuracy: coords.accuracy, bounds: latlng.toBounds(coords.accuracy) });
+                })
+                .catch((e: { message?: string }) =>
+                  leafletMap.fire("locationerror", { code: /denied|permission/i.test(e?.message ?? "") ? 1 : 2, message: e?.message ?? "" })
+                );
+              return;
+            }
             leafletMap.locate({
               setView: true,
               maxZoom: 15,

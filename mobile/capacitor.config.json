@@ -1,0 +1,23 @@
+{
+  "appId": "live.packmates.app",
+  "appName": "Packmates",
+  "webDir": "www",
+  "backgroundColor": "#6d28d9",
+  "appendUserAgent": "PackmatesApp/1.0",
+  "server": {
+    "url": "https://www.packmates.live",
+    "allowNavigation": ["packmates.live", "www.packmates.live"],
+    "errorPath": "offline.html"
+  },
+  "ios": {
+    "contentInset": "never"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#6d28d9",
+      "showSpinner": false
+    }
+  }
+}

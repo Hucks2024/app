@@ -17,6 +17,7 @@ import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
 import InstallHint from "@/components/InstallHint";
+import { inApp } from "@/lib/in-app";
 import StoreBadges, { storeLinks } from "@/components/StoreBadges";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -60,6 +61,8 @@ export default async function ProfilePage({
       },
     }),
   ]);
+  // In the App Store app: no "get the app" card.
+  const app = await inApp();
   const blocks = await prisma.block.findMany({
     where: { blockerId: user.id },
     orderBy: { createdAt: "desc" },
@@ -117,7 +120,7 @@ export default async function ProfilePage({
 
       {/* The real app once it's in the stores; until then, how to put the
           site on the home screen. */}
-      {Object.values(storeLinks()).some(Boolean) ? (
+      {app ? null : Object.values(storeLinks()).some(Boolean) ? (
         <div className="card mb-4">
           <p className="mb-3 font-semibold">Get the app</p>
           <StoreBadges />

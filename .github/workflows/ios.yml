@@ -1,0 +1,90 @@
+name: iPhone app
+
+# Builds the App Store app (mobile/) on GitHub's own Macs, so no Mac is
+# needed. Until the App Store Connect secrets below are added, it only
+# checks the app builds. With them, it signs the app and sends it to App
+# Store Connect, where it shows up in TestFlight, ready to submit for
+# review.
+#
+# Secrets (Settings -> Secrets and variables -> Actions), never in this
+# file: the repository is public.
+#   APPLE_TEAM_ID   developer.apple.com -> Account -> Membership details
+#   ASC_KEY_ID      App Store Connect -> Users and Access -> Integrations
+#   ASC_ISSUER_ID     -> App Store Connect API (a key with the Admin role)
+#   ASC_KEY         that key's .p8 file, all of it, BEGIN and END lines too
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["mobile/**", ".github/workflows/ios.yml"]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      CAN_UPLOAD: ${{ secrets.ASC_KEY != '' && secrets.ASC_KEY_ID != '' && secrets.ASC_ISSUER_ID != '' && secrets.APPLE_TEAM_ID != '' }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx cap sync ios
+
+      # The App Store only takes apps built with a recent Xcode.
+      - name: Use the newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Check it builds
+        if: env.CAN_UPLOAD != 'true'
+        run: |
+          source ../.github/ios-quiet.sh
+          quiet build xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+      # Apple keeps the signing certificate (cloud signing), so nothing
+      # secret lives on this machine beyond the API key, for this run only.
+      # Each run's number is the build number, which must always go up.
+      - name: Sign and send to App Store Connect
+        if: env.CAN_UPLOAD == 'true'
+        env:
+          ASC_KEY: ${{ secrets.ASC_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          source ../.github/ios-quiet.sh
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY" > "$KEY_PATH"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH"
+                -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+
+          quiet archive xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            "${AUTH[@]}" archive
+
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+
+          quiet upload xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+            "${AUTH[@]}"
+          rm -f "$KEY_PATH"
