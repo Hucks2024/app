@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-// Keeping bots from signing up, and adverts off the map. The front door
-// (turning away crawlers and scripts) is in src/proxy.ts.
+// Keeping bots from signing up, and adverts and nastiness off the map. The
+// front door (turning away crawlers and scripts) is in src/proxy.ts.
 
 // --- Signup ticket -------------------------------------------------------
 //
@@ -71,4 +71,61 @@ export const NO_ADS = "No links, emails or phone numbers.";
 
 export function looksLikeAdvert(text: string): boolean {
   return LINK.test(text) || EMAIL.test(text) || PHONE.test(text);
+}
+
+// --- Nothing offensive -----------------------------------------------------
+//
+// Names and everything typed into a meetup are refused if they swear, use
+// a slur or are about sex or hard drugs. Whole words only, so Scunthorpe
+// and "cocktail" are fine; a few common disguises (f*ck, sh1t, $lut) are
+// undone first. It's a first line: what gets past it, people report.
+
+// Each of these as a whole word, or with an ordinary ending (s, ed, er,
+// ing, y...).
+const OFFENSIVE_STEMS = [
+  // Swearing
+  "fuck", "fck", "fuk", "motherfuck", "shit", "cunt", "twat", "wank", "bitch", "dickhead", "prick",
+  "pussy", "slut", "whore", "bastard", "arsehole", "asshole", "bollock",
+  // Slurs
+  "nigger", "nigga", "faggot", "tranny", "retard", "spic", "chink", "kike", "paki", "gook", "wetback",
+  "coon", "raghead", "towelhead", "golliwog", "spastic",
+  // Sex. Not "nude" or "naked": life drawing has a nude model.
+  "porn", "porno", "nudes", "nsfw", "onlyfans", "hookup", "milf", "dtf", "horny", "blowjob", "handjob",
+  "orgy", "fetish", "bdsm", "erotic", "camgirl", "sexting", "rapist",
+  // Hard drugs
+  "cocaine", "ketamine", "mdma", "heroin", "meth",
+];
+// Left out on purpose, being places, pubs and plain English as often as
+// not: dyke (Offa's Dyke), cock (the Cock Inn), dick (Moby Dick), fag (a
+// fag break), rape (oilseed rape), escort.
+const OFFENSIVE_PHRASES = [
+  "sugar daddy", "sugar baby", "friends with benefits", "send nudes", "escort service", "kill yourself",
+  "sieg heil", "heil hitler",
+];
+const ENDINGS = "(s|es|ed|er|ers|ing|in|y|ty|ties|head|heads|face)?";
+const OFFENSIVE_WORD = new RegExp(`^(${OFFENSIVE_STEMS.join("|")})${ENDINGS}$`);
+
+/** Lower case, the usual stand-ins put back (0 for o, $ for s, * for a
+ * vowel left out), and anything else that isn't a letter as a space. */
+function plainWords(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[0@4]/g, (c) => ({ "0": "o", "@": "a", "4": "a" })[c]!)
+    .replace(/[1!|]/g, "i")
+    .replace(/3/g, "e")
+    .replace(/[5$]/g, "s")
+    .replace(/7/g, "t")
+    .replace(/(\w)\*+(\w)/g, "$1u$2")
+    .replace(/[^a-z]+/g, " ")
+    .trim();
+}
+
+export const NOT_NICE = "Keep it friendly: no swearing, slurs or adult stuff.";
+
+export function looksOffensive(text: string): boolean {
+  const plain = plainWords(text);
+  if (!plain) return false;
+  if (plain.split(" ").some((w) => OFFENSIVE_WORD.test(w))) return true;
+  const padded = ` ${plain} `;
+  return OFFENSIVE_PHRASES.some((p) => padded.includes(` ${p} `));
 }

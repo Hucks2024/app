@@ -5,6 +5,7 @@ import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
+import { blockedEitherWay } from "@/lib/blocks";
 import Avatar from "@/components/Avatar";
 import JoinedBurst from "@/components/JoinedBurst";
 import LocalTime from "@/components/LocalTime";
@@ -13,6 +14,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { SITE } from "@/lib/site";
 import { readError } from "@/lib/flash";
 import {
+  blockUserAction,
   cancelActivityAction,
   joinActivityAction,
   leaveActivityAction,
@@ -46,11 +48,18 @@ export default async function ActivityDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; sig?: string; reported?: string; joined?: string; saved?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    sig?: string;
+    reported?: string;
+    blocked?: string;
+    joined?: string;
+    saved?: string;
+  }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
-  const { error: rawError, sig, reported, joined: justJoined, saved } = await searchParams;
+  const { error: rawError, sig, reported, blocked: justBlocked, joined: justJoined, saved } = await searchParams;
   const error = readError(rawError, sig);
   const prisma = await getPrisma();
 
@@ -71,6 +80,11 @@ export default async function ActivityDetailPage({
   if (!activity || (activity.host.accountStatus !== "ACTIVE" && user.role !== "ADMIN")) {
     notFound();
   }
+  // Blocked either way: their meetups are gone for you, and they're left
+  // off the list of who's going on anyone else's.
+  const blocked = await blockedEitherWay(prisma, user.id);
+  if (blocked.has(activity.hostId) && user.role !== "ADMIN") notFound();
+  const unblocked = <T extends { userId: string }>(list: T[]) => list.filter((p) => !blocked.has(p.userId));
 
   const myParticipation = activity.participations.find((p) => p.userId === user.id);
   const isHost = activity.hostId === user.id;
@@ -156,7 +170,12 @@ export default async function ActivityDetailPage({
       )}
       {reported && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Thanks. A moderator will look.
+          Thanks. A moderator will look within 24 hours.
+        </p>
+      )}
+      {justBlocked && (
+        <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
+          Blocked. You won&apos;t see each other&apos;s meetups. Undo it on <Link href="/profile#blocked" className="underline">Me</Link>.
         </p>
       )}
 
@@ -348,12 +367,12 @@ export default async function ActivityDetailPage({
 
       <div id="people" className="card mt-6 scroll-mt-20">
         <h2 className="text-lg font-bold mb-1">
-          {happened ? "Who came" : "Who's going"} ({joined.length}
+          {happened ? "Who came" : "Who's going"} ({unblocked(joined).length}
           {activity.maxParticipants && !happened ? ` of ${activity.maxParticipants}` : ""})
         </h2>
         <p className="text-sm text-slate-600 mb-4">✓ = been before · 👍 = thumbs up</p>
         <ul className="space-y-4">
-          {joined.map((p) => (
+          {unblocked(joined).map((p) => (
             <ParticipantRow
               key={p.id}
               person={p.user}
@@ -366,13 +385,13 @@ export default async function ActivityDetailPage({
           ))}
         </ul>
 
-        {waitlist.length > 0 && !happened && (
+        {unblocked(waitlist).length > 0 && !happened && (
           <>
             <h3 className="font-semibold mt-6 mb-3 text-base text-slate-700">
-              Waitlist ({waitlist.length})
+              Waitlist ({unblocked(waitlist).length})
             </h3>
             <ul className="space-y-4">
-              {waitlist.map((p) => (
+              {unblocked(waitlist).map((p) => (
                 <ParticipantRow
                   key={p.id}
                   person={p.user}
@@ -388,6 +407,15 @@ export default async function ActivityDetailPage({
         )}
       </div>
 
+      {!isHost && (
+        <details className="card mt-6">
+          <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-slate-900">
+            🚩 Report this meetup
+          </summary>
+          <ReportForm personId={activity.hostId} activityId={activity.id} fieldId="meetup" />
+        </details>
+      )}
+
       {/* Meeting people you don't know yet: the few things worth doing,
           one tap away and out of the way otherwise. */}
       <details className="card mt-6">
@@ -399,7 +427,7 @@ export default async function ActivityDetailPage({
           <li>Tell a friend where you are.</li>
           <li>Get home your own way.</li>
           <li>Feels wrong? Leave.</li>
-          <li>Someone rude? Tap <strong>Report</strong>.</li>
+          <li>Someone rude? Tap <strong>Report or block</strong> under their name.</li>
         </ul>
       </details>
     </div>
@@ -471,31 +499,43 @@ function ParticipantRow({
       {person.id !== viewer && (
         <details className="mt-1 pl-[3.25rem]">
           <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-slate-600 underline hover:text-red-700">
-            🚩 Report {person.name}
+            🚩 Report or block {person.name}
           </summary>
-          <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
+          <ReportForm personId={person.id} activityId={activityId} fieldId={person.id} />
+          <form action={blockUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
             <p className="text-sm text-slate-700">
-              Only moderators see this. 3 reports = banned for life.
+              Block {person.name}? You won&apos;t see each other&apos;s meetups, and they&apos;re
+              taken off yours.
             </p>
-            <input type="hidden" name="reportedUserId" value={person.id} />
+            <input type="hidden" name="blockedId" value={person.id} />
             <input type="hidden" name="activityId" value={activityId} />
-            <label htmlFor={`reason-${person.id}`} className="text-sm font-semibold text-slate-800">
-              What happened?
-            </label>
-            <textarea
-              id={`reason-${person.id}`}
-              name="reason"
-              className="input !text-base"
-              rows={3}
-              required
-              minLength={5}
-            />
-            <SubmitButton className="btn-danger min-h-11" pending="Sending…">
-              Send report
+            <SubmitButton className="btn-secondary min-h-11" pending="Blocking…">
+              🚫 Block {person.name}
             </SubmitButton>
           </form>
         </details>
       )}
     </li>
+  );
+}
+
+/** "What happened?", sent to the moderators. About a person, or about a
+ * meetup, which is a report about its host. */
+function ReportForm({ personId, activityId, fieldId }: { personId: string; activityId: string; fieldId: string }) {
+  return (
+    <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
+      <p className="text-sm text-slate-700">
+        Only moderators see this. We act within 24 hours. 3 reports = banned for life.
+      </p>
+      <input type="hidden" name="reportedUserId" value={personId} />
+      <input type="hidden" name="activityId" value={activityId} />
+      <label htmlFor={`reason-${fieldId}`} className="text-sm font-semibold text-slate-800">
+        What happened?
+      </label>
+      <textarea id={`reason-${fieldId}`} name="reason" className="input !text-base" rows={3} required minLength={5} />
+      <SubmitButton className="btn-danger min-h-11" pending="Sending…">
+        Send report
+      </SubmitButton>
+    </form>
   );
 }

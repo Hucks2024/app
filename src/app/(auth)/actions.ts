@@ -16,12 +16,15 @@ import { canSendEmail, isTemporaryEmailError } from "@/lib/email";
 import { checkResetCode, sendResetCode } from "@/lib/reset-code";
 import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/lockout";
 import {
+  NOT_NICE,
   NO_ADS,
   isThrowawayEmail,
   issueSignupTicket,
   looksLikeAdvert,
+  looksOffensive,
   signupTicketOk,
 } from "@/lib/bots";
+import { SITE } from "@/lib/site";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -32,6 +35,7 @@ import {
 const emailSchema = z.string().trim().toLowerCase().email("Check the email address.");
 const THROWAWAY = "Use your own email, not a throwaway one.";
 const NOT_NOW = "Something went wrong. Try again.";
+const AGREE = `Tick the box to say you're ${SITE.minimumAge} or over and agree.`;
 
 export type EmailLookup =
   | { kind: "existing"; provider: "apple" | "google" | null }
@@ -68,7 +72,8 @@ const signupSchema = z.object({
     .trim()
     .min(2, "Type your first name.")
     .max(80)
-    .refine((v) => !looksLikeAdvert(v), NO_ADS),
+    .refine((v) => !looksLikeAdvert(v), NO_ADS)
+    .refine((v) => !looksOffensive(v), NOT_NICE),
   email: emailSchema,
   password: z.string().min(8, "Password: 8 or more characters."),
 });
@@ -96,6 +101,10 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
       password: formData.get("password"),
     });
     if (!parsed.success) return { error: parsed.error.issues[0].message };
+    // The tick box: old enough, and agreeing to the Terms (no tolerance
+    // for abuse) and the privacy policy. Checked here as well as in the
+    // browser, which a script could skip.
+    if (formData.get("agree") !== "on") return { error: AGREE };
     const { name, email, password } = parsed.data;
     if (isThrowawayEmail(email)) return { error: THROWAWAY };
     // Proof the form was filled in by hand (see src/lib/bots.ts).

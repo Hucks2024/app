@@ -3,6 +3,7 @@ import type { CurrentUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { liveMeetup } from "@/lib/meetups";
+import { blockedEitherWay } from "@/lib/blocks";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
 
@@ -13,8 +14,10 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
   const prisma = await getPrisma();
   const { verified, justVerified } = await refreshVerified(prisma, user);
 
+  // Not the meetups of anyone they've blocked, or who's blocked them.
+  const blocked = await blockedEitherWay(prisma, user.id);
   const activities = await prisma.runActivity.findMany({
-    where: { startsAt: { gte: new Date() }, ...liveMeetup },
+    where: { startsAt: { gte: new Date() }, ...liveMeetup, hostId: { notIn: [...blocked] } },
     orderBy: { startsAt: "asc" },
     include: {
       host: { select: { id: true, name: true } },

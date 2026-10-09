@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useRef, useState, useTransition } from "react";
+import { SITE } from "@/lib/site";
 import {
   emailAuthAction,
   finishResetAction,
@@ -183,6 +184,21 @@ export default function SignIn({
           <span aria-hidden="true">✉️</span>
           Continue with email
         </button>
+        {/* Apple and Google make the account without our sign up form, so
+            the agreement is said here instead of ticked. */}
+        {anyProvider && (
+          <p className="text-center text-sm text-white">
+            By continuing you confirm you&apos;re {SITE.minimumAge} or over and agree to the{" "}
+            <a href="/terms" className="font-semibold underline">
+              Terms
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" className="font-semibold underline">
+              Privacy policy
+            </a>
+            .
+          </p>
+        )}
       </div>
     );
   }
@@ -408,13 +424,20 @@ export default function SignIn({
         </p>
       )}
       {creating && (
-        <p className="field-hint">
-          Joining means you agree to the{" "}
-          <a href="/info#rules" target="_blank" rel="noopener" className="font-semibold underline">
-            house rules
-          </a>
-          .
-        </p>
+        <label className="flex items-start gap-3 rounded-2xl bg-white/15 px-4 py-3 text-sm text-white">
+          <input type="checkbox" name="agree" required className="mt-0.5 h-6 w-6 flex-none accent-white" />
+          <span>
+            I&apos;m {SITE.minimumAge} or over and agree to the{" "}
+            <a href="/terms" target="_blank" rel="noopener" className="font-semibold underline">
+              Terms
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" rel="noopener" className="font-semibold underline">
+              Privacy policy
+            </a>
+            .
+          </span>
+        </label>
       )}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">
         {submitting && <Spinner />}

@@ -14,6 +14,11 @@ export const SITE = {
   url: process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http://")
     ? process.env.NEXT_PUBLIC_SITE_URL
     : `https://${DOMAIN}`,
+  // Where people reach us: shown on Info, Terms and Privacy, and the
+  // App Store's support address.
+  contactEmail: `hello@${DOMAIN}`,
+  // Who can join. In the Terms, and asked for at sign up.
+  minimumAge: 18,
   tagline: "We all belong in a pack… mate",
   description: "We all belong in a pack… mate. A free map of meetups: paint, walk, run, coffee, anything.",
 };

@@ -28,9 +28,13 @@ import type { User } from "@prisma/client";
 export type Provider = "apple" | "google";
 
 export function enabledProviders(): Record<Provider, boolean> {
+  const apple = Boolean(process.env.APPLE_CLIENT_ID);
   return {
-    apple: Boolean(process.env.APPLE_CLIENT_ID),
-    google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    apple,
+    // Google only alongside Apple: the App Store won't take an app that
+    // offers a Google sign in without Sign in with Apple next to it
+    // (guideline 4.8).
+    google: apple && Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
   };
 }
 

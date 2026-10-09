@@ -8,6 +8,7 @@ import { SITE } from "@/lib/site";
 import { readError } from "@/lib/flash";
 import {
   deleteAccountAction,
+  unblockUserAction,
   updateProfileAction,
 } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
@@ -24,9 +25,9 @@ export const metadata = { title: "Profile" };
 export default async function ProfilePage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; sig?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; saved?: string; blocked?: string }>;
 }) {
-  const { error: rawError, sig, saved } = await searchParams;
+  const { error: rawError, sig, saved, blocked: justBlocked } = await searchParams;
   const error = readError(rawError, sig);
   const user = await requireUser();
 
@@ -59,6 +60,11 @@ export default async function ProfilePage({
       },
     }),
   ]);
+  const blocks = await prisma.block.findMany({
+    where: { blockerId: user.id },
+    orderBy: { createdAt: "desc" },
+    select: { blocked: { select: { id: true, name: true, profilePhotoType: true } } },
+  });
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
@@ -165,6 +171,34 @@ export default async function ProfilePage({
       </div>
 
 
+      {(blocks.length > 0 || justBlocked) && (
+        <div id="blocked" className="card mt-4 scroll-mt-20">
+          <p className="mb-1 font-semibold">Blocked</p>
+          <p className="mb-3 text-sm text-slate-600">You don&apos;t see each other&apos;s meetups.</p>
+          {justBlocked && (
+            <p role="status" className="mb-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-base text-brand-800">
+              Blocked.
+            </p>
+          )}
+          <ul className="space-y-3">
+            {blocks.map(({ blocked }) => (
+              <li key={blocked.id} className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-3">
+                  <Avatar userId={blocked.id} hasPhoto={!!blocked.profilePhotoType} size={10} />
+                  <span className="truncate text-base font-semibold">{blocked.name}</span>
+                </span>
+                <form action={unblockUserAction}>
+                  <input type="hidden" name="blockedId" value={blocked.id} />
+                  <SubmitButton className="btn-secondary min-h-11 px-4" pending="…">
+                    Unblock
+                  </SubmitButton>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Stacked, not side by side: a long email address pushed the
           button off the card. */}
       <div className="card mt-4">
@@ -186,6 +220,20 @@ export default async function ProfilePage({
           </SubmitButton>
         </form>
       </details>
+
+      <p className="mt-6 text-center text-sm text-white">
+        <Link href="/terms" className="underline">
+          Terms
+        </Link>{" "}
+        ·{" "}
+        <Link href="/privacy" className="underline">
+          Privacy
+        </Link>{" "}
+        ·{" "}
+        <a href={`mailto:${SITE.contactEmail}`} className="underline">
+          {SITE.contactEmail}
+        </a>
+      </p>
     </div>
   );
 }

@@ -11,11 +11,17 @@ import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES, categoryFor } from "@/lib/categories";
-import { NO_ADS, looksLikeAdvert } from "@/lib/bots";
+import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
+import { block } from "@/lib/blocks";
 
 // Every box anyone can type in, checked for adverts (see src/lib/bots.ts).
 const text = (max: number) =>
-  z.string().trim().max(max).refine((v) => !looksLikeAdvert(v), NO_ADS);
+  z
+    .string()
+    .trim()
+    .max(max)
+    .refine((v) => !looksLikeAdvert(v), NO_ADS)
+    .refine((v) => !looksOffensive(v), NOT_NICE);
 
 const createSchema = z.object({
   title: text(120).pipe(z.string().min(3, "Give it a name.")),
@@ -296,4 +302,26 @@ export async function reportUserAction(formData: FormData) {
   await banIfFlagged(prisma, reportedUserId);
 
   back("reported=1");
+}
+
+/** Block someone, from a meetup page. See src/lib/blocks.ts. */
+export async function blockUserAction(formData: FormData) {
+  const user = await requireUser();
+  const blockedId = String(formData.get("blockedId"));
+  const activityId = String(formData.get("activityId") ?? "");
+  if (blockedId === user.id) redirect(`/activities/${activityId}?${errorQuery("You can't block yourself.")}`);
+
+  const prisma = await getPrisma();
+  const [blocked, activity] = await Promise.all([
+    prisma.user.findUnique({ where: { id: blockedId }, select: { id: true } }),
+    prisma.runActivity.findUnique({ where: { id: activityId }, select: { hostId: true } }),
+  ]);
+  if (!blocked) redirect("/");
+
+  await block(prisma, user.id, blockedId);
+  revalidatePath("/");
+  // Their own meetup is hidden from you now, so there's nothing to go
+  // back to; Me shows who you've blocked, and undoes it.
+  if (!activity || activity.hostId === blockedId) redirect("/profile?blocked=1#blocked");
+  redirect(`/activities/${activityId}?blocked=1`);
 }

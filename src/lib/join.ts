@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { isBlockedEitherWay } from "@/lib/blocks";
 
 /** Says someone's going (or on the waitlist, if it's full), and where to
  * send them after. Shared by "I'm in" and the photo page, which finishes
@@ -12,6 +13,8 @@ export async function joinMeetup(prisma: PrismaClient, userId: string, activityI
   // Saying you're going to something that's over would count as having
   // been, which is what unlocks posting.
   if (activity.startsAt <= new Date() || activity.cancelledAt) return `/activities/${activityId}`;
+  // Blocked either way: their meetups aren't there for you to join.
+  if (await isBlockedEitherWay(prisma, userId, activity.hostId)) return "/";
 
   const alreadyIn = activity.participations.some((p) => p.userId === userId);
   const isFull = !!activity.maxParticipants && activity.participations.length >= activity.maxParticipants;

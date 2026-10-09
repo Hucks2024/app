@@ -111,7 +111,17 @@ export default async function InfoPage() {
           q: "Someone was rude",
           a: (
             <p>
-              Tap <strong>🚩 Report</strong> under their name.
+              Tap <strong>🚩 Report or block</strong> under their name. We act within 24 hours.
+            </p>
+          ),
+        },
+        {
+          id: "block",
+          q: "Block someone",
+          a: (
+            <p>
+              Tap <strong>🚩 Report or block</strong> under their name, then <strong>Block</strong>. You won&apos;t see
+              each other&apos;s meetups. Undo it on <strong>Me</strong>.
             </p>
           ),
         },
@@ -211,6 +221,19 @@ export default async function InfoPage() {
           q: "Read it in my language",
           a: <p>Use your browser&apos;s Translate button.</p>,
         },
+        {
+          id: "privacy",
+          q: "My data",
+          a: (
+            <p>
+              No adverts, no tracking. Read the{" "}
+              <Link href="/privacy" className="font-semibold text-brand-700 underline">
+                Privacy policy
+              </Link>
+              .
+            </p>
+          ),
+        },
       ],
     },
   ];
@@ -234,6 +257,7 @@ export default async function InfoPage() {
           House rules
         </h2>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-base text-slate-800">
+          <li>{SITE.minimumAge}+ only.</li>
           <li>Be kind.</li>
           <li>Meet in public.</li>
           <li>
@@ -243,6 +267,13 @@ export default async function InfoPage() {
           <li>No means no.</li>
         </ol>
         <p className="mt-3 text-base font-semibold text-slate-900">🚩 3 reports = banned for life.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          The full{" "}
+          <Link href="/terms" className="font-semibold text-brand-700 underline">
+            Terms
+          </Link>
+          .
+        </p>
       </section>
 
       <p className="mt-8 text-lg text-white">Questions? Tap one.</p>
@@ -268,7 +299,26 @@ export default async function InfoPage() {
         </section>
       ))}
 
-      <div className="card mt-10 text-center">
+      <section id="contact" className="card mt-10 scroll-mt-20 text-center" aria-labelledby="contact-heading">
+        <h2 id="contact-heading" className="text-xl font-bold text-slate-900">
+          Contact us
+        </h2>
+        <p className="mt-2 text-base text-slate-700">Questions, problems or something to report:</p>
+        <a href={`mailto:${SITE.contactEmail}`} className="mt-1 inline-block text-lg font-semibold text-brand-700 underline">
+          {SITE.contactEmail}
+        </a>
+        <p className="mt-3 text-sm text-slate-600">
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>{" "}
+          ·{" "}
+          <Link href="/privacy" className="underline">
+            Privacy
+          </Link>
+        </p>
+      </section>
+
+      <div className="card mt-6 text-center">
         <p className="text-lg font-semibold text-slate-900">Ready?</p>
         <Link href={user ? "/" : "/login"} className="btn-primary mt-3 min-h-12 px-8 text-lg">
           {user ? "Back to the map" : "Join free"}

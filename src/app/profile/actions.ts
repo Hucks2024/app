@@ -1,10 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { errorQuery } from "@/lib/flash";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
-import { NO_ADS, looksLikeAdvert } from "@/lib/bots";
+import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import {
   createSession,
   destroySession,
@@ -21,7 +22,8 @@ const profileSchema = z.object({
     .trim()
     .min(2, "Type your first name.")
     .max(80)
-    .refine((v) => !looksLikeAdvert(v), NO_ADS),
+    .refine((v) => !looksLikeAdvert(v), NO_ADS)
+    .refine((v) => !looksOffensive(v), NOT_NICE),
 });
 
 export async function updateProfileAction(formData: FormData) {
@@ -78,6 +80,18 @@ export async function changePasswordAction(
   // one that survives.
   await createSession(user.id);
   return { error: null, done: true };
+}
+
+/** Unblock someone, from the list on Me. */
+export async function unblockUserAction(formData: FormData) {
+  const user = await requireUser();
+  const prisma = await getPrisma();
+  await prisma.block.deleteMany({ where: { blockerId: user.id, blockedId: String(formData.get("blockedId")) } });
+  // Redrawn, not just scrolled to: going from /profile to /profile#blocked
+  // is only a jump down the page, which would leave them listed.
+  revalidatePath("/profile");
+  revalidatePath("/");
+  redirect("/profile#blocked");
 }
 
 /** Deletes your account and everything that hangs off it: meetups you

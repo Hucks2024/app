@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { format } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
@@ -84,6 +85,13 @@ export default async function AdminPage({
                 people who met them at a meetup)
               </p>
               <p className="text-sm text-slate-700 mt-1">&ldquo;{r.reason}&rdquo;</p>
+              {/* The meetup it was about, to read it and cancel it if it has
+                  to go. */}
+              {r.activityId && (
+                <Link href={`/activities/${r.activityId}`} className="mt-1 inline-block text-sm font-medium text-brand-700 underline">
+                  See the meetup
+                </Link>
+              )}
               <div className="flex items-center gap-3 mt-3">
                 <form action={resolveReportAction}>
                   <input type="hidden" name="reportId" value={r.id} />
