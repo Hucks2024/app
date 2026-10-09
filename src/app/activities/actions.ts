@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
-import { CATEGORY_VALUES } from "@/lib/categories";
+import { CATEGORY_VALUES, categoryFor } from "@/lib/categories";
 import { NO_ADS, looksLikeAdvert } from "@/lib/bots";
 
 // Every box anyone can type in, checked for adverts (see src/lib/bots.ts).
@@ -22,7 +22,7 @@ const createSchema = z.object({
   category: z
     .string()
     .refine((v) => CATEGORY_VALUES.includes(v), "Pick a type.")
-    .default("RUN"),
+    .default("SOCIAL"),
   afterSpot: text(200).optional(),
   findUs: text(200).optional(),
   description: text(2000).optional(),
@@ -61,7 +61,7 @@ export type MeetupFormState = { error: string | null };
 function readMeetupForm(formData: FormData) {
   return {
     title: formData.get("title"),
-    category: formData.get("category") || "RUN",
+    category: formData.get("category") || "SOCIAL",
     afterSpot: formData.get("afterSpot") || undefined,
     findUs: formData.get("findUs") || undefined,
     description: formData.get("description") || undefined,
@@ -149,6 +149,8 @@ export async function saveMeetupAction(
     longitude = place.longitude;
   }
 
+  // Only a run, a ride and the like keep a distance, pace and route.
+  const route = categoryFor(parsed.data.category).route;
   const fields = {
     title: parsed.data.title,
     category: parsed.data.category,
@@ -159,10 +161,10 @@ export async function saveMeetupAction(
     latitude,
     longitude,
     startsAt,
-    distanceKm: parsed.data.distanceKm ?? null,
-    pace: parsed.data.pace ?? null,
+    distanceKm: route ? (parsed.data.distanceKm ?? null) : null,
+    pace: route ? (parsed.data.pace ?? null) : null,
     maxParticipants: parsed.data.maxParticipants ?? null,
-    stravaUrl: parsed.data.stravaUrl ?? null,
+    stravaUrl: route ? (parsed.data.stravaUrl ?? null) : null,
   };
 
   if (existing) {

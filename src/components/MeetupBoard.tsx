@@ -81,9 +81,9 @@ export default function MeetupBoard({
     return [...counts.entries()]
       .map(([value, count]) => {
         // Label and emoji come from the catalogue, but the value stays the
-        // one actually stored: categoryFor falls back to Run for anything
-        // it doesn't recognise, and spreading that over the real value
-        // would quietly point the chip at the wrong filter.
+        // one actually stored: categoryFor falls back to "Something else"
+        // for anything it doesn't recognise, and spreading that over the
+        // real value would quietly point the chip at the wrong filter.
         const meta = categoryFor(value);
         return { value, count, label: meta.label, emoji: meta.emoji };
       })

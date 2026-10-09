@@ -15,5 +15,5 @@ export const SITE = {
     ? process.env.NEXT_PUBLIC_SITE_URL
     : `https://${DOMAIN}`,
   tagline: "We all belong in a pack… mate",
-  description: "We all belong in a pack… mate. A free map of meetups: run, walk, coffee, pint.",
+  description: "We all belong in a pack… mate. A free map of meetups: paint, walk, run, coffee, anything.",
 };

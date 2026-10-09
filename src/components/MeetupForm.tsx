@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
-import { CATEGORIES, categoryFor } from "@/lib/categories";
+import { CATEGORIES, CATEGORY_GROUPS, categoryFor } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
@@ -57,9 +57,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // it's out of date.
   const [edited, setEdited] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const lookingUp = useRef<{ text: string; result: Promise<PlaceCheck> } | null>(null);
   const onWhen = useCallback((d: Date | null) => setWhen(d), []);
 
   const saving = pending || place.status === "checking";
+  // Distance, pace and a Strava route only mean something for a run, a
+  // ride and the like; a painting meetup isn't asked for them.
+  const route = categoryFor(category).route;
   const show = (i: number) => editing || step === i;
 
   function locationText(): string {
@@ -70,12 +74,19 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   async function lookUp(text: string): Promise<PlaceCheck> {
     if (text.length < 3) return { status: "idle" };
     if (place.status !== "idle" && place.status !== "checking" && place.for === text) return place;
+    // Tapping Next straight after typing asks again while the look-up from
+    // leaving the box is still out: wait for that one rather than a second.
+    if (lookingUp.current?.text === text) return lookingUp.current.result;
     setPlace({ status: "checking", for: text });
-    const result = await geocodeLocation(text);
-    const next: PlaceCheck =
-      result.status === "found" ? { ...result, for: text } : { status: result.status, for: text };
-    setPlace(next);
-    return next;
+    const result = geocodeLocation(text).then((found): PlaceCheck => {
+      const next: PlaceCheck =
+        found.status === "found" ? { ...found, for: text } : { status: found.status, for: text };
+      setPlace(next);
+      if (lookingUp.current?.text === text) lookingUp.current = null;
+      return next;
+    });
+    lookingUp.current = { text, result };
+    return result;
   }
 
   /** A suggested name from what they've picked, until they type their own. */
@@ -157,31 +168,37 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       {/* 1. What */}
       <fieldset hidden={!show(0)}>
         <legend className="mb-3 text-xl font-bold text-slate-900">What are you doing?</legend>
-        <div className="type-grid">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => {
-                setCategory(c.value);
-                setStepError(null);
-                setEdited(true);
-                // On the first step, picking one is the answer: straight on.
-                if (!editing) {
-                  setStep(1);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }
-              }}
-              className={`type-btn ${category === c.value ? "type-btn-on" : ""}`}
-              aria-pressed={category === c.value}
-            >
-              <span className="text-3xl leading-none" aria-hidden="true">
-                {c.emoji}
-              </span>
-              <span>{c.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* In groups, so two dozen choices read as four short lists. */}
+        {[...CATEGORY_GROUPS, null].map((group) => (
+          <div key={group ?? "other"} className="mb-4 last:mb-0">
+            {group && <p className="type-group">{group}</p>}
+            <div className="type-grid">
+              {CATEGORIES.filter((c) => c.group === group).map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => {
+                    setCategory(c.value);
+                    setStepError(null);
+                    setEdited(true);
+                    // On the first step, picking one is the answer: straight on.
+                    if (!editing) {
+                      setStep(1);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                  }}
+                  className={`type-btn ${category === c.value ? "type-btn-on" : ""}`}
+                  aria-pressed={category === c.value}
+                >
+                  <span className="text-3xl leading-none" aria-hidden="true">
+                    {c.emoji}
+                  </span>
+                  <span>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </fieldset>
 
       {/* 2. Where */}
@@ -204,7 +221,9 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             aria-describedby="location-hint location-check"
             onBlur={(e) => void lookUp(e.target.value.trim())}
           />
-          <p id="location-check" className="mt-2 text-base" aria-live="polite">
+          {/* A line's room kept for "Finding it…", so it appearing doesn't
+              push Next down from under a finger mid-tap. */}
+          <p id="location-check" className="mt-2 min-h-6 text-base" aria-live="polite">
             {place.status === "checking" && <span className="text-slate-600">Finding it…</span>}
             {place.status === "found" && (
               <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
@@ -318,53 +337,57 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 Empty = no limit
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label !text-base" htmlFor="distanceKm">
-                  Distance (km)
-                </label>
-                <input
-                  className="input !text-base min-h-12"
-                  id="distanceKm"
-                  name="distanceKm"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  min="0"
-                  max="500"
-                  defaultValue={initial?.distanceKm ?? ""}
-                />
-              </div>
-              <div>
-                <label className="label !text-base" htmlFor="pace">
-                  Pace
-                </label>
-                <input
-                  className="input !text-base min-h-12"
-                  id="pace"
-                  name="pace"
-                  defaultValue={initial?.pace ?? ""}
-                  maxLength={40}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="label !text-base" htmlFor="stravaUrl">
-                Strava route link
-              </label>
-              <input
-                className="input !text-base min-h-12"
-                id="stravaUrl"
-                name="stravaUrl"
-                type="url"
-                inputMode="url"
-                defaultValue={initial?.stravaUrl ?? ""}
-                aria-describedby="strava-hint"
-              />
-              <p id="strava-hint" className="mt-1 text-sm text-amber-800">
-                Set the route to Public.
-              </p>
-            </div>
+            {route && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label !text-base" htmlFor="distanceKm">
+                      Distance (km)
+                    </label>
+                    <input
+                      className="input !text-base min-h-12"
+                      id="distanceKm"
+                      name="distanceKm"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      min="0"
+                      max="500"
+                      defaultValue={initial?.distanceKm ?? ""}
+                    />
+                  </div>
+                  <div>
+                    <label className="label !text-base" htmlFor="pace">
+                      Pace
+                    </label>
+                    <input
+                      className="input !text-base min-h-12"
+                      id="pace"
+                      name="pace"
+                      defaultValue={initial?.pace ?? ""}
+                      maxLength={40}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="label !text-base" htmlFor="stravaUrl">
+                    Strava route link
+                  </label>
+                  <input
+                    className="input !text-base min-h-12"
+                    id="stravaUrl"
+                    name="stravaUrl"
+                    type="url"
+                    inputMode="url"
+                    defaultValue={initial?.stravaUrl ?? ""}
+                    aria-describedby="strava-hint"
+                  />
+                  <p id="strava-hint" className="mt-1 text-sm text-amber-800">
+                    Set the route to Public.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </details>
       </fieldset>
@@ -379,7 +402,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         {(editing || step > 0) && (
           <button
             type="submit"
-            disabled={saving}
+            // Not greyed out while the place is being found: leaving the box
+            // starts that, and a button that greys out under the finger
+            // swallows the tap. Next waits for the look-up itself.
+            disabled={pending}
             aria-busy={saving}
             className="btn-primary min-h-12 flex-1 text-lg"
           >

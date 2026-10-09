@@ -960,8 +960,17 @@ button[aria-busy="true"] {
 }
 
 /* "What are you doing?": every choice on show as a big picture button,
-   two to a row on a phone. Fourteen options in a dropdown means opening a
-   menu and reading a list; a grid of pictures is one look and one tap. */
+   two to a row on a phone, under a heading per group. Two dozen options in
+   a dropdown means opening a menu and reading a list; a grid of pictures
+   is one look and one tap. */
+.type-group {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--slate-600));
+}
 .type-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

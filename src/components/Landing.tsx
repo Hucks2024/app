@@ -16,7 +16,7 @@ const STEPS = [
   {
     emoji: "📍",
     title: "Find a meetup",
-    body: "Run, walk, coffee, pint.",
+    body: "Paint, walk, run, coffee. Anything.",
   },
   {
     emoji: "🙌",
