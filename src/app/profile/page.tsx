@@ -6,10 +6,8 @@ import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
 import { readError } from "@/lib/flash";
-import { emailVerificationEnabled } from "@/lib/email";
 import {
   deleteAccountAction,
-  setEmailRemindersAction,
   updateProfileAction,
 } from "@/app/profile/actions";
 import Avatar from "@/components/Avatar";
@@ -154,19 +152,6 @@ export default async function ProfilePage({
         <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
       </div>
 
-      {/* Only when email is set up: a switch for emails that never send is clutter. */}
-      {emailVerificationEnabled() && (
-        <div id="emails" className="card mt-4 scroll-mt-20">
-          <p className="font-semibold mb-1">Reminder emails</p>
-          <p className="text-base text-slate-700 mb-3">{user.emailReminders ? "On" : "Off"}</p>
-          <form action={setEmailRemindersAction}>
-            <input type="hidden" name="on" value={user.emailReminders ? "0" : "1"} />
-            <SubmitButton className={`${user.emailReminders ? "btn-secondary" : "btn-primary"} min-h-11`} pending="Saving…">
-              {user.emailReminders ? "Turn off" : "Turn on"}
-            </SubmitButton>
-          </form>
-        </div>
-      )}
 
       {/* Stacked, not side by side: a long email address pushed the
           button off the card. */}

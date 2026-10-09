@@ -1,7 +1,7 @@
 import { getPrisma } from "@/lib/db";
 import { enabledProviders } from "@/lib/oauth";
 import { liveMeetup } from "@/lib/meetups";
-import { emailVerificationEnabled } from "@/lib/email";
+import { canSendEmail } from "@/lib/email";
 import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
 
@@ -44,8 +44,8 @@ export default async function Welcome({
       <p className="font-wordmark mt-1 text-lg font-semibold text-white">
         your guide to the galaxy
       </p>
-      <p className="mt-3 text-lg leading-snug text-white">
-        Find a meetup. Turn up. Make friends.
+      <p className="mt-3 text-xl font-semibold leading-snug text-white">
+        Meet people like you.
       </p>
 
       {count > 0 && (
@@ -62,7 +62,7 @@ export default async function Welcome({
       <div className="mx-auto mt-7 max-w-sm text-left">
         <SignIn
           providers={enabledProviders()}
-          canEmail={emailVerificationEnabled()}
+          canEmail={canSendEmail()}
           startWithEmail={startWithEmail}
           error={error}
           next={next}

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
-import { emailVerificationEnabled, explainEmailError, sendEmail } from "@/lib/email";
+import { canSendEmail, explainEmailError, sendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
 import { processXrpPayments } from "@/lib/xrp";
 import { addDomainToResend, askResendToVerify } from "@/lib/email-setup";
@@ -193,7 +193,7 @@ export type TestEmailState = { ok: boolean; message: string; detail?: string } |
  * without anybody digging through logs. */
 export async function testEmailAction(): Promise<TestEmailState> {
   const me = await requireAdmin();
-  if (!emailVerificationEnabled()) {
+  if (!canSendEmail()) {
     return {
       ok: false,
       message: "Email is switched off: RESEND_API_KEY isn't set in Vercel (for Production), or the site hasn't been redeployed since it was added.",

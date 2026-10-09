@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { emailVerificationEnabled } from "@/lib/email";
+import { canSendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
 
 export const metadata = { title: "Help" };
@@ -15,7 +15,7 @@ type QA = { id: string; q: string; a: React.ReactNode };
 
 export default async function HelpPage() {
   const user = await getCurrentUser();
-  const canEmail = emailVerificationEnabled();
+  const canEmail = canSendEmail();
 
   const sections: { title: string; items: QA[] }[] = [
     {
@@ -69,11 +69,9 @@ export default async function HelpPage() {
         {
           id: "reminder",
           q: "Will I get a reminder?",
-          a: canEmail ? (
-            <p>Yes. We email you the day before.</p>
-          ) : (
+          a: (
             <p>
-              Tap <strong>Add to calendar</strong> on the meetup.
+              Tap <strong>Add to calendar</strong> on the meetup. Your phone will remind you.
             </p>
           ),
         },

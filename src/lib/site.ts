@@ -14,7 +14,6 @@ export const SITE = {
   url: process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http://")
     ? process.env.NEXT_PUBLIC_SITE_URL
     : `https://${DOMAIN}`,
-  tagline: "Find a meetup. Turn up. Make friends.",
-  description:
-    "A free map of meetups. Run, walk, coffee, pint. Pick one. Turn up. Make friends.",
+  tagline: "Meet people like you.",
+  description: "Meet people like you. A free map of meetups: run, walk, coffee, pint.",
 };

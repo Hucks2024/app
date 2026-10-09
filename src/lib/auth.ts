@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/db";
-import { emailVerificationEnabled } from "@/lib/email";
 import type { User } from "@prisma/client";
 
 // Kept through the renames: it's an invisible implementation detail, and
@@ -145,24 +144,11 @@ export function isPaidUp(user: Pick<User, "role" | "paidUntil">): boolean {
   return user.role === "ADMIN" || (user.paidUntil != null && user.paidUntil > new Date());
 }
 
-/** Whether this account still owes us a confirmed email address.
- *
- * Accounts created while email was switched off are stamped verified at
- * signup, so flipping it on later never locks existing members out, it
- * only applies to people who sign up from then on. */
-export function needsEmailCheck(user: Pick<User, "emailVerifiedAt">): boolean {
-  return emailVerificationEnabled() && user.emailVerifiedAt == null;
-}
-
 /** The bar for joining meetups and giving thumbs up: a signed-in,
- * non-suspended account with a confirmed email address (when email is
- * switched on), plus a current membership if the fee is switched on.
- * Posting meetups asks for more than this, see src/lib/trust.ts. */
+ * non-suspended account, plus a current membership if the fee is switched
+ * on. Posting meetups asks for more than this, see src/lib/trust.ts. */
 export async function requireMember(): Promise<CurrentUser> {
   const user = await requireUser();
-  if (needsEmailCheck(user)) {
-    redirect("/verify-email");
-  }
   if (!isPaidUp(user)) {
     redirect("/subscribe");
   }

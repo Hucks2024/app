@@ -8,12 +8,10 @@ import { SITE } from "@/lib/site";
 // real use it's always Resend's own address.
 const RESEND_ENDPOINT = process.env.RESEND_API_URL ?? "https://api.resend.com/emails";
 
-/** Whether outbound email is configured at all.
- *
- * When it isn't, the app doesn't break and doesn't strand anyone: signup
- * stamps new accounts as verified on the spot and never asks for a code.
- * Setting RESEND_API_KEY is the whole switch. */
-export function emailVerificationEnabled(): boolean {
+/** Whether the app can send email at all. It only ever sends one kind:
+ * the code for resetting a forgotten password. Without it, "Forgot your
+ * password?" says to ask an admin instead. RESEND_API_KEY is the switch. */
+export function canSendEmail(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 

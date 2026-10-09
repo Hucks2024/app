@@ -265,7 +265,7 @@ export default async function ActivityDetailPage({
               <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
                 <input type="hidden" name="activityId" value={activity.id} />
                 <p className="text-base text-slate-700 mb-3">
-                  Everyone going will be told. You can&apos;t undo this.
+                  Everyone going will see it&apos;s cancelled. You can&apos;t undo this.
                 </p>
                 <SubmitButton className="btn-danger w-full min-h-11" pending="Cancelling…">
                   Yes, cancel it

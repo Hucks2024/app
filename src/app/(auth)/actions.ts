@@ -8,13 +8,12 @@ import {
   destroySession,
   hashPassword,
   isPaidUp,
-  needsEmailCheck,
   passwordChangeStamp,
   safeNext,
   verifyPassword,
 } from "@/lib/auth";
 import { ensureMembership } from "@/lib/invite";
-import { emailVerificationEnabled, isTemporaryEmailError } from "@/lib/email";
+import { canSendEmail, isTemporaryEmailError } from "@/lib/email";
 import { checkVerificationCode, sendVerificationCode } from "@/lib/email-verification";
 import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/lockout";
 
@@ -92,25 +91,13 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
         name,
         email,
         passwordHash: await hashPassword(password),
-        // Nobody is made to confirm an address we have no way of writing to,
-        // so with email switched off the account is confirmed from the start.
-        emailVerifiedAt: emailVerificationEnabled() ? null : new Date(),
+        // No code to confirm the address: the app emails nobody except to
+        // reset a password, so joining is straight in.
+        emailVerifiedAt: new Date(),
       },
     });
     await ensureMembership(prisma, user.id);
     await createSession(user.id);
-
-    if (emailVerificationEnabled()) {
-      const sent = await sendVerificationCode(prisma, user);
-      if (sent.ok) redirect(verifyEmailFor(formData.get("next")));
-      // The email didn't go (a lapsed key, an unverified sending domain,
-      // the provider being down). Holding everyone at "check your inbox"
-      // for a code that will never come would stop the app taking new
-      // members at all until somebody noticed, so they're let in instead,
-      // the same as when email isn't set up.
-      console.error("Signup verification email failed, letting them in:", sent.error);
-      await prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
-    }
     redirect(safeNext(formData.get("next")));
   }
 
@@ -152,19 +139,13 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 
   await createSession(user.id);
   const step = nextStepFor(user);
-  redirect(
-    step === "/"
-      ? safeNext(formData.get("next"))
-      : step === "/verify-email"
-        ? verifyEmailFor(formData.get("next"))
-        : step
-  );
+  redirect(step === "/" ? safeNext(formData.get("next")) : step);
 }
 
 /** Forgot your password, step one: email a code to the address. Only
  * possible when email is set up; the screen says so when it isn't. */
 export async function startResetAction(raw: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!emailVerificationEnabled()) {
+  if (!canSendEmail()) {
     return { ok: false, error: "Ask an admin to reset it." };
   }
   const parsed = emailSchema.safeParse(raw);
@@ -235,18 +216,10 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   redirect(safeNext(formData.get("next")));
 }
 
-/** Where a signed-in member should land: confirm the email if one is
- * still owed, then the map, unless the membership fee is switched on and
- * theirs has lapsed. */
-function nextStepFor(user: { role: string; paidUntil: Date | null; emailVerifiedAt: Date | null }) {
-  if (needsEmailCheck(user)) return "/verify-email";
+/** Where a signed-in member should land: the map, unless the membership
+ * fee is switched on and theirs has lapsed. */
+function nextStepFor(user: { role: string; paidUntil: Date | null }) {
   return isPaidUp(user) ? "/" : "/subscribe";
-}
-
-/** The code step, remembering where they were going afterwards. */
-function verifyEmailFor(rawNext: unknown): string {
-  const next = safeNext(rawNext);
-  return next === "/" ? "/verify-email" : `/verify-email?next=${encodeURIComponent(next)}`;
 }
 
 export async function logoutAction() {

@@ -114,14 +114,3 @@ export async function deleteAccountAction() {
   await destroySession();
   redirect("/");
 }
-
-/** Reminder and change emails on or off, from the Me page. */
-export async function setEmailRemindersAction(formData: FormData) {
-  const user = await requireUser();
-  const prisma = await getPrisma();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { emailReminders: formData.get("on") === "1" },
-  });
-  redirect("/profile?emails=1#emails");
-}

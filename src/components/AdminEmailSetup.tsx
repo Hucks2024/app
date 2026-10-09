@@ -63,7 +63,7 @@ export default async function AdminEmailSetup({ error, checked }: { error: strin
         </p>
       )}
       <p className="text-base text-slate-700">
-        Email sends sign-up codes, password resets and meetup reminders.{" "}
+        Email is only used for one thing: password resets.{" "}
         {verified ? (
           <strong className="text-green-800">It&apos;s set up.</strong>
         ) : (
