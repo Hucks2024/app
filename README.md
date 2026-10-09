@@ -60,3 +60,5 @@ The app runs on Vercel with a Turso database.
 - **Health check**: read-only. Shows where the domains point, and member
   and meetup counts. Never prints emails.
 - **Make admin**: gives an existing member the admin role.
+- **Set a new admin password**: for a forgotten admin password while
+  email isn't set up. Uses the `NEW_ADMIN_PASSWORD` repository secret.
