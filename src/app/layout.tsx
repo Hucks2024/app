@@ -13,10 +13,10 @@ const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-open-sans" })
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
-  title: { default: SITE.name, template: `%s · ${SITE.name}` },
+  title: { default: `${SITE.name} · ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   openGraph: {
-    title: SITE.name,
+    title: `${SITE.name} · ${SITE.tagline}`,
     description: SITE.description,
     url: SITE.url,
     siteName: SITE.name,
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: SITE.name,
+    title: `${SITE.name} · ${SITE.tagline}`,
     description: SITE.description,
   },
   // Installable to the home screen, see src/app/manifest.ts. iOS ignores

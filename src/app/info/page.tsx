@@ -13,11 +13,6 @@ export const metadata = { title: "Info" };
 
 type QA = { id: string; q: string; a: React.ReactNode };
 
-const QUOTES = [
-  { text: "Every friend was once a stranger.", who: "Proverb" },
-  { text: "Life shrinks or expands in proportion to one’s courage.", who: "Anaïs Nin" },
-  { text: "Alone we can do so little; together we can do so much.", who: "Helen Keller" },
-];
 
 export default async function InfoPage() {
   const user = await getCurrentUser();
@@ -225,18 +220,12 @@ export default async function InfoPage() {
       <h1 className="text-3xl font-bold text-white drop-shadow">Info</h1>
 
       {/* A little nerve for the first time: walking up to strangers is
-          the hard bit, and the reason most people never go. Three, not
-          a wall of them. */}
-      <section className="mt-6 space-y-3" aria-label="A little push">
-        {QUOTES.map((q) => (
-          <figure key={q.who} className="card !p-5">
-            <blockquote className="text-xl font-semibold leading-snug text-slate-900">
-              &ldquo;{q.text}&rdquo;
-            </blockquote>
-            <figcaption className="mt-2 text-base text-slate-600">{q.who}</figcaption>
-          </figure>
-        ))}
-      </section>
+          the hard bit, and the reason most people never go. */}
+      <figure className="card mt-6 !p-5">
+        <blockquote className="text-xl font-semibold leading-snug text-slate-900">
+          &ldquo;Every friend was once a stranger.&rdquo;
+        </blockquote>
+      </figure>
 
       {/* The rules, up top and always open: short enough to read in ten
           seconds, and the thing everyone agrees to when they join. */}

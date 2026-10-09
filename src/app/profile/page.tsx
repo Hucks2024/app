@@ -132,7 +132,7 @@ export default async function ProfilePage({
       <div className="card mb-4">
         <p className="font-semibold mb-1">Bring a friend 🎒</p>
         <p className="text-sm text-slate-600 mb-3">Send them this link.</p>
-        <CopyableField value={SITE.url} />
+        <CopyableField value={SITE.url} shown={SITE.domain} />
       </div>
 
       <form action={updateProfileAction} className="card space-y-4">

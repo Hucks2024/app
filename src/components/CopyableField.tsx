@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
-export default function CopyableField({ value }: { value: string }) {
+// `shown` is a shorter way to write the value on screen, when the whole
+// thing would break across lines on a phone.
+export default function CopyableField({ value, shown }: { value: string; shown?: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -23,7 +25,7 @@ export default function CopyableField({ value }: { value: string }) {
       onClick={copy}
       className="w-full flex items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-mono text-left hover:bg-slate-100"
     >
-      <span className="break-all">{value}</span>
+      <span className="break-all">{shown ?? value}</span>
       <span className="shrink-0 text-sm font-sans font-medium text-brand-600">
         {copied ? "Copied ✓" : "Copy"}
       </span>

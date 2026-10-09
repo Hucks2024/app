@@ -1222,9 +1222,10 @@ body:has(.map-screen) {
   overflow-wrap: anywhere;
 }
 
-/* The smallest phones: three across leaves "Directions" no room, so the
-   meetup's buttons become full-width rows, icon then words. */
-@media (max-width: 359px) {
+/* Smaller phones (lots of Androids are 360 wide): three across leaves
+   "Directions" no room, so the meetup's buttons become full-width rows,
+   icon then words. */
+@media (max-width: 379px) {
   .tool-grid {
     grid-template-columns: 1fr;
   }

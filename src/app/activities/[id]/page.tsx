@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
@@ -115,6 +116,14 @@ export default async function ActivityDetailPage({
       location: activity.location,
       details: `${activity.findUs ? `How to find us: ${activity.findUs}\n\n` : ""}${pageUrl}`,
     });
+  // Google Calendar on Android can't open a calendar file, so Android
+  // phones go straight to it; everything else gets the file, which opens
+  // in whatever calendar the phone or computer uses.
+  const android = /Android/i.test((await headers()).get("user-agent") ?? "");
+  const calendarFile = `/activities/${activity.id}/calendar`;
+  const addToCalendar = android
+    ? { href: googleCalendar, target: "_blank", rel: "noopener noreferrer" }
+    : { href: calendarFile };
 
   return (
     // Room at the bottom on a phone for the action bar pinned there.
@@ -132,7 +141,7 @@ export default async function ActivityDetailPage({
         <div className="card mb-4 !p-4">
           <p className="text-base font-bold text-slate-900">Don&apos;t miss it</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <a href={`/activities/${activity.id}/calendar`} className="btn-primary min-h-12 flex-1 text-base">
+            <a {...addToCalendar} className="btn-primary min-h-12 flex-1 text-base">
               📆 Add to calendar
             </a>
           </div>
@@ -216,7 +225,7 @@ export default async function ActivityDetailPage({
               <span aria-hidden="true">🧭</span>
               Directions
             </a>
-            <a href={`/activities/${activity.id}/calendar`} className="tool-btn">
+            <a {...addToCalendar} className="tool-btn">
               <span aria-hidden="true">📆</span>
               Add to calendar
             </a>
@@ -225,9 +234,15 @@ export default async function ActivityDetailPage({
         )}
         {upcoming && (
           <p className="mt-2 text-sm text-slate-600">
-            <a href={googleCalendar} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline">
-              Or add to Google Calendar
-            </a>
+            {android ? (
+              <a href={calendarFile} className="font-medium text-brand-700 underline">
+                Or save a calendar file
+              </a>
+            ) : (
+              <a href={googleCalendar} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline">
+                Or add to Google Calendar
+              </a>
+            )}
           </p>
         )}
 

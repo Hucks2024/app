@@ -3,6 +3,7 @@ import { enabledProviders } from "@/lib/oauth";
 import { liveMeetup } from "@/lib/meetups";
 import { canSendEmail } from "@/lib/email";
 import Logo from "@/components/Logo";
+import { SITE } from "@/lib/site";
 import SignIn from "@/components/SignIn";
 
 /** How many meetups are coming up, for the live pill. A real count, never
@@ -36,10 +37,9 @@ export default async function Welcome({
         <Logo variant="white" size={62} />
       </div>
 
-      {/* Sized to the screen so it stays on one line, the way a welcome
-          screen's hello should, rather than breaking after "to". */}
-      <h1 className="font-wordmark mt-6 text-[clamp(22px,7.4vw,34px)] font-bold leading-tight lowercase">
-        welcome to packmates
+      {/* Two even lines on a phone, so "mate" never sits alone. */}
+      <h1 className="font-wordmark mt-6 text-balance text-[clamp(24px,7.4vw,34px)] font-bold leading-tight">
+        {SITE.tagline}
       </h1>
       <p className="font-wordmark mt-1 text-lg font-semibold text-white">
         your guide to the galaxy
