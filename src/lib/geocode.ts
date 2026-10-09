@@ -25,7 +25,7 @@ export type GeocodeResult =
   | { status: "not_found" }
   | { status: "unavailable" };
 
-const USER_AGENT = "Packmates/1.0 (doyoulikepizza.com)";
+const USER_AGENT = "Packmates/1.0 (packmates.live)";
 
 /** Nominatim asks servers to say who they are. A browser can't set the
  * User-Agent (and trying would make the request fail its CORS check), and

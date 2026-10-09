@@ -83,10 +83,10 @@ export function explainEmailError(error: string): string {
     return "Resend is still in testing mode, so it only sends to your own address. Follow the Email steps at the top of the admin page to verify the domain.";
   }
   if (e.includes("invalid `from`") || e.includes("invalid from")) {
-    return 'EMAIL_FROM isn\'t in a form Resend accepts. Set it to exactly: Packmates <hello@doyoulikepizza.com>, then redeploy.';
+    return `EMAIL_FROM isn't in a form Resend accepts. Remove it in Vercel (the app picks hello@${SITE.domain} itself), then redeploy.`;
   }
   if (e.includes("restricted") || e.includes("returned 403")) {
-    return "Resend refused this key for sending from this address. Check the key has sending access for doyoulikepizza.com on resend.com → API Keys, and the domain shows Verified.";
+    return `Resend refused this key for sending from this address. Check the key has sending access for ${SITE.domain} on resend.com → API Keys, and the domain shows Verified.`;
   }
   if (e.includes("returned 429")) {
     return "Resend's sending limit was hit (100 a day on the free plan). It resets within a day.";

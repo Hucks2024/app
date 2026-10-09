@@ -54,6 +54,36 @@ try {
   // Older database without the column: nothing sent yet.
 }
 
+// Where the domains point, and whether they open the app.
+async function dns(name, type) {
+  try {
+    const res = await fetch(`https://dns.google/resolve?name=${name}&type=${type}`, { signal: AbortSignal.timeout(8000) });
+    const json = await res.json();
+    return (json.Answer ?? []).map((a) => String(a.data).replace(/\.$/, ""));
+  } catch {
+    return [];
+  }
+}
+async function opens(url) {
+  try {
+    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    const where = res.headers.get("location");
+    if (where) return `${res.status} -> ${where}`;
+    const html = await res.text();
+    return `${res.status}${/packmates/i.test(html) ? ", the app" : ", not the app"}`;
+  } catch (e) {
+    return `doesn't open (${e.cause?.code ?? e.message})`;
+  }
+}
+console.log("");
+console.log("DOMAINS");
+for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
+  const ns = await dns(domain, "NS");
+  console.log(`  ${domain}`);
+  console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
+  console.log(`    https://${domain} -> ${await opens(`https://${domain}/`)}`);
+}
+
 console.log("");
 console.log("MEMBERS");
 console.log(`  ${users.length} in all, ${recent.length} joined in the last 30 days`);

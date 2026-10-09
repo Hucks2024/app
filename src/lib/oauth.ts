@@ -13,13 +13,13 @@ import type { User } from "@prisma/client";
 // whole file is dormant until then and the email sign in carries on
 // regardless:
 //
-//   Apple   APPLE_CLIENT_ID       the Services ID, e.g. com.doyoulikepizza.web
+//   Apple   APPLE_CLIENT_ID       the Services ID, e.g. live.packmates.web
 //   Google  GOOGLE_CLIENT_ID      from Google Cloud → APIs & Services → Credentials
 //           GOOGLE_CLIENT_SECRET
 //
 // with these registered as the return URLs on the provider's side:
-//   https://doyoulikepizza.com/auth/apple/callback
-//   https://doyoulikepizza.com/auth/google/callback
+//   https://packmates.live/auth/apple/callback
+//   https://packmates.live/auth/google/callback
 //
 // Apple needs no secret here: it posts the signed ID token straight back,
 // and that token is checked against Apple's published keys, which is all

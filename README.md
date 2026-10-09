@@ -59,7 +59,7 @@ npm run dev
 Visit `http://localhost:3000`. Log in as the seeded admin to reach `/admin`
 and approve your own test accounts' verification requests.
 
-## Deploying, and connecting doyoulikepizza.com
+## Deploying, and connecting packmates.live
 
 ### Option A: Vercel (recommended, fully working)
 
@@ -83,28 +83,23 @@ and approve your own test accounts' verification requests.
    Either way, run `npx prisma migrate deploy` against the production
    database once before first use (the `build` script already does this
    automatically on deploy).
-4. **Point doyoulikepizza.com at it:** in the Vercel project → Settings →
-   Domains, add `doyoulikepizza.com` (and `www.doyoulikepizza.com` if you
-   want both). Vercel will show you the DNS records to add, usually an `A`
-   record (or `ALIAS`/`ANAME`) for the apex domain and a `CNAME` for `www`,
-   at whatever registrar/DNS provider you bought the domain through (or at
-   Cloudflare's DNS if that's where the domain is managed, Cloudflare can
-   host your DNS and point the domain at Vercel even though the app itself
-   isn't running on Cloudflare's own servers). DNS changes can take anywhere
-   from a few minutes to a few hours to propagate.
-5. Once the domain is live, update `NEXT_PUBLIC_SITE_URL` to
-   `https://doyoulikepizza.com` (already the default) and redeploy so the
-   Open Graph/canonical tags match.
-6. **Redirecting an existing WordPress site to it:** if `doyoulikepizza.com`
-   currently runs WordPress and you want it to *point at* this app instead,
-   the cleanest approach is to change the domain's DNS to Vercel per step 4
-   above and retire the WordPress hosting (rather than trying to run a
-   redirect *from* WordPress, which keeps you paying for and maintaining a
-   WordPress install just to bounce visitors elsewhere). If you'd rather
-   keep WordPress on the root domain for now and only send some traffic
-   here, deploy this app and point a subdomain (e.g. `runs.doyoulikepizza.com`)
-   at it in step 4 instead, then add a link or redirect to that subdomain
-   from WordPress.
+4. **Point packmates.live at it.** The domain is registered at
+   WordPress.com and its DNS is handed to Vercel:
+   - Vercel project → Settings → Domains → add `packmates.live` and
+     `www.packmates.live` (let Vercel redirect `www` to the bare domain).
+   - WordPress.com → Upgrades → Domains → `packmates.live` → Name servers
+     → turn off "Use WordPress.com name servers" and enter
+     `ns1.vercel-dns.com` and `ns2.vercel-dns.com`.
+   - Wait for Vercel to show the domain as valid (minutes to a few hours).
+   Every DNS record after that (the email ones on /admin, for instance)
+   goes in Vercel → Domains → packmates.live → DNS Records.
+5. The live address is set in `src/lib/site.ts`, not by
+   `NEXT_PUBLIC_SITE_URL` (which is only honoured for a local `http://`
+   address), so nothing needs changing in Vercel's environment variables.
+6. **The old address, doyoulikepizza.com:** once packmates.live works, in
+   Vercel → Settings → Domains, edit `doyoulikepizza.com` and set it to
+   redirect to `packmates.live`, so old links and home-screen icons land
+   on the new address.
 
 ### Option B: Cloudflare Workers (prepared, currently blocked)
 

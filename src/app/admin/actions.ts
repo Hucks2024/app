@@ -210,7 +210,7 @@ export async function testEmailAction(): Promise<TestEmailState> {
   return { ok: false, message: explainEmailError(sent.error), detail: sent.error };
 }
 
-/** "Add doyoulikepizza.com to Resend", the first step of email setup. */
+/** "Add packmates.live to Resend", the first step of email setup. */
 export async function addEmailDomainAction() {
   await requireAdmin();
   const result = await addDomainToResend();
