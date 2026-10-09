@@ -51,6 +51,17 @@ async function dns(name, type) {
     return [];
   }
 }
+// What the domain's registry holds: the truth, while DNS answers above can
+// still be old copies for a few hours after a change.
+async function registry(name) {
+  try {
+    const res = await fetch(`https://rdap.org/domain/${name}`, { signal: AbortSignal.timeout(10000) });
+    const json = await res.json();
+    return (json.nameservers ?? []).map((n) => String(n.ldhName).toLowerCase());
+  } catch {
+    return [];
+  }
+}
 async function opens(url) {
   try {
     // As a browser: the app turns away anything that looks like a script.
@@ -74,6 +85,8 @@ for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
   const ns = await dns(domain, "NS");
   console.log(`  ${domain}`);
   console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
+  const reg = await registry(domain);
+  console.log(`    Registry says: ${reg.length ? reg.join(", ") : "couldn't ask"}`);
   const ips = await dns(domain, "A");
   console.log(`    Points at: ${ips.length ? ips.join(", ") : "nothing"}`);
   console.log(`    https://${domain} -> ${await opens(`https://${domain}/`)}`);
