@@ -27,10 +27,20 @@ const ago = (t) => {
   const days = Math.floor((now - t) / day);
   return days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
 };
+const since = (t) => {
+  const mins = Math.round((now - t) / 60000);
+  return mins < 60 ? `${mins} min ago` : mins < 24 * 60 ? `${Math.round(mins / 60)} h ago` : ago(t);
+};
 
 const users = (
-  await client.execute(`SELECT "createdAt", "emailVerifiedAt", "accountStatus" FROM "User" WHERE "id" NOT LIKE 'demo-%'`)
-).rows.map((r) => ({ created: when(r.createdAt), confirmed: when(r.emailVerifiedAt), status: r.accountStatus }));
+  await client.execute(`SELECT "createdAt", "emailVerifiedAt", "accountStatus", "passwordChangedAt" FROM "User" WHERE "id" NOT LIKE 'demo-%'`)
+).rows.map((r) => ({
+  created: when(r.createdAt),
+  confirmed: when(r.emailVerifiedAt),
+  status: r.accountStatus,
+  passwordChanged: when(r.passwordChangedAt),
+}));
+const lastPasswordChange = Math.max(0, ...users.map((u) => u.passwordChanged ?? 0));
 
 const recent = users.filter((u) => u.created && now - u.created < 30 * day);
 const codes = (await client.execute(`SELECT "sentAt" FROM "EmailVerification"`)).rows.map((r) => when(r.sentAt)).filter(Boolean);
@@ -89,7 +99,9 @@ console.log("MEETUPS");
 console.log(`  ${upcoming.length} coming up, ${meetups.length} ever posted`);
 console.log("");
 console.log("EMAIL (only used for password resets)");
-console.log(`  Reset codes sent and not used yet: ${codes.length}${lastCode ? ` (latest ${ago(lastCode)})` : ""}`);
+console.log(`  Reset codes sent and not used yet: ${codes.length}${lastCode ? ` (latest ${since(lastCode)})` : ""}`);
+// A reset that worked shows here: the code is used up and the password changed.
+console.log(`  Latest password change: ${lastPasswordChange ? since(lastPasswordChange) : "none recorded"}`);
 console.log("  To check email works: /admin -> Email -> Send me a test email.");
 // The records Resend asks for, so it can send from packmates.live.
 for (const name of ["resend._domainkey", "send", "_dmarc"]) {
