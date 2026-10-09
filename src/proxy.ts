@@ -8,7 +8,7 @@ const SESSION_COOKIE = "pacemates_session";
 // Lightweight edge-safe gate: just confirms a valid signed session exists.
 // Deeper checks (verification status, admin role, ownership) happen in the
 // page/server-action itself, which has real DB access.
-const PROTECTED_PREFIXES = ["/activities", "/profile", "/verify", "/admin"];
+const PROTECTED_PREFIXES = ["/activities", "/profile", "/verify", "/admin", "/photo"];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

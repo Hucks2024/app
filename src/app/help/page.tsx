@@ -53,6 +53,11 @@ export default async function HelpPage() {
           ),
         },
         {
+          id: "photo",
+          q: "Do I need a photo?",
+          a: <p>Yes, of your face. People need to know who to look for.</p>,
+        },
+        {
           id: "near",
           q: "What's near me?",
           a: (

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { errorQuery } from "@/lib/flash";
+import { joinMeetup } from "@/lib/join";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
@@ -87,6 +88,9 @@ export async function saveMeetupAction(
     // Posting is for verified members: somebody who's been to a meetup
     // themselves. The page explains how to get there; this is the lock.
     redirect("/activities/new");
+  } else if (!user.profilePhotoType) {
+    // The host most of all: they're the one people look for first.
+    redirect("/photo?next=/activities/new");
   }
 
   const parsed = createSchema.safeParse(readMeetupForm(formData));
@@ -187,33 +191,10 @@ export async function cancelActivityAction(formData: FormData) {
 export async function joinActivityAction(formData: FormData) {
   const user = await requireMember();
   const activityId = String(formData.get("activityId"));
-
-  const prisma = await getPrisma();
-  const activity = await prisma.runActivity.findUnique({
-    where: { id: activityId },
-    include: { participations: { where: { status: "JOINED" } } },
-  });
-  if (!activity) redirect("/activities");
-  // Saying you're going to something that's over would count as having
-  // been, which is what unlocks posting.
-  if (activity!.startsAt <= new Date() || activity!.cancelledAt) redirect(`/activities/${activityId}`);
-
-  const alreadyIn = activity!.participations.some((p) => p.userId === user.id);
-  const isFull =
-    !!activity!.maxParticipants && activity!.participations.length >= activity!.maxParticipants;
-
-  if (!alreadyIn) {
-    await prisma.participation.upsert({
-      where: { activityId_userId: { activityId, userId: user.id } },
-      create: { activityId, userId: user.id, status: isFull ? "WAITLIST" : "JOINED" },
-      update: { status: isFull ? "WAITLIST" : "JOINED" },
-    });
-  }
-
-  // Only flagged on the join that actually did something, so tapping a
-  // page you're already on doesn't throw confetti at you.
-  const celebrate = !alreadyIn && !isFull ? "?joined=1" : "";
-  redirect(`/activities/${activityId}${celebrate}`);
+  // Everyone going has a face on the meetup, so the group knows who to
+  // look out for: no photo, no place. The photo page finishes the join.
+  if (!user.profilePhotoType) redirect(`/photo?join=${encodeURIComponent(activityId)}`);
+  redirect(await joinMeetup(await getPrisma(), user.id, activityId));
 }
 
 export async function leaveActivityAction(formData: FormData) {

@@ -138,7 +138,7 @@ export default async function ProfilePage({
         </div>
         <div>
           <label id="photo" className="label scroll-mt-24" htmlFor="profilePhoto">
-            Photo
+            Photo <span className="font-normal text-slate-600">(your face, to join meetups)</span>
           </label>
           <PhotoInput />
         </div>

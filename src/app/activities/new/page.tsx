@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { readError } from "@/lib/flash";
 import Link from "next/link";
 import { requireMember } from "@/lib/auth";
@@ -64,6 +65,9 @@ export default async function NewActivityPage({
       </div>
     );
   }
+
+  // Hosts are who people look for first, so a photo comes before posting.
+  if (!user.profilePhotoType) redirect("/photo?next=/activities/new");
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">

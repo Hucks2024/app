@@ -135,11 +135,6 @@ export default async function ActivityDetailPage({
             <a href={`/activities/${activity.id}/calendar`} className="btn-primary min-h-12 flex-1 text-base">
               📆 Add to calendar
             </a>
-            {!user.profilePhotoType && (
-              <Link href="/profile#photo" className="btn-secondary min-h-12 flex-1 text-base">
-                🙂 Add your photo
-              </Link>
-            )}
           </div>
         </div>
       )}
@@ -306,7 +301,9 @@ export default async function ActivityDetailPage({
               {full ? "Full: join waitlist" : "I'm in 🙌"}
             </SubmitButton>
             <p className="mt-1 text-center text-sm text-slate-600">
-              Free · {joined.length > 0 ? `${joined.length} going` : "Be the first"}
+              {user.profilePhotoType
+                ? `Free · ${joined.length > 0 ? `${joined.length} going` : "Be the first"}`
+                : "Free · You'll add a photo first"}
             </p>
           </form>
         ) : going ? (

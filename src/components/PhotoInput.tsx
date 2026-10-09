@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 
 const MAX_SIDE = 800;
 
-async function shrink(file: File): Promise<File> {
+export async function shrink(file: File): Promise<File> {
   const url = URL.createObjectURL(file);
   try {
     const img = new Image();
