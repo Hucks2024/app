@@ -4,6 +4,7 @@ import { liveMeetup } from "@/lib/meetups";
 import { canSendEmail } from "@/lib/email";
 import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
+import StoreBadges from "@/components/StoreBadges";
 
 /** How many meetups are coming up, for the live pill. A real count, never
  * a padded one: it's the first number anyone sees here, and the same
@@ -63,6 +64,8 @@ export default async function Welcome({
           next={next}
         />
       </div>
+
+      <StoreBadges className="mt-6" />
     </section>
   );
 }

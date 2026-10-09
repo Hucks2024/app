@@ -54,6 +54,9 @@ The app runs on Vercel with a Turso database.
    - Once it shows as valid, set `doyoulikepizza.com` to redirect to
      `packmates.live` in the same Domains screen.
 4. For password reset emails, follow the Email steps on `/admin`.
+5. Once the app is in the stores, set `APP_STORE_URL` and
+   `GOOGLE_PLAY_URL` and redeploy: the download buttons appear on the
+   front page and Me.
 
 ## GitHub Actions
 

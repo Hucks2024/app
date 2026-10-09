@@ -16,6 +16,7 @@ import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
 import InstallHint from "@/components/InstallHint";
+import StoreBadges, { storeLinks } from "@/components/StoreBadges";
 import LogoutButton from "@/components/LogoutButton";
 
 export const metadata = { title: "Profile" };
@@ -108,7 +109,16 @@ export default async function ProfilePage({
         </div>
       </div>
 
-      <InstallHint />
+      {/* The real app once it's in the stores; until then, how to put the
+          site on the home screen. */}
+      {Object.values(storeLinks()).some(Boolean) ? (
+        <div className="card mb-4">
+          <p className="mb-3 font-semibold">Get the app</p>
+          <StoreBadges />
+        </div>
+      ) : (
+        <InstallHint />
+      )}
 
       <div className="card mb-4">
         <p className="font-semibold mb-3">Your meetups</p>
