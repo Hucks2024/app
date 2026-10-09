@@ -102,9 +102,11 @@ export default async function ActivityDetailPage({
 
   const category = categoryFor(activity.category);
   const hasPin = activity.latitude != null && activity.longitude != null;
-  const directions = hasPin
-    ? `https://www.google.com/maps/dir/?api=1&destination=${activity.latitude},${activity.longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`;
+  // Just the spot on Google Maps, not a route to it: a route starts from
+  // wherever you are now, which is rarely where you'll set off from.
+  const directions = `https://www.google.com/maps/search/?api=1&query=${
+    hasPin ? `${activity.latitude},${activity.longitude}` : encodeURIComponent(activity.location)
+  }`;
   const pageUrl = `${SITE.url}/activities/${activity.id}`;
   const end = new Date(activity.startsAt.getTime() + 2 * 60 * 60 * 1000);
   const googleCalendar =
