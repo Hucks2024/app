@@ -70,7 +70,8 @@ async function opens(url) {
     const where = res.headers.get("location");
     if (where) return `${res.status} -> ${where}`;
     const html = await res.text();
-    return `${res.status}${/packmates/i.test(html) ? ", the app" : ", not the app"}`;
+    // The app's own description, which a registrar's holding page won't have.
+    return `${res.status}${html.includes("A free map of meetups") ? ", the app" : ", not the app (something else answers)"}`;
   } catch (e) {
     return `doesn't open (${e.cause?.code ?? e.message})`;
   }
@@ -81,6 +82,8 @@ for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
   const ns = await dns(domain, "NS");
   console.log(`  ${domain}`);
   console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
+  const ips = await dns(domain, "A");
+  console.log(`    Points at: ${ips.length ? ips.join(", ") : "nothing"}`);
   console.log(`    https://${domain} -> ${await opens(`https://${domain}/`)}`);
 }
 
