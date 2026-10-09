@@ -18,16 +18,8 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     orderBy: { startsAt: "asc" },
     include: {
       host: { select: { id: true, name: true } },
-      // The people, not just the count: the pins show a face, which is
-      // what makes a meetup read as somebody going rather than a category
-      // sitting on a map.
-      participations: {
-        where: { status: "JOINED" },
-        // The type, not the photo: it says whether there is one without
-        // pulling every picture on the map out of the database.
-        include: { user: { select: { id: true, profilePhotoType: true } } },
-        orderBy: { joinedAt: "asc" },
-      },
+      // How many are going, for the number on the pin.
+      _count: { select: { participations: { where: { status: "JOINED" } } } },
     },
   });
 
@@ -51,13 +43,8 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
       pace: a.pace,
       category: a.category,
       afterSpot: a.afterSpot,
-      joinedCount: a.participations.length,
+      joinedCount: a._count.participations,
       maxParticipants: a.maxParticipants,
-      // Only people with a photo: the pin shows a real face or none.
-      faces: a.participations
-        .filter((p) => p.user.profilePhotoType != null)
-        .slice(0, 3)
-        .map((p) => ({ userId: p.user.id, hasPhoto: true })),
       host: { name: a.host.name, thumbs: thumbs.get(a.host.id) ?? 0 },
     }));
 

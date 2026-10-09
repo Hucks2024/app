@@ -62,10 +62,9 @@ export default async function Landing() {
       pace: null,
       category: a.category,
       afterSpot: null,
+      // Who's going is members-only. The logged-out map shows that
+      // meetups exist, never who or how many are at them.
       joinedCount: 0,
-      // Who's going is members-only, and a face is a person. The
-      // logged-out map shows that meetups exist, never who is at them.
-      faces: [],
       maxParticipants: null,
       host: null,
     }));

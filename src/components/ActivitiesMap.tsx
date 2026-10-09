@@ -19,7 +19,7 @@ import { formatWhen } from "@/components/LocalTime";
 // Tailwind can't reach markup handed over as a raw string, and can't do
 // the keyframes either.
 //
-// The pin says what it is, how many are going and one face. Pace and
+// The pin says what it is and how many are going. Pace and
 // duration used to hang underneath every pin as well; they belong in the
 // list, where there's room to read them, rather than on a map where eight
 // of them at once is just noise.
@@ -28,18 +28,7 @@ import { formatWhen } from "@/components/LocalTime";
 const PIN_W = 58;
 const PIN_H = 83;
 
-/** Who's going, for the faces on the pin. */
-export type Face = { userId: string; hasPhoto: boolean };
-
-function faceBubble(face: Face | undefined): string {
-  // A real photo or nothing. There used to be a 🙂 standing in for anyone
-  // without one, which early on was every pin, and read as decoration
-  // rather than a person.
-  if (!face?.hasPhoto) return "";
-  return `<span class="map-pin-face"><img src="/api/photos/profile/${face.userId}" alt="" loading="lazy"></span>`;
-}
-
-function emojiIcon(emoji: string, going: number, face?: Face) {
+function emojiIcon(emoji: string, going: number) {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this
   // replaced needed one copy per marker with a unique id, or whichever
   // marker Leaflet unmounted first took the definition down and left the
@@ -49,14 +38,13 @@ function emojiIcon(emoji: string, going: number, face?: Face) {
       <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="${BRAND}"/>
       <circle cx="256" cy="196" r="80" fill="#fff"/>
     </svg>`;
-  // The count only earns its space once there's a group to speak of: a "1"
-  // on every pin is noise, and an empty meetup advertising that it's empty
-  // is worse than saying nothing.
-  const count = going > 1 ? `<span class="map-pin-count">${going}</span>` : "";
+  // How many are going, the host included. Nothing on the logged-out map,
+  // where that's members-only and comes through as 0.
+  const count = going > 0 ? `<span class="map-pin-count">${going}</span>` : "";
   const html =
     `<div class="map-pin">` +
     `${svg}<span class="map-pin-emoji">${emoji}</span>` +
-    `${count}${faceBubble(face)}</div>`;
+    `${count}</div>`;
 
   return L.divIcon({
     html,
@@ -293,12 +281,8 @@ export type MapActivity = {
   afterSpot: string | null;
   joinedCount: number;
   maxParticipants: number | null;
-  // Up to a couple of people who've said they're going, for the faces on
-  // the pin. Empty on the logged-out map: who is going is members-only,
-  // and a face is a person.
-  faces: Face[];
-  // Who's running it and their 👍 count. Null on the logged-out map, for
-  // the same reason as the faces.
+  // Who's running it and their 👍 count. Null on the logged-out map:
+  // who is going is members-only.
   host: { name: string; thumbs: number } | null;
 };
 
@@ -336,12 +320,7 @@ export default function ActivitiesMap({
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
     for (const a of activities) {
-      map.set(
-        a.id,
-        // The first person going who has a photo, so one photo-less early
-        // joiner doesn't leave the pin faceless when others have one.
-        emojiIcon(categoryFor(a.category).emoji, a.joinedCount, a.faces.find((f) => f.hasPhoto))
-      );
+      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, a.joinedCount));
     }
     return map;
   }, [activities]);
