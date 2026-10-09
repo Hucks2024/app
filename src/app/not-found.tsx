@@ -2,9 +2,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 
 // Next renders this for any unmatched path, and for every notFound() the
-// app throws — including a member reaching for a meetup in the other club,
-// where the page genuinely isn't theirs to see. So it stays light rather
-// than accusing anyone of anything.
+// app throws. So it stays light rather than accusing anyone of anything.
 export default function NotFound() {
   return (
     <div className="mx-auto max-w-sm px-4 py-20 text-center">

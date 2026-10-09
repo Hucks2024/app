@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireMember, safeNext } from "@/lib/auth";
+import { requireUser, safeNext } from "@/lib/auth";
 import { readError } from "@/lib/flash";
 import { getPrisma } from "@/lib/db";
 import PhotoPicker from "@/components/PhotoPicker";
@@ -15,7 +15,7 @@ export default async function PhotoPage({
   searchParams: Promise<{ join?: string; next?: string; error?: string; sig?: string }>;
 }) {
   const { join, next: rawNext, error: rawError, sig } = await searchParams;
-  const user = await requireMember();
+  const user = await requireUser();
   const error = readError(rawError, sig);
   const next = safeNext(rawNext);
 
@@ -24,7 +24,7 @@ export default async function PhotoPage({
     : null;
   // Back to the meetup, or to the map: going back to Post would only send
   // them straight here again.
-  const back = meetup ? `/activities/${meetup.id}` : "/";
+  const back = meetup ? `/activities/${meetup.id}` : next === "/" ? "/profile" : "/";
 
   return (
     <div className="mx-auto max-w-sm px-4 py-10">

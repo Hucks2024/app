@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireMember, safeNext } from "@/lib/auth";
+import { requireUser, safeNext } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ImageValidationError, readImageFile } from "@/lib/images";
 import { errorQuery } from "@/lib/flash";
@@ -10,7 +10,7 @@ import { joinMeetup } from "@/lib/join";
 /** Saves the photo, then finishes whatever it was needed for: the join
  * they'd tapped "I'm in" for, or the page they were heading to. */
 export async function savePhotoAction(formData: FormData) {
-  const user = await requireMember();
+  const user = await requireUser();
   const join = String(formData.get("join") ?? "");
   const next = safeNext(formData.get("next"));
   const back = (message: string) => {

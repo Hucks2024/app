@@ -4,7 +4,6 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 import BottomBar from "@/components/BottomBar";
 import { getCurrentUser } from "@/lib/auth";
-import InstallHint from "@/components/InstallHint";
 import { SITE } from "@/lib/site";
 
 // The stand-in for Segoe UI on devices that don't have it (see
@@ -68,7 +67,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main id="main" className="flex-1">
           {children}
         </main>
-        <InstallHint />
         {user && <BottomBar />}
       </body>
     </html>

@@ -53,7 +53,12 @@ async function dns(name, type) {
 }
 async function opens(url) {
   try {
-    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    // As a browser: the app turns away anything that looks like a script.
+    const res = await fetch(url, {
+      redirect: "manual",
+      headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) PackmatesHealthCheck" },
+      signal: AbortSignal.timeout(10000),
+    });
     const where = res.headers.get("location");
     if (where) return `${res.status} -> ${where}`;
     const html = await res.text();

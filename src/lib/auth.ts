@@ -64,10 +64,6 @@ async function getSession(): Promise<{ userId: string; issuedAt: number } | null
   }
 }
 
-export async function getSessionUserId(): Promise<string | null> {
-  return (await getSession())?.userId ?? null;
-}
-
 /** Now, to the whole second, for passwordChangedAt. A session's issue time
  * is only kept to the second, so this is what lets the session started
  * straight after a change count as newer than it. */
@@ -126,35 +122,6 @@ export function safeNext(raw: unknown): string {
   return next;
 }
 
-/** Whether the membership fee is being charged at all.
- *
- * Off by default, and meant to stay off for now: the app is free for
- * everyone while it grows. The XRP flow underneath (/subscribe, the admin
- * ledger scan, the payment log) is untouched and starts gating again the
- * moment this is set to "true" in the environment.
- *
- * Note that setting it also means taking money, which the Vercel Hobby
- * plan doesn't allow: that switch and a paid Vercel plan go together. */
-function membershipRequired(): boolean {
-  return process.env.MEMBERSHIP_REQUIRED === "true";
-}
-
-export function isPaidUp(user: Pick<User, "role" | "paidUntil">): boolean {
-  if (!membershipRequired()) return true;
-  return user.role === "ADMIN" || (user.paidUntil != null && user.paidUntil > new Date());
-}
-
-/** The bar for joining meetups and giving thumbs up: a signed-in,
- * non-suspended account, plus a current membership if the fee is switched
- * on. Posting meetups asks for more than this, see src/lib/trust.ts. */
-export async function requireMember(): Promise<CurrentUser> {
-  const user = await requireUser();
-  if (!isPaidUp(user)) {
-    redirect("/subscribe");
-  }
-  return user;
-}
-
 /** Requires a logged-in admin. Redirects home otherwise. */
 export async function requireAdmin(): Promise<CurrentUser> {
   const user = await requireUser();
@@ -162,10 +129,4 @@ export async function requireAdmin(): Promise<CurrentUser> {
     redirect("/");
   }
   return user;
-}
-
-/** Strips fields that should never be sent to the client. */
-export function publicUser(user: User) {
-  const { passwordHash, ...rest } = user;
-  return rest;
 }

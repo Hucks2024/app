@@ -7,71 +7,8 @@ import { getPrisma } from "@/lib/db";
 import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
 import { canSendEmail, explainEmailError, sendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
-import { processXrpPayments } from "@/lib/xrp";
 import { addDomainToResend, askResendToVerify } from "@/lib/email-setup";
 import { errorQuery } from "@/lib/flash";
-
-export async function approveVerificationAction(formData: FormData) {
-  await requireAdmin();
-  const requestId = String(formData.get("requestId"));
-
-  const prisma = await getPrisma();
-  const request = await prisma.verificationRequest.findUnique({ where: { id: requestId } });
-  if (!request) return;
-
-  await prisma.$transaction([
-    prisma.verificationRequest.update({
-      where: { id: requestId },
-      data: {
-        status: "APPROVED",
-        reviewedAt: new Date(),
-        reviewerNote: null,
-        // Privacy: we only needed the ID photo to make this decision.
-        idPhoto: null,
-        idPhotoType: null,
-      },
-    }),
-    prisma.user.update({
-      where: { id: request.userId },
-      data: {
-        verificationStatus: "APPROVED",
-        profilePhoto: request.selfiePhoto,
-        profilePhotoType: request.selfiePhotoType,
-      },
-    }),
-  ]);
-
-  revalidatePath("/admin");
-}
-
-export async function rejectVerificationAction(formData: FormData) {
-  await requireAdmin();
-  const requestId = String(formData.get("requestId"));
-  const note = (formData.get("note") as string)?.trim() || null;
-
-  const prisma = await getPrisma();
-  const request = await prisma.verificationRequest.findUnique({ where: { id: requestId } });
-  if (!request) return;
-
-  await prisma.$transaction([
-    prisma.verificationRequest.update({
-      where: { id: requestId },
-      data: {
-        status: "REJECTED",
-        reviewedAt: new Date(),
-        reviewerNote: note,
-        idPhoto: null,
-        idPhotoType: null,
-      },
-    }),
-    prisma.user.update({
-      where: { id: request.userId },
-      data: { verificationStatus: "REJECTED" },
-    }),
-  ]);
-
-  revalidatePath("/admin");
-}
 
 export async function resolveReportAction(formData: FormData) {
   await requireAdmin();
@@ -96,26 +33,6 @@ export async function unbanUserAction(formData: FormData) {
   const prisma = await getPrisma();
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "ACTIVE" } });
   revalidatePath("/admin");
-}
-
-/** Checks the XRP Ledger for new payments and credits them. The whole
- * membership system's crediting step, run whenever an admin presses
- * "Scan now" on /admin, nothing else triggers it. */
-export async function scanXrpPaymentsAction() {
-  await requireAdmin();
-  const walletAddress = process.env.XRP_WALLET_ADDRESS;
-  if (!walletAddress) {
-    redirect("/admin?xrpScan=" + encodeURIComponent("not configured"));
-  }
-
-  const prisma = await getPrisma();
-  const result = await processXrpPayments(prisma, walletAddress);
-
-  const summary = result.error
-    ? `error: ${result.error}`
-    : `credited ${result.credited}, ${result.skippedNoTag} with no tag, ${result.skippedUnmatchedTag.length} with an unrecognized tag${result.skippedUnmatchedTag.length ? ` (${result.skippedUnmatchedTag.join(", ")})` : ""}`;
-
-  redirect("/admin?xrpScan=" + encodeURIComponent(summary));
 }
 
 /** Gives somebody the ✓, and with it posting, without a first meetup.

@@ -49,7 +49,9 @@ export default function InstallHint() {
   }
 
   return (
-    <div className="install-hint card !p-3 shadow-lg flex items-start gap-3" role="status">
+    // A card in the page, not floating over it: floating, it sat on top of
+    // the Join button until it was closed.
+    <div className="card mb-4 flex items-start gap-3 !p-3">
       <span aria-hidden className="text-xl leading-none">
         📲
       </span>

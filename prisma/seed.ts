@@ -2,7 +2,7 @@ import path from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import bcrypt from "bcryptjs";
-import { ensureMembership, formatMemberNumber } from "../src/lib/invite";
+import { ensureMemberNumber, formatMemberNumber } from "../src/lib/member";
 
 // Same resolution as src/lib/db.ts, minus the Cloudflare-binding lookup
 // (this script only ever runs as a plain Node CLI, e.g. `prisma db seed` or
@@ -30,8 +30,7 @@ async function main() {
   const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
-  // Signup is invite-only, so the very first account needs a code or
-  // nobody can ever join. Admin codes never run out.
+  // The first admin, for a fresh local database.
   const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
   const admin =
     existing ??
@@ -45,11 +44,10 @@ async function main() {
       },
     }));
 
-  const { memberNumber, inviteCode } = await ensureMembership(prisma, admin.id);
+  const memberNumber = await ensureMemberNumber(prisma, admin.id);
   console.log(
     `Admin ${existing ? "already exists" : "created"}: ${adminEmail} (#${formatMemberNumber(memberNumber)})`
   );
-  console.log(`  invite code: ${inviteCode}`);
 
   console.log(
     adminPassword === "changeme123"

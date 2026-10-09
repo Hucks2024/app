@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
 import { getPrisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth";
-import { ensureMembership } from "@/lib/invite";
+import { ensureMemberNumber } from "@/lib/member";
 import { SITE } from "@/lib/site";
 import type { User } from "@prisma/client";
 
@@ -242,7 +242,7 @@ export async function signInWithIdentity(provider: Provider, id: Identity): Prom
         emailVerifiedAt: new Date(),
       },
     });
-    await ensureMembership(prisma, user.id);
+    await ensureMemberNumber(prisma, user.id);
   }
 
   if (user.accountStatus === "BANNED") {

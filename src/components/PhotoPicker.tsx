@@ -1,7 +1,38 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { shrink } from "@/components/PhotoInput";
+
+// Shrinks the photo before it's sent.
+//
+// A photo straight off a phone camera is 2-5MB, and the server only takes
+// a few: sent as it is, it failed with an error page. Drawn down to 800px
+// on a canvas it's a JPEG of a hundred or two KB, which uploads in a blink
+// even on a bad signal and is still far sharper than the little circles
+// it's shown in. If the browser can't read the file (an odd format, a very
+// old phone), it goes as it is and the server's own checks decide.
+
+const MAX_SIDE = 800;
+
+async function shrink(file: File): Promise<File> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    );
+    if (!blob) return file;
+    return new File([blob], "photo.jpg", { type: "image/jpeg" });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 /** One big button that opens the camera or the photo library, a round
  * preview of the result, and the save button, which stays off until

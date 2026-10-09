@@ -7,15 +7,22 @@ import {
   createSession,
   destroySession,
   hashPassword,
-  isPaidUp,
   passwordChangeStamp,
   safeNext,
   verifyPassword,
 } from "@/lib/auth";
-import { ensureMembership } from "@/lib/invite";
+import { ensureMemberNumber } from "@/lib/member";
 import { canSendEmail, isTemporaryEmailError } from "@/lib/email";
-import { checkVerificationCode, sendVerificationCode } from "@/lib/email-verification";
+import { checkResetCode, sendResetCode } from "@/lib/reset-code";
 import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/lockout";
+import {
+  NO_ADS,
+  isThrowawayEmail,
+  issueSignupTicket,
+  looksLikeAdvert,
+  signupTicketOk,
+  tooManySignups,
+} from "@/lib/bots";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -24,10 +31,12 @@ import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/l
 // instead of as a mystery second account later.
 
 const emailSchema = z.string().trim().toLowerCase().email("Check the email address.");
+const THROWAWAY = "Use your own email, not a throwaway one.";
+const NOT_NOW = "Something went wrong. Try again.";
 
 export type EmailLookup =
   | { kind: "existing"; provider: "apple" | "google" | null }
-  | { kind: "new" }
+  | { kind: "new"; ticket: string }
   | { kind: "invalid"; error: string };
 
 /** Step one: is there an account at this address? */
@@ -40,7 +49,10 @@ export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
     where: { email: parsed.data },
     select: { appleSub: true, googleSub: true },
   });
-  if (!user) return { kind: "new" };
+  if (!user) {
+    if (isThrowawayEmail(parsed.data)) return { kind: "invalid", error: THROWAWAY };
+    return { kind: "new", ticket: issueSignupTicket(parsed.data) };
+  }
   // Said up front, so somebody who joined with a button doesn't sit there
   // guessing at a password they never had.
   return {
@@ -52,7 +64,12 @@ export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
 export type AuthState = { error: string | null };
 
 const signupSchema = z.object({
-  name: z.string().trim().min(2, "Type your first name.").max(80),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Type your first name.")
+    .max(80)
+    .refine((v) => !looksLikeAdvert(v), NO_ADS),
   email: emailSchema,
   password: z.string().min(8, "Password: 8 or more characters."),
 });
@@ -72,7 +89,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     // A field people never see, so only a bot filling in every box
     // fills it in. Turned away with nothing that says why.
     if (String(formData.get("website") ?? "").length > 0) {
-      return { error: "Something went wrong. Try again." };
+      return { error: NOT_NOW };
     }
     const parsed = signupSchema.safeParse({
       name: formData.get("name"),
@@ -81,9 +98,17 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     });
     if (!parsed.success) return { error: parsed.error.issues[0].message };
     const { name, email, password } = parsed.data;
+    if (isThrowawayEmail(email)) return { error: THROWAWAY };
+    // Proof the form was filled in by hand (see src/lib/bots.ts).
+    if (!signupTicketOk(String(formData.get("ticket") ?? ""), email)) {
+      return { error: NOT_NOW };
+    }
 
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
       return { error: "That email already has an account. Go back and sign in." };
+    }
+    if (await tooManySignups(prisma)) {
+      return { error: "Lots of people joining right now. Try again in 10 minutes." };
     }
 
     const user = await prisma.user.create({
@@ -96,7 +121,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
         emailVerifiedAt: new Date(),
       },
     });
-    await ensureMembership(prisma, user.id);
+    await ensureMemberNumber(prisma, user.id);
     await createSession(user.id);
     redirect(safeNext(formData.get("next")));
   }
@@ -138,8 +163,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
   }
 
   await createSession(user.id);
-  const step = nextStepFor(user);
-  redirect(step === "/" ? safeNext(formData.get("next")) : step);
+  redirect(safeNext(formData.get("next")));
 }
 
 /** Forgot your password, step one: email a code to the address. Only
@@ -157,7 +181,7 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
   // the screen looks the same either way.
   if (!user || user.accountStatus !== "ACTIVE") return { ok: true };
 
-  const sent = await sendVerificationCode(prisma, user, "reset");
+  const sent = await sendResetCode(prisma, user);
   if (!sent.ok) {
     // Into Vercel's logs; the Email steps on /admin say the same thing in
     // plain words.
@@ -198,7 +222,7 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   if (!user || user.accountStatus !== "ACTIVE") {
     return { error: "Code expired. Get a new one." };
   }
-  const checked = await checkVerificationCode(prisma, user.id, parsed.data.code);
+  const checked = await checkResetCode(prisma, user.id, parsed.data.code);
   if (!checked.ok) return { error: checked.error };
 
   await prisma.user.update({
@@ -216,11 +240,6 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   redirect(safeNext(formData.get("next")));
 }
 
-/** Where a signed-in member should land: the map, unless the membership
- * fee is switched on and theirs has lapsed. */
-function nextStepFor(user: { role: string; paidUntil: Date | null }) {
-  return isPaidUp(user) ? "/" : "/subscribe";
-}
 
 export async function logoutAction() {
   await destroySession();

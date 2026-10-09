@@ -65,15 +65,7 @@ model User {
   invitees    User[]  @relation("Invites")
   invitesLeft Int     @default(5)
 
-  // Membership fee, paid in XRP. Switched OFF for now (the app is free
-  // while it grows, see MEMBERSHIP_REQUIRED in src/lib/auth.ts); these
-  // columns and the whole XRP flow stay in place, dormant, ready for when
-  // charging starts. One shared wallet receives every payment;
-  // xrpDestinationTag is how we tell members apart on the ledger (the
-  // standard XRPL pattern exchanges use for shared deposit addresses).
-  // paidUntil is a rolling expiry a payment pushes forward, not a
-  // subscription object, there's no "cancel" on a push payment, it just
-  // lapses. Admins bypass the check regardless of its value.
+  // Unused: left over from a membership fee that was never switched on.
   xrpDestinationTag Int?      @unique
   paidUntil         DateTime?
 

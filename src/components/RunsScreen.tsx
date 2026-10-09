@@ -7,7 +7,7 @@ import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
 
 // The map of upcoming meetups. Only reachable by members, both "/" and
-// "/activities" gate on requireMember() before rendering this, so there's
+// "/activities" gate on requireUser() before rendering this, so there's
 // no "you're not a member yet" branch to handle here.
 export default async function RunsScreen({ user }: { user: CurrentUser }) {
   const prisma = await getPrisma();

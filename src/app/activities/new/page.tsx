@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { readError } from "@/lib/flash";
 import Link from "next/link";
-import { requireMember } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified } from "@/lib/trust";
 import LocalTime from "@/components/LocalTime";
@@ -14,7 +14,7 @@ export default async function NewActivityPage({
 }: {
   searchParams: Promise<{ error?: string; sig?: string }>;
 }) {
-  const user = await requireMember();
+  const user = await requireUser();
   const { error: rawError, sig } = await searchParams;
   const error = readError(rawError, sig);
   const prisma = await getPrisma();

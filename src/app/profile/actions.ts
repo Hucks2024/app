@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { errorQuery } from "@/lib/flash";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
+import { NO_ADS, looksLikeAdvert } from "@/lib/bots";
 import {
   createSession,
   destroySession,
@@ -13,13 +14,14 @@ import {
   requireUser,
   verifyPassword,
 } from "@/lib/auth";
-import { readImageFile, ImageValidationError } from "@/lib/images";
 
 const profileSchema = z.object({
-  name: z.string().trim().min(2, "Type your first name.").max(80),
-  city: z.string().trim().max(80).optional(),
-  pace: z.string().trim().max(40).optional(),
-  bio: z.string().trim().max(500).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Type your first name.")
+    .max(80)
+    .refine((v) => !looksLikeAdvert(v), NO_ADS),
 });
 
 export async function updateProfileAction(formData: FormData) {
@@ -27,33 +29,14 @@ export async function updateProfileAction(formData: FormData) {
 
   const parsed = profileSchema.safeParse({
     name: formData.get("name"),
-    city: formData.get("city") || undefined,
-    pace: formData.get("pace") || undefined,
-    bio: formData.get("bio") || undefined,
   });
 
   if (!parsed.success) {
     redirect(`/profile?${errorQuery(parsed.error.issues[0]?.message ?? "Check your details.")}`);
   }
 
-  let photo: { bytes: Uint8Array<ArrayBuffer>; type: string } | null = null;
-  try {
-    photo = await readImageFile(formData.get("profilePhoto") as File | null);
-  } catch (err) {
-    const message = err instanceof ImageValidationError ? err.message : "Photo didn't upload. Try again.";
-    redirect(`/profile?${errorQuery(message)}`);
-  }
-
   const prisma = await getPrisma();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      ...parsed.data,
-      ...(photo
-        ? { profilePhoto: photo.bytes, profilePhotoType: photo.type }
-        : {}),
-    },
-  });
+  await prisma.user.update({ where: { id: user.id }, data: { name: parsed.data.name } });
 
   redirect("/profile?saved=1");
 }

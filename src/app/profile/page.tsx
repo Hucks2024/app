@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { hasOwnPassword, requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import { ensureMembership, formatMemberNumber } from "@/lib/invite";
+import { ensureMemberNumber, formatMemberNumber } from "@/lib/member";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
 import { SITE } from "@/lib/site";
@@ -15,7 +15,7 @@ import CopyableField from "@/components/CopyableField";
 import LocalTime from "@/components/LocalTime";
 import SubmitButton from "@/components/SubmitButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
-import PhotoInput from "@/components/PhotoInput";
+import InstallHint from "@/components/InstallHint";
 import LogoutButton from "@/components/LogoutButton";
 
 export const metadata = { title: "Profile" };
@@ -30,7 +30,7 @@ export default async function ProfilePage({
   const user = await requireUser();
 
   const prisma = await getPrisma();
-  const { memberNumber } = await ensureMembership(prisma, user.id);
+  const memberNumber = await ensureMemberNumber(prisma, user.id);
   const { verified } = await refreshVerified(prisma, user);
   const thumbs = (await thumbsFor(prisma, [user.id])).get(user.id) ?? 0;
 
@@ -62,7 +62,13 @@ export default async function ProfilePage({
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <div className="flex items-center gap-4 mb-6">
-        <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} size={16} />
+        {/* Tap the face to change it: the one photo screen, shared with joining. */}
+        <Link href="/photo" aria-label="Change your photo" className="relative flex-none">
+          <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} size={16} />
+          <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm shadow" aria-hidden="true">
+            📷
+          </span>
+        </Link>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
           <p className="text-sm text-white">Member #{formatMemberNumber(memberNumber)}</p>
@@ -102,6 +108,8 @@ export default async function ProfilePage({
         </div>
       </div>
 
+      <InstallHint />
+
       <div className="card mb-4">
         <p className="font-semibold mb-3">Your meetups</p>
         {upcoming.length === 0 && past.length === 0 ? (
@@ -133,12 +141,6 @@ export default async function ProfilePage({
             Name
           </label>
           <input className="input" id="name" name="name" defaultValue={user.name} required />
-        </div>
-        <div>
-          <label id="photo" className="label scroll-mt-24" htmlFor="profilePhoto">
-            Photo <span className="font-normal text-slate-600">(your face, to join meetups)</span>
-          </label>
-          <PhotoInput />
         </div>
         <SubmitButton className="btn-primary w-full" pending="Saving…">
           Save

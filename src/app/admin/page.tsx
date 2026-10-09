@@ -5,16 +5,13 @@ import Avatar from "@/components/Avatar";
 import AdminResetPassword from "@/components/AdminResetPassword";
 import AdminEmailSetup from "@/components/AdminEmailSetup";
 import { readError } from "@/lib/flash";
-import { formatMemberNumber } from "@/lib/invite";
+import { formatMemberNumber } from "@/lib/member";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
 import {
-  approveVerificationAction,
-  rejectVerificationAction,
   resolveReportAction,
   banUserAction,
   unbanUserAction,
-  scanXrpPaymentsAction,
   setVerifiedAction,
   setAdminAction,
 } from "@/app/admin/actions";
@@ -22,18 +19,13 @@ import {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ xrpScan?: string; error?: string; sig?: string; checked?: string }>;
+  searchParams: Promise<{ error?: string; sig?: string; checked?: string }>;
 }) {
   const me = await requireAdmin();
-  const { xrpScan, error: rawError, sig, checked } = await searchParams;
+  const { error: rawError, sig, checked } = await searchParams;
   const prisma = await getPrisma();
 
-  const [pending, openReports, users, xrpPayments] = await Promise.all([
-    prisma.verificationRequest.findMany({
-      where: { status: "PENDING" },
-      include: { user: true },
-      orderBy: { submittedAt: "asc" },
-    }),
+  const [openReports, users] = await Promise.all([
     prisma.report.findMany({
       where: { status: "OPEN" },
       include: { reporter: true, reportedUser: true },
@@ -45,11 +37,6 @@ export default async function AdminPage({
       // A hundred photos would be a lot of database to read for a table
       // that only needs to know which members have one.
       omit: { profilePhoto: true },
-    }),
-    prisma.xrpPayment.findMany({
-      include: { user: true },
-      orderBy: { createdAt: "desc" },
-      take: 20,
     }),
   ]);
   const thumbs = await thumbsFor(
@@ -77,67 +64,6 @@ export default async function AdminPage({
       <section id="email" className="scroll-mt-20">
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Email</h2>
         <AdminEmailSetup error={readError(rawError, sig)} checked={checked === "1"} />
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
-          Pending photo-ID verifications ({pending.length})
-        </h2>
-        {pending.length === 0 && <p className="text-sm text-white">Nothing to review.</p>}
-        <div className="space-y-4">
-          {pending.map((req) => (
-            <div key={req.id} className="card">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="font-medium">{req.user.name}</p>
-                  <p className="text-xs text-slate-500">{req.user.email}</p>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Submitted {format(req.submittedAt, "MMM d, h:mm a")}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-1">Selfie</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/photos/verification/${req.id}/selfie`}
-                    alt="Selfie submitted for verification"
-                    className="rounded-lg border border-slate-200 max-h-64 object-contain w-full bg-slate-50"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-1">Photo ID</p>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/photos/verification/${req.id}/id`}
-                    alt="Photo ID submitted for verification"
-                    className="rounded-lg border border-slate-200 max-h-64 object-contain w-full bg-slate-50"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <form action={approveVerificationAction}>
-                  <input type="hidden" name="requestId" value={req.id} />
-                  <button type="submit" className="btn-primary">
-                    Approve
-                  </button>
-                </form>
-                <form action={rejectVerificationAction} className="flex items-center gap-2 flex-1">
-                  <input type="hidden" name="requestId" value={req.id} />
-                  <input
-                    className="input"
-                    name="note"
-                    placeholder="Optional note (photo unclear, doesn't match, etc.)"
-                  />
-                  <button type="submit" className="btn-danger shrink-0">
-                    Reject
-                  </button>
-                </form>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
 
       <section>
@@ -182,55 +108,6 @@ export default async function AdminPage({
       </section>
 
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-white drop-shadow">XRP payments</h2>
-          <form action={scanXrpPaymentsAction}>
-            <button type="submit" className="btn-secondary !py-1 !text-xs">
-              Scan now
-            </button>
-          </form>
-        </div>
-        {xrpScan && (
-          <p className="mb-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-            Scan result: {xrpScan}
-          </p>
-        )}
-        {xrpPayments.length === 0 ? (
-          <p className="text-sm text-white">
-            No payments credited yet. Nothing checks the ledger on its own, use &ldquo;Scan
-            now&rdquo; above whenever you want to check for new ones.
-          </p>
-        ) : (
-          <div className="card relative overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-200">
-                  <th className="py-2 pr-4">Member</th>
-                  <th className="py-2 pr-4">XRP</th>
-                  <th className="py-2 pr-4">≈ GBP</th>
-                  <th className="py-2 pr-4">Months</th>
-                  <th className="py-2 pr-4">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {xrpPayments.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-2 pr-4">{p.user.name}</td>
-                    <td className="py-2 pr-4">{p.amountXrp.toFixed(2)}</td>
-                    <td className="py-2 pr-4">£{p.amountGbp.toFixed(2)}</td>
-                    <td className="py-2 pr-4">{p.monthsCredited}</td>
-                    <td className="py-2 pr-4 text-slate-500">
-                      {format(p.ledgerCloseAt, "MMM d, h:mm a")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section>
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">
           Members ({users.length})
         </h2>
@@ -243,7 +120,6 @@ export default async function AdminPage({
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2 pr-4">👍</th>
                 <th className="py-2 pr-4">Can post</th>
-                <th className="py-2 pr-4">Paid until</th>
                 <th className="py-2 pr-4">Status</th>
                 <th className="py-2 pr-4">
                   <span className="sr-only">Actions</span>
@@ -254,7 +130,7 @@ export default async function AdminPage({
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-slate-100 last:border-0">
                   <td className="py-2 pr-4 font-mono text-slate-500">
-                    {u.memberNumber == null ? "—" : formatMemberNumber(u.memberNumber)}
+                    {u.memberNumber == null ? "" : formatMemberNumber(u.memberNumber)}
                   </td>
                   <td className="py-2 pr-4 flex items-center gap-2">
                     <Avatar userId={u.id} hasPhoto={!!u.profilePhotoType} size={6} />
@@ -281,15 +157,6 @@ export default async function AdminPage({
                           verify
                         </button>
                       </form>
-                    )}
-                  </td>
-                  <td className="py-2 pr-4">
-                    {u.role === "ADMIN" ? (
-                      "n/a"
-                    ) : u.paidUntil && u.paidUntil > new Date() ? (
-                      format(u.paidUntil, "MMM d, yyyy")
-                    ) : (
-                      <span className="text-slate-500">not paid</span>
                     )}
                   </td>
                   <td className="py-2 pr-4">

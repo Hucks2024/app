@@ -6,37 +6,54 @@ import { joinMeetup } from "@/lib/join";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
-import { requireUser, requireMember } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES } from "@/lib/categories";
+import { NO_ADS, looksLikeAdvert } from "@/lib/bots";
+
+// Every box anyone can type in, checked for adverts (see src/lib/bots.ts).
+const text = (max: number) =>
+  z.string().trim().max(max).refine((v) => !looksLikeAdvert(v), NO_ADS);
 
 const createSchema = z.object({
-  title: z.string().trim().min(3, "Give it a name.").max(120),
+  title: text(120).pipe(z.string().min(3, "Give it a name.")),
   category: z
     .string()
     .refine((v) => CATEGORY_VALUES.includes(v), "Pick a type.")
     .default("RUN"),
-  afterSpot: z.string().trim().max(200).optional(),
-  findUs: z.string().trim().max(200).optional(),
-  description: z.string().trim().max(2000).optional(),
-  location: z.string().trim().min(3, "Type where to meet.").max(200),
+  afterSpot: text(200).optional(),
+  findUs: text(200).optional(),
+  description: text(2000).optional(),
+  location: text(200).pipe(z.string().min(3, "Type where to meet.")),
   startsAt: z.string().min(1, "Pick a day and time."),
   distanceKm: z.coerce.number().positive().max(500).optional(),
-  pace: z.string().trim().max(40).optional(),
+  pace: text(40).optional(),
   maxParticipants: z.coerce.number().int().positive().max(500).optional(),
   stravaUrl: z
     .string()
     .trim()
     .url("That doesn't look like a valid URL")
     .max(300)
-    // .url() alone accepts any scheme, including javascript:, this field
-    // gets rendered as a clickable <a href> to every other member, so a
-    // non-http(s) URL here would be a stored-XSS vector.
-    .refine((v) => /^https?:\/\//i.test(v), "Must be a http(s):// link")
+    // A Strava link and nothing else: anything else is an advert, and a
+    // javascript: link would run on every member's phone.
+    .refine(isStravaLink, "Only Strava links.")
     .optional(),
 });
+
+function isStravaLink(v: string): boolean {
+  try {
+    const url = new URL(v);
+    const host = url.hostname.toLowerCase();
+    return (
+      url.protocol === "https:" &&
+      (host === "strava.com" || host.endsWith(".strava.com") || host === "strava.app.link")
+    );
+  } catch {
+    return false;
+  }
+}
 
 export type MeetupFormState = { error: string | null };
 
@@ -71,7 +88,7 @@ export async function saveMeetupAction(
   _prev: MeetupFormState,
   formData: FormData
 ): Promise<MeetupFormState> {
-  const user = await requireMember();
+  const user = await requireUser();
   const prisma = await getPrisma();
   const editingId = String(formData.get("activityId") ?? "");
 
@@ -169,7 +186,7 @@ export async function saveMeetupAction(
  * It comes off the map at once, and the people going see it marked
  * cancelled rather than finding it gone. */
 export async function cancelActivityAction(formData: FormData) {
-  const user = await requireMember();
+  const user = await requireUser();
   const activityId = String(formData.get("activityId"));
   const prisma = await getPrisma();
   const activity = await prisma.runActivity.findUnique({ where: { id: activityId } });
@@ -181,7 +198,7 @@ export async function cancelActivityAction(formData: FormData) {
 }
 
 export async function joinActivityAction(formData: FormData) {
-  const user = await requireMember();
+  const user = await requireUser();
   const activityId = String(formData.get("activityId"));
   // Everyone going has a face on the meetup, so the group knows who to
   // look out for: no photo, no place. The photo page finishes the join.
@@ -213,7 +230,7 @@ export async function leaveActivityAction(formData: FormData) {
  * them was glad they came". No redirect, so the page just refreshes in
  * place with the new numbers. */
 export async function toggleThumbsUpAction(formData: FormData) {
-  const user = await requireMember();
+  const user = await requireUser();
   const activityId = String(formData.get("activityId"));
   const toId = String(formData.get("toId"));
   if (toId === user.id) return;
@@ -249,7 +266,7 @@ export async function toggleThumbsUpAction(formData: FormData) {
  * (see src/lib/moderation.ts), and the third such flag bans them on the
  * spot rather than waiting for an admin to get round to it. */
 export async function reportUserAction(formData: FormData) {
-  const user = await requireMember();
+  const user = await requireUser();
   const reportedUserId = String(formData.get("reportedUserId"));
   const activityId = String(formData.get("activityId") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();

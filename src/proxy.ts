@@ -6,12 +6,38 @@ import { jwtVerify } from "jose";
 const SESSION_COOKIE = "pacemates_session";
 
 // Lightweight edge-safe gate: just confirms a valid signed session exists.
-// Deeper checks (verification status, admin role, ownership) happen in the
-// page/server-action itself, which has real DB access.
-const PROTECTED_PREFIXES = ["/activities", "/profile", "/verify", "/admin", "/photo"];
+// Deeper checks (admin role, ownership) happen in the page/server-action
+// itself, which has real DB access.
+const PROTECTED_PREFIXES = ["/activities", "/profile", "/admin", "/photo"];
+
+// --- No bots ---------------------------------------------------------------
+//
+// Welcome: search engines (so people can find the front page) and the
+// link previews chat apps make when somebody shares a link.
+const WELCOME_BOTS =
+  /googlebot|google-inspectiontool|bingbot|duckduckbot|applebot|facebookexternalhit|facebot|twitterbot|whatsapp|slackbot|telegrambot|discordbot|linkedinbot|skypeuripreview|vercel/i;
+// Turned away: scripts, scrapers, AI crawlers, SEO tools, robot browsers.
+const BLOCKED_BOTS =
+  /curl|wget|python|httpx|aiohttp|go-http-client|java\/|okhttp|libwww|perl|ruby|php|node-fetch|axios|undici|^node$|headless|phantomjs|selenium|puppeteer|playwright|scrapy|gpt|claude|anthropic|perplexity|ccbot|bytespider|amazonbot|meta-externalagent|cohere|diffbot|ahrefs|semrush|mj12bot|dotbot|petalbot|dataforseo|blexbot|serpstat|barkrowler|zoominfo|imagesift|timpibot|omgili|youbot|ai2bot/i;
+// Anything else calling itself a bot. Only counted with a mark a real
+// browser never has (a web address, "compatible;", no "Mozilla"), as some
+// phones have "bot" in their model name.
+const ANY_BOT = /bot|crawl|spider|scrape|slurp/i;
+
+function isBot(ua: string): boolean {
+  if (!ua.trim()) return true;
+  if (WELCOME_BOTS.test(ua)) return false;
+  if (BLOCKED_BOTS.test(ua)) return true;
+  return ANY_BOT.test(ua) && (/https?:\/\/|compatible;/i.test(ua) || !/mozilla/i.test(ua));
+}
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // robots.txt stays open, so the rules in it can be read.
+  if (pathname !== "/robots.txt" && isBot(req.headers.get("user-agent") ?? "")) {
+    return new NextResponse("No bots.", { status: 403 });
+  }
+
   const needsAuth = PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
@@ -40,5 +66,7 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/activities/:path*", "/profile/:path*", "/verify/:path*", "/admin/:path*"],
+  // Every page and action; not the build's own files (scripts, styles,
+  // fonts), which hold nothing worth scraping.
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

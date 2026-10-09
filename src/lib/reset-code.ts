@@ -15,15 +15,14 @@ function sixDigits(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-/** Issues a fresh code and emails it. Replaces any code already out.
- *
- * The same code does two jobs: confirming the address at signup, and
- * proving it's you when you've forgotten your password. Either way it
- * shows you can read that inbox, so either use confirms the address. */
-export async function sendVerificationCode(
+// The code for resetting a forgotten password: the only email the app
+// sends. Kept in the EmailVerification table, which held sign-up codes
+// once too.
+
+/** Issues a fresh code and emails it. Replaces any code already out. */
+export async function sendResetCode(
   prisma: PrismaClient,
-  user: { id: string; email: string; name: string },
-  purpose: "verify" | "reset" = "verify"
+  user: { id: string; email: string; name: string }
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await prisma.emailVerification.findUnique({ where: { userId: user.id } });
   if (existing) {
@@ -43,7 +42,7 @@ export async function sendVerificationCode(
     text: [
       `Hi ${user.name},`,
       ``,
-      purpose === "reset" ? `Your code to reset your password:` : `Your code:`,
+      `Your code to reset your password:`,
       ``,
       `    ${code}`,
       ``,
@@ -69,8 +68,8 @@ export async function sendVerificationCode(
 
 export type CheckResult = { ok: true } | { ok: false; error: string };
 
-/** Checks a typed code and, if it's right, marks the email verified. */
-export async function checkVerificationCode(
+/** Checks a typed code; a right one is used up. */
+export async function checkResetCode(
   prisma: PrismaClient,
   userId: string,
   typed: string
@@ -104,9 +103,7 @@ export async function checkVerificationCode(
     };
   }
 
-  // Right code: stamp the account and throw the code away so it can't be
-  // replayed.
-  await prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
+  // Right code: throw it away so it can't be used twice.
   await prisma.emailVerification.delete({ where: { userId } });
   return { ok: true };
 }

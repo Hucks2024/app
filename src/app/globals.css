@@ -185,7 +185,7 @@ body {
    the address bar hidden, which is taller than what's actually on screen
    and would push the bottom of the map under the toolbar. */
 /* An explicit height, not flex: 1. Both together collapsed the stage to
-   nothing — flex-basis 0 wins over height, and the parent was sizing to
+   nothing: flex-basis 0 wins over height, and the parent was sizing to
    its content, so the map had no height to fill and disappeared.
    
    185px is the chrome around it: the nav, this page's padding, the filter
@@ -197,15 +197,6 @@ body {
   height: calc(100vh - 185px);
   height: calc(100svh - 185px);
   min-height: 300px;
-}
-/* The members' map with the list under it: tall enough to read the pins
-   and pan about, short enough that the first meetups in the list peek up
-   from below, which is what tells people there's more to scroll to. */
-.board-stage-split {
-  height: 50vh;
-  height: 50svh;
-  min-height: 300px;
-  max-height: 560px;
 }
 /* The front door's map sits under a hero, so it takes a fixed slice
    instead of the whole remaining viewport, which would have pushed it off
@@ -480,7 +471,7 @@ a:active > .meetup-row {
 
 /* The burst under "You're in": each bit flies out on its own angle, set
    from --i so twelve spans need one keyframe rather than twelve.
-   Deliberately large and fully opaque for most of its flight — a first
+   Deliberately large and fully opaque for most of its flight. A first
    attempt at 15px starting from scale(0.4) was technically animating and
    entirely invisible, which is the same as not having it. */
 .burst {
@@ -899,24 +890,6 @@ button[aria-busy="true"] {
 .nav-link:hover {
   background: rgb(255 255 255 / 0.14);
 }
-}
-
-/* "Add to your home screen" (InstallHint): above the bottom bar when there
-   is one, and above the map's own layers either way. */
-.install-hint {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  z-index: 1450;
-}
-.has-bottom-bar .install-hint {
-  bottom: calc(76px + env(safe-area-inset-bottom));
-}
-@media (min-width: 640px) {
-  .has-bottom-bar .install-hint {
-    bottom: 12px;
-  }
 }
 
 /* For keyboard and screen reader users: the first Tab on any page offers

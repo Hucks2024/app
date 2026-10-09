@@ -1,31 +1,41 @@
+// Only this site's own scripts run, and pictures come only from here and
+// the map tiles. Nothing from anywhere else gets in: no adverts, no
+// trackers, and no way to frame the site inside another one.
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://tile.openstreetmap.de",
+  "font-src 'self' data:",
+  "connect-src 'self' https://nominatim.openstreetmap.org https://photon.komoot.io",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Profile photos are shrunk in the browser before they're sent (see
-  // PhotoInput), so they arrive at a couple of hundred KB. This is the
-  // backstop for a phone that can't shrink one: the 1MB default turned an
-  // ordinary camera photo into an error page. Vercel itself stops at
-  // 4.5MB, so this stays under it.
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Content-Security-Policy", value: csp },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
+  // Profile photos are shrunk in the browser before they're sent, so they
+  // arrive at a couple of hundred KB. This is the backstop for a phone
+  // that can't shrink one; Vercel itself stops at 4.5MB.
   experimental: {
     serverActions: {
       bodySizeLimit: "4mb",
     },
   },
-  // The libSQL client's Cloudflare Workers ("workerd") export condition
-  // points at a file that Next's output tracer otherwise misses, which
-  // breaks the OpenNext Cloudflare bundle. Force it into the traced output.
-  outputFileTracingIncludes: {
-    "/**": ["./node_modules/@libsql/isomorphic-ws/**"],
-  },
 };
 
 module.exports = nextConfig;
-
-// Local-dev-only shim so `npm run dev` can read Cloudflare bindings the
-// same way the deployed Worker does (see src/lib/db.ts). It has no
-// business running during a real build, on Vercel (or any other
-// production build, including `opennextjs-cloudflare build` itself) this
-// isn't a dev server and the call fails outright, breaking the build.
-if (process.env.NODE_ENV === "development") {
-  import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
-}

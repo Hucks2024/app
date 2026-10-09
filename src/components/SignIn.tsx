@@ -80,6 +80,7 @@ export default function SignIn({
   const [focusEmail, setFocusEmail] = useState(startWithEmail);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
+  const [ticket, setTicket] = useState("");
   const [joinedWith, setJoinedWith] = useState<"apple" | "google" | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [looking, startLookup] = useTransition();
@@ -130,6 +131,7 @@ export default function SignIn({
         setLookupError(result.error);
         emailRef.current?.focus();
       } else if (result.kind === "new") {
+        setTicket(result.ticket);
         setStep("create");
       } else {
         setJoinedWith(result.provider);
@@ -310,6 +312,7 @@ export default function SignIn({
       <input type="hidden" name="mode" value={creating ? "signup" : "login"} />
       <input type="hidden" name="email" value={email} />
       <input type="hidden" name="next" value={next} />
+      {creating && <input type="hidden" name="ticket" value={ticket} />}
       {/* Lets the browser's password manager file the new password under
           the right address. */}
       <input type="email" value={email} autoComplete="username" readOnly hidden />
