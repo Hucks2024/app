@@ -110,6 +110,8 @@ model User {
   xrpPayments       XrpPayment[]
   thumbsGiven       ThumbsUp[]           @relation("ThumbsGiven")
   thumbsReceived    ThumbsUp[]           @relation("ThumbsReceived")
+  blocksMade        Block[]              @relation("BlocksMade")
+  blocksReceived    Block[]              @relation("BlocksReceived")
 }
 
 // One 👍 from one person to another, for one meetup they were both at.
@@ -268,4 +270,19 @@ model Report {
   status String @default("OPEN")
 
   createdAt DateTime @default(now())
+}
+
+/// One member blocking another. From then on neither sees the other's
+/// meetups and neither can join one the other is hosting (see
+/// src/lib/blocks.ts). Only the blocker can undo it, from the Me page.
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("BlocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }
