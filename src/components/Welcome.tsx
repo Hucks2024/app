@@ -68,8 +68,6 @@ export default async function Welcome({
           next={next}
         />
       </div>
-
-      <p className="mt-4 text-sm text-white">Free. No invite needed.</p>
     </section>
   );
 }
