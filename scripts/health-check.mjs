@@ -92,7 +92,7 @@ console.log("EMAIL (only used for password resets)");
 console.log(`  Reset codes sent and not used yet: ${codes.length}${lastCode ? ` (latest ${ago(lastCode)})` : ""}`);
 console.log("  To check email works: /admin -> Email -> Send me a test email.");
 // The records Resend asks for, so it can send from packmates.live.
-for (const name of ["resend._domainkey", "send", "rsend", "_dmarc"]) {
+for (const name of ["resend._domainkey", "send", "_dmarc"]) {
   const found = [];
   for (const type of ["CNAME", "MX", "TXT"]) {
     for (const value of await dns(`${name}.packmates.live`, type)) found.push(`${type} ${value.slice(0, 40)}`);
