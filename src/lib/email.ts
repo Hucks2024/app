@@ -20,7 +20,7 @@ export function fromAddress(): string {
   // an address on the site's own domain: verifying it (the steps on
   // /admin) is the whole setup, with nothing else to set in Vercel.
   // EMAIL_FROM still wins if it's set.
-  return process.env.EMAIL_FROM || `${SITE.name} <hello@${SITE.domain}>`;
+  return process.env.EMAIL_FROM || `${SITE.name} <noreply@${SITE.domain}>`;
 }
 
 export type SendResult = { ok: true } | { ok: false; error: string };
@@ -81,7 +81,7 @@ export function explainEmailError(error: string): string {
     return "Resend is still in testing mode, so it only sends to your own address. Follow the Email steps at the top of the admin page to verify the domain.";
   }
   if (e.includes("invalid `from`") || e.includes("invalid from")) {
-    return `EMAIL_FROM isn't in a form Resend accepts. Remove it in Vercel (the app picks hello@${SITE.domain} itself), then redeploy.`;
+    return `EMAIL_FROM isn't in a form Resend accepts. Remove it in Vercel (the app picks noreply@${SITE.domain} itself), then redeploy.`;
   }
   if (e.includes("restricted") || e.includes("returned 403")) {
     return `Resend refused this key for sending from this address. Check the key has sending access for ${SITE.domain} on resend.com → API Keys, and the domain shows Verified.`;

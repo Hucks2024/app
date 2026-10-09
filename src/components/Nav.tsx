@@ -44,8 +44,8 @@ export default async function Nav() {
               <Link href="/profile" className="nav-link hidden sm:inline-flex">
                 Me
               </Link>
-              <Link href="/help" className="nav-link hidden sm:inline-flex">
-                Help
+              <Link href="/info" className="nav-link hidden sm:inline-flex">
+                Info
               </Link>
               {user.role === "ADMIN" && (
                 <Link href="/admin" className="nav-link font-bold">
@@ -58,8 +58,8 @@ export default async function Nav() {
             </>
           ) : (
             <>
-              <Link href="/help" className="nav-link">
-                Help
+              <Link href="/info" className="nav-link">
+                Info
               </Link>
               {/* One button, because there's one way in: new and returning
                   members both start here, and the screen works out which. */}

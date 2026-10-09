@@ -42,14 +42,14 @@ const TABS = [
     ),
   },
   {
-    href: "/help",
-    label: "Help",
-    match: (p: string) => p.startsWith("/help"),
+    href: "/info",
+    label: "Info",
+    match: (p: string) => p.startsWith("/info"),
     icon: (
       <>
         <circle cx="12" cy="12" r="9" />
-        <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7" />
-        <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+        <path d="M12 11v6" />
+        <circle cx="12" cy="7.5" r="0.6" fill="currentColor" />
       </>
     ),
   },

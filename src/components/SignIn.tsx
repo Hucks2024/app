@@ -407,7 +407,7 @@ export default function SignIn({
       {creating && (
         <p className="field-hint">
           Joining means you agree to the{" "}
-          <a href="/help#rules" target="_blank" rel="noopener" className="font-semibold underline">
+          <a href="/info#rules" target="_blank" rel="noopener" className="font-semibold underline">
             house rules
           </a>
           .
