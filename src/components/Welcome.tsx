@@ -3,7 +3,6 @@ import { enabledProviders } from "@/lib/oauth";
 import { liveMeetup } from "@/lib/meetups";
 import { canSendEmail } from "@/lib/email";
 import Logo from "@/components/Logo";
-import { SITE } from "@/lib/site";
 import SignIn from "@/components/SignIn";
 
 /** How many meetups are coming up, for the live pill. A real count, never
@@ -37,15 +36,11 @@ export default async function Welcome({
         <Logo variant="white" size={62} />
       </div>
 
-      {/* Two even lines on a phone, so "mate" never sits alone. */}
       <h1 className="font-wordmark mt-6 text-balance text-[clamp(24px,7.4vw,34px)] font-bold leading-tight">
-        {SITE.tagline}
+        Meet people like you.
       </h1>
       <p className="font-wordmark mt-1 text-lg font-semibold text-white">
         your guide to the galaxy
-      </p>
-      <p className="mt-3 text-xl font-semibold leading-snug text-white">
-        Meet people like you.
       </p>
 
       {count > 0 && (
