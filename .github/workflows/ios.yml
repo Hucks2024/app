@@ -31,7 +31,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Capacitor's tools need 22 or newer.
+          node-version: 22
       - run: npm ci
       - run: npx cap sync ios
 
