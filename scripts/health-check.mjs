@@ -51,18 +51,7 @@ async function dns(name, type) {
     return [];
   }
 }
-// What the domain's registry holds: the truth, while DNS answers above can
-// still be old copies for a few hours after a change.
-async function registry(name) {
-  try {
-    const res = await fetch(`https://rdap.org/domain/${name}`, { signal: AbortSignal.timeout(10000) });
-    const json = await res.json();
-    return (json.nameservers ?? []).map((n) => String(n.ldhName).toLowerCase());
-  } catch {
-    return [];
-  }
-}
-async function opens(url) {
+async function opens(url, hops = 0) {
   try {
     // As a browser: the app turns away anything that looks like a script.
     const res = await fetch(url, {
@@ -71,7 +60,8 @@ async function opens(url) {
       signal: AbortSignal.timeout(10000),
     });
     const where = res.headers.get("location");
-    if (where) return `${res.status} -> ${where}`;
+    // Follow a redirect (packmates.live to www, say) to see where it lands.
+    if (where) return `${res.status} -> ${where}${hops < 2 ? ` -> ${await opens(new URL(where, url).href, hops + 1)}` : ""}`;
     const html = await res.text();
     // The app's own description, which a registrar's holding page won't have.
     return `${res.status}${html.includes("A free map of meetups") ? ", the app" : ", not the app (something else answers)"}`;
@@ -85,8 +75,6 @@ for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
   const ns = await dns(domain, "NS");
   console.log(`  ${domain}`);
   console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
-  const reg = await registry(domain);
-  console.log(`    Registry says: ${reg.length ? reg.join(", ") : "couldn't ask"}`);
   const ips = await dns(domain, "A");
   console.log(`    Points at: ${ips.length ? ips.join(", ") : "nothing"}`);
   console.log(`    https://${domain} -> ${await opens(`https://${domain}/`)}`);
