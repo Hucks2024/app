@@ -21,7 +21,6 @@ import {
   issueSignupTicket,
   looksLikeAdvert,
   signupTicketOk,
-  tooManySignups,
 } from "@/lib/bots";
 
 // One way in for email, in two steps: the address first, then either the
@@ -106,9 +105,6 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
       return { error: "That email already has an account. Go back and sign in." };
-    }
-    if (await tooManySignups(prisma)) {
-      return { error: "Lots of people joining right now. Try again in 10 minutes." };
     }
 
     const user = await prisma.user.create({

@@ -1,5 +1,4 @@
 import { createHmac, timingSafeEqual } from "crypto";
-import type { PrismaClient } from "@prisma/client";
 
 // Keeping bots from signing up, and adverts off the map. The front door
 // (turning away crawlers and scripts) is in src/proxy.ts.
@@ -35,20 +34,6 @@ export function signupTicketOk(ticket: string, email: string): boolean {
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) return false;
   const age = Date.now() - issuedAt;
   return age >= FASTEST_HUMAN_MS && age <= TICKET_LIFE_MS;
-}
-
-// --- Too many at once ----------------------------------------------------
-//
-// A burst of new accounts is a bot, not a good day. Past this many in ten
-// minutes, email signups wait.
-
-const SIGNUPS_PER_10_MIN = 20;
-
-export async function tooManySignups(prisma: PrismaClient): Promise<boolean> {
-  const recent = await prisma.user.count({
-    where: { createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) } },
-  });
-  return recent >= SIGNUPS_PER_10_MIN;
 }
 
 // --- Throwaway email addresses ---------------------------------------------
