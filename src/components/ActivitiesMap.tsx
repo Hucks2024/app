@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
+import { getVersion, setWorkerUrl } from "maplibre-gl";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { callNative } from "@/lib/native";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
@@ -251,18 +254,106 @@ function LocateControl({
   );
 }
 
-// Where the map pictures come from. OpenStreetMap's own servers first:
-// no key, no account. (CartoDB's "Voyager" tiles were tried for a more
-// colourful look and started stamping "API KEY REQUIRED" across every
-// tile.) If they won't serve this visitor (an outage, or rate limiting),
-// the German OpenStreetMap community's mirror of the same map takes over,
-// so a bad day at one tile server is never a grey box where the map was.
+// Where the map pictures come from: OpenFreeMap's "liberty" map, the same
+// OpenStreetMap data in a similar look. Free with no key, no account and
+// no limit, and fine in an app, which OpenStreetMap's own tile servers
+// aren't: their policy asks apps not to use them without permission.
+// (CartoDB's "Voyager" tiles were tried once and started stamping "API KEY
+// REQUIRED" across every tile.) MapLibre draws it, under Leaflet, which
+// still does the pins, popups and Near me.
+const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
+const OPENFREEMAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> ' +
+  '&copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> ' +
+  'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+// Where MapLibre's worker is (copied there by scripts/copy-map-worker.mjs):
+// it can't work it out itself once bundled. The version keeps phones from
+// using an old copy after an update.
+setWorkerUrl(`/maplibre-worker.js?v=${getVersion()}`);
+
+// How long to wait for OpenFreeMap before using the stand-in.
+const STYLE_TIMEOUT_MS = 10000;
+
+/** Whether this phone can draw MapLibre's map, which needs WebGL 2 (every
+ * iPhone since iOS 15, and almost every Android). Asked first, because a
+ * map that fails halfway through being added can't be cleanly taken off
+ * again. */
+function canDrawVectorMap(): boolean {
+  try {
+    return document.createElement("canvas").getContext("webgl2") != null;
+  } catch {
+    return false;
+  }
+}
+
+/** Takes the layer off the map, even one that failed halfway onto it,
+ * whose own clean-up would throw and leave it half attached. */
+function takeOff(map: L.Map, layer: L.Layer) {
+  try {
+    map.removeLayer(layer);
+  } catch {
+    const events = (layer as L.Layer & { getEvents?: () => L.LeafletEventHandlerFnMap }).getEvents?.();
+    // off(handlers, context): what Leaflet registered them with, which its
+    // types don't spell out.
+    if (events) (map as unknown as { off(e: object, context: object): void }).off(events, layer);
+    delete (map as unknown as { _layers: Record<number, L.Layer> })._layers[L.stamp(layer)];
+    (layer as unknown as { _container?: HTMLElement })._container?.remove();
+  }
+}
+
+function Tiles() {
+  const map = useMap();
+  const [standIn, setStandIn] = useState(false);
+  useEffect(() => {
+    if (standIn) return;
+    if (!canDrawVectorMap()) {
+      setStandIn(true);
+      return;
+    }
+    let layer: L.MaplibreGL | null = null;
+    let ready = false;
+    try {
+      layer = maplibreGL({
+        style: OPENFREEMAP_STYLE,
+        // The credits, in Leaflet's own line with the rest.
+        attributionControl: { customAttribution: OPENFREEMAP_ATTRIBUTION },
+      });
+      layer.addTo(map);
+      const gl = layer.getMaplibreMap();
+      gl.once("style.load", () => {
+        ready = true;
+      });
+      // Before the map has loaded, an error means it isn't coming.
+      gl.on("error", () => {
+        if (!ready) setStandIn(true);
+      });
+    } catch {
+      if (layer) takeOff(map, layer);
+      layer = null;
+      setStandIn(true);
+    }
+    const timer = setTimeout(() => {
+      if (!ready) setStandIn(true);
+    }, STYLE_TIMEOUT_MS);
+    return () => {
+      clearTimeout(timer);
+      if (layer) takeOff(map, layer);
+    };
+  }, [map, standIn]);
+  return standIn ? <StandInTiles /> : null;
+}
+
+// The stand-in, for a phone that can't draw OpenFreeMap's map or a day it
+// doesn't answer: OpenStreetMap's own picture tiles, and if they won't
+// serve this visitor either, the German OpenStreetMap community's mirror,
+// so it's never a grey box where the map was. Only ever the odd visitor,
+// which their policy is fine with.
 const TILE_SOURCES = [
   "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
 ];
 
-function Tiles() {
+function StandInTiles() {
   const [source, setSource] = useState(0);
   const loaded = useRef(0);
   const failed = useRef(0);

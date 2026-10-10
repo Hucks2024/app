@@ -83,8 +83,12 @@ export default function PrivacyPage() {
               <strong>Resend</strong> sends password reset emails, so it gets your email address.
             </li>
             <li>
-              <strong>OpenStreetMap</strong> and <strong>Komoot (Photon)</strong> draw the map and find the place you type
-              when you post a meetup. They see your IP address and that place, not who you are.
+              <strong>OpenFreeMap</strong> draws the map (OpenStreetMap&apos;s own servers stand in if it&apos;s down).
+              It sees your IP address and which bit of map you&apos;re looking at, not who you are.
+            </li>
+            <li>
+              <strong>OpenStreetMap (Nominatim)</strong> and <strong>Komoot (Photon)</strong> find the place you type when
+              you post a meetup. They see your IP address and that place, not who you are.
             </li>
           </ul>
           <p className="mt-2">

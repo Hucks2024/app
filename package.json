@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "prisma generate && next build --webpack",
+    "build": "prisma generate && node scripts/copy-map-worker.mjs && next build --webpack",
     "dev": "next dev",
     "start": "next start",
     "lint": "next lint",
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
+    "@maplibre/maplibre-gl-leaflet": "0.1.4",
     "@photostructure/tz-lookup": "^11.7.0",
     "@prisma/adapter-libsql": "^7.10.0",
     "@prisma/client": "^7.10.0",
@@ -19,6 +20,7 @@
     "date-fns": "^3.6.0",
     "jose": "^5.9.3",
     "leaflet": "^1.9.4",
+    "maplibre-gl": "6.13.0",
     "next": "^16.3.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
