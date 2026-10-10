@@ -111,3 +111,10 @@ for (const name of ["resend._domainkey", "send", "_dmarc"]) {
   }
   console.log(`  ${name}: ${found.length ? [...new Set(found)].join(" | ") : "nothing"}`);
 }
+// Mail to hello@packmates.live, forwarded on by ImprovMX: its two MX
+// records and its SPF line, on the domain itself.
+const inbox = [
+  ...(await dns("packmates.live", "MX")).map((v) => `MX ${v}`),
+  ...(await dns("packmates.live", "TXT")).filter((v) => v.includes("spf1")).map((v) => `TXT ${v.replace(/"/g, "")}`),
+];
+console.log(`  hello@ inbox: ${inbox.length ? inbox.join(" | ") : "not set up"}`);
