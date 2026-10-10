@@ -111,10 +111,12 @@ for (const name of ["resend._domainkey", "send", "_dmarc"]) {
   }
   console.log(`  ${name}: ${found.length ? [...new Set(found)].join(" | ") : "nothing"}`);
 }
-// Mail to hello@packmates.live, forwarded on by ImprovMX: its two MX
-// records and its SPF line, on the domain itself.
+// Mail to the contact address at packmates.live, which Zoho Mail
+// receives: its MX records and SPF line on the domain itself, and its
+// DKIM key.
 const inbox = [
   ...(await dns("packmates.live", "MX")).map((v) => `MX ${v}`),
   ...(await dns("packmates.live", "TXT")).filter((v) => v.includes("spf1")).map((v) => `TXT ${v.replace(/"/g, "")}`),
 ];
-console.log(`  hello@ inbox: ${inbox.length ? inbox.join(" | ") : "not set up"}`);
+const zohoKey = (await dns("zmail._domainkey.packmates.live", "TXT")).length > 0;
+console.log(`  contact inbox: ${inbox.length ? inbox.join(" | ") : "not set up"}${zohoKey ? " | DKIM zmail found" : ""}`);

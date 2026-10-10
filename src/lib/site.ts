@@ -14,9 +14,10 @@ export const SITE = {
   url: process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http://")
     ? process.env.NEXT_PUBLIC_SITE_URL
     : `https://${DOMAIN}`,
-  // Where people reach us: shown on Info, Terms and Privacy, and the
-  // App Store's support address.
-  contactEmail: `hello@${DOMAIN}`,
+  // Where people reach us, at this domain: shown on Info, Terms, Privacy
+  // and Me by src/components/ContactEmail.tsx, which keeps it from spam
+  // bots. Only the name here, so the whole address is never in the code.
+  contactName: "hello",
   // Who can join. In the Terms, and asked for at sign up.
   minimumAge: 18,
   tagline: "We all belong in a pack… mate",

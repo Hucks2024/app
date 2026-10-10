@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { canSendEmail } from "@/lib/email";
+import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
 import { inApp } from "@/lib/in-app";
 
@@ -312,9 +313,7 @@ export default async function InfoPage() {
           Contact us
         </h2>
         <p className="mt-2 text-base text-slate-700">Questions, problems or something to report:</p>
-        <a href={`mailto:${SITE.contactEmail}`} className="mt-1 inline-block text-lg font-semibold text-brand-700 underline">
-          {SITE.contactEmail}
-        </a>
+        <ContactEmail className="mt-1 inline-block text-lg font-semibold text-brand-700 underline" />
         <p className="mt-3 text-sm text-slate-600">
           <Link href="/terms" className="underline">
             Terms

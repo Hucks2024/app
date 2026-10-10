@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { ensureMemberNumber, formatMemberNumber } from "@/lib/member";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { categoryFor } from "@/lib/categories";
+import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
 import { readError } from "@/lib/flash";
 import {
@@ -233,9 +234,7 @@ export default async function ProfilePage({
           Privacy
         </Link>{" "}
         ·{" "}
-        <a href={`mailto:${SITE.contactEmail}`} className="underline">
-          {SITE.contactEmail}
-        </a>
+        <ContactEmail className="underline" />
       </p>
     </div>
   );

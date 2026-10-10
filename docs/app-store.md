@@ -15,7 +15,7 @@ this file: the repository is public.
 | Support URL | https://packmates.live/info#contact |
 | Privacy Policy URL | https://packmates.live/privacy |
 | Marketing URL | https://packmates.live |
-| Contact email | hello@packmates.live |
+| Contact email | hello at packmates.live |
 
 **Description**
 
@@ -69,7 +69,7 @@ email and password in the sign-in fields (not here).
 >   and three reports from people met at meetups ban an account
 >   automatically, with no moderator needed.
 > - Blocking hides both people's meetups from each other. Unblock on Me.
-> - Contact: hello@packmates.live (Info → Contact us).
+> - Contact: hello at packmates.live, shown on Info → Contact us.
 >
 > Account deletion (5.1.1(v)): Me → Delete my account.
 > Location (5.1.5): only for "Near me" on the map; it stays on the device.
@@ -107,7 +107,7 @@ with them, each run signs the app and sends it to App Store Connect.
 | 1.2 User-generated content: filter | `looksOffensive` and `looksLikeAdvert` in `src/lib/bots.ts` on names and all meetup text |
 | 1.2 Report | "Report or block" under every person, "Report this meetup"; reports on /admin with a link to the meetup |
 | 1.2 Block | `src/lib/blocks.ts`; Blocked list with Unblock on Me |
-| 1.2 / 1.5 Contact | hello@packmates.live on Info, Terms, Privacy and Me |
+| 1.2 / 1.5 Contact | hello at packmates.live on Info, Terms, Privacy and Me |
 | 1.1.4 / random chat | No messaging; not a dating or hookup app (in the Terms) |
 | 2.1 Demo account | See above |
 | 4.2 Minimum functionality | The app (mobile/) uses the phone's own location for Near me, share sheet, camera for the profile photo and haptics, has its own launch screen and offline screen, and leaves out website-only bits |

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
 
 export const metadata = { title: "Terms" };
@@ -87,9 +88,7 @@ export default function TermsPage() {
 
         <Section title="Contact">
           <p>
-            <a href={`mailto:${SITE.contactEmail}`} className="font-semibold text-brand-700 underline">
-              {SITE.contactEmail}
-            </a>
+            <ContactEmail className="font-semibold text-brand-700 underline" />
           </p>
         </Section>
       </div>
