@@ -1,0 +1,21 @@
+name: Smaller photos (database)
+
+# One-time change (see scripts/smaller-photos.mjs): adds the photo version
+# column and shrinks photos already uploaded. Safe to re-run. Run this
+# BEFORE the deploy that reads the column.
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node scripts/smaller-photos.mjs
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
