@@ -21,7 +21,7 @@ export default function TermsPage() {
             <li>You must be {SITE.minimumAge} or over.</li>
             <li>Be kind. Meet in public. No selling.</li>
             <li>We don&apos;t put up with abuse, hate or sexual content. At all.</li>
-            <li>Report anything wrong. We act within 24 hours.</li>
+            <li>Report anything wrong.</li>
           </ul>
         </Section>
 
@@ -49,7 +49,7 @@ export default function TermsPage() {
         <Section title="Reporting and blocking">
           <p>
             On any meetup, tap <strong>🚩 Report or block</strong> under someone&apos;s name, or{" "}
-            <strong>🚩 Report this meetup</strong>. We review every report within 24 hours. Blocking someone hides
+            <strong>🚩 Report this meetup</strong>. Reports go to our moderators. Blocking someone hides
             your meetups from each other straight away. You can unblock them on <strong>Me</strong>.
           </p>
         </Section>

@@ -177,7 +177,7 @@ export default async function ActivityDetailPage({
       )}
       {reported && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Thanks. A moderator will look within 24 hours.
+          Thanks. A moderator will look.
         </p>
       )}
       {justBlocked && (
@@ -532,7 +532,7 @@ function ReportForm({ personId, activityId, fieldId }: { personId: string; activ
   return (
     <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
       <p className="text-sm text-slate-700">
-        Only moderators see this. We act within 24 hours. 3 reports = banned for life.
+        Only moderators see this. 3 reports = banned for life.
       </p>
       <input type="hidden" name="reportedUserId" value={personId} />
       <input type="hidden" name="activityId" value={activityId} />

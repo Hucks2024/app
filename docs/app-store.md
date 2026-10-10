@@ -66,8 +66,8 @@ email and password in the sign-in fields (not here).
 >   emails and phone numbers.
 > - Every person on a meetup has "Report or block" under their name, and
 >   every meetup has "Report this meetup". Reports reach our moderators,
->   who act within 24 hours; three reports from people met at meetups ban
->   an account automatically.
+>   and three reports from people met at meetups ban an account
+>   automatically, with no moderator needed.
 > - Blocking hides both people's meetups from each other. Unblock on Me.
 > - Contact: hello@packmates.live (Info → Contact us).
 >

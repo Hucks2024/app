@@ -113,7 +113,7 @@ export default async function InfoPage() {
           q: "Someone was rude",
           a: (
             <p>
-              Tap <strong>🚩 Report or block</strong> under their name. We act within 24 hours.
+              Tap <strong>🚩 Report or block</strong> under their name.
             </p>
           ),
         },
