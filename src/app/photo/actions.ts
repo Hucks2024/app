@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { requireUser, safeNext } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
-import { ImageValidationError, readImageFile } from "@/lib/images";
+import { ImageValidationError, readImageFile, shrinkPhoto } from "@/lib/images";
 import { errorQuery } from "@/lib/flash";
 import { joinMeetup } from "@/lib/join";
 
@@ -29,10 +29,12 @@ export async function savePhotoAction(formData: FormData) {
   }
   if (!photo) back("Pick a photo first.");
 
+  const small = await shrinkPhoto(photo!);
   const prisma = await getPrisma();
   await prisma.user.update({
     where: { id: user.id },
-    data: { profilePhoto: photo!.bytes, profilePhotoType: photo!.type },
+    // A new date, so the new photo has a new link and every phone fetches it.
+    data: { profilePhoto: small.bytes, profilePhotoType: small.type, photoUpdatedAt: new Date() },
   });
 
   if (join) redirect(await joinMeetup(prisma, user.id, join));

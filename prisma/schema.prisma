@@ -30,6 +30,9 @@ model User {
 
   profilePhoto     Bytes?
   profilePhotoType String?
+  // When the photo last changed: photo links carry it, so a phone keeps
+  // each photo until it changes rather than fetching it again every hour.
+  photoUpdatedAt   DateTime?
 
   /// "USER" | "ADMIN"
   role String @default("USER")

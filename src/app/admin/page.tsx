@@ -141,7 +141,7 @@ export default async function AdminPage({
                     {u.memberNumber == null ? "" : formatMemberNumber(u.memberNumber)}
                   </td>
                   <td className="py-2 pr-4 flex items-center gap-2">
-                    <Avatar userId={u.id} hasPhoto={!!u.profilePhotoType} size={6} />
+                    <Avatar userId={u.id} hasPhoto={!!u.profilePhotoType} version={u.photoUpdatedAt} size={6} />
                     {u.name}
                     {u.role === "ADMIN" && <span className="badge-green">Admin</span>}
                   </td>

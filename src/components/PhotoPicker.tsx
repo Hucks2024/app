@@ -5,13 +5,15 @@ import { useRef, useState } from "react";
 // Shrinks the photo before it's sent.
 //
 // A photo straight off a phone camera is 2-5MB, and the server only takes
-// a few: sent as it is, it failed with an error page. Drawn down to 800px
-// on a canvas it's a JPEG of a hundred or two KB, which uploads in a blink
-// even on a bad signal and is still far sharper than the little circles
-// it's shown in. If the browser can't read the file (an odd format, a very
-// old phone), it goes as it is and the server's own checks decide.
+// a few: sent as it is, it failed with an error page. Drawn down to 320px
+// on a canvas it's a JPEG of about 30KB, which uploads in a blink even on a
+// bad signal and is still sharp in the biggest circle it's shown in (64px,
+// on a 3x screen). Small matters: every face on every meetup page is one
+// of these, and the free hosting plan is mostly spent sending them. If the
+// browser can't read the file (an odd format, a very old phone), it goes as
+// it is and the server shrinks it (src/lib/images.ts).
 
-const MAX_SIDE = 800;
+const MAX_SIDE = 320;
 
 async function shrink(file: File): Promise<File> {
   const url = URL.createObjectURL(file);

@@ -66,7 +66,7 @@ export default async function ProfilePage({
   const blocks = await prisma.block.findMany({
     where: { blockerId: user.id },
     orderBy: { createdAt: "desc" },
-    select: { blocked: { select: { id: true, name: true, profilePhotoType: true } } },
+    select: { blocked: { select: { id: true, name: true, profilePhotoType: true, photoUpdatedAt: true } } },
   });
 
   return (
@@ -74,7 +74,7 @@ export default async function ProfilePage({
       <div className="flex items-center gap-4 mb-6">
         {/* Tap the face to change it: the one photo screen, shared with joining. */}
         <Link href="/photo" aria-label="Change your photo" className="relative flex-none">
-          <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} size={16} />
+          <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} version={user.photoUpdatedAt} size={16} />
           <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm shadow" aria-hidden="true">
             📷
           </span>
@@ -187,7 +187,7 @@ export default async function ProfilePage({
             {blocks.map(({ blocked }) => (
               <li key={blocked.id} className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-3">
-                  <Avatar userId={blocked.id} hasPhoto={!!blocked.profilePhotoType} size={10} />
+                  <Avatar userId={blocked.id} hasPhoto={!!blocked.profilePhotoType} version={blocked.photoUpdatedAt} size={10} />
                   <span className="truncate text-base font-semibold">{blocked.name}</span>
                 </span>
                 <form action={unblockUserAction}>

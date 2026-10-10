@@ -27,6 +27,7 @@ const personSelect = {
   id: true,
   name: true,
   profilePhotoType: true,
+  photoUpdatedAt: true,
   role: true,
   memberVerifiedAt: true,
 } as const;
@@ -35,6 +36,7 @@ type Person = {
   id: string;
   name: string;
   profilePhotoType: string | null;
+  photoUpdatedAt: Date | null;
   role: string;
   memberVerifiedAt: Date | null;
 };
@@ -288,7 +290,7 @@ export default async function ActivityDetailPage({
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
           <span className="text-slate-600">Host</span>
-          <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} size={8} />
+          <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} version={activity.host.photoUpdatedAt} size={8} />
           <span className="font-semibold">{activity.host.name}</span>
           <TrustMarks person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
         </div>
@@ -478,7 +480,7 @@ function ParticipantRow({
     <li>
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar userId={person.id} hasPhoto={!!person.profilePhotoType} size={10} />
+          <Avatar userId={person.id} hasPhoto={!!person.profilePhotoType} version={person.photoUpdatedAt} size={10} />
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">
               {person.name}
