@@ -6,9 +6,9 @@ import { useRef, useState } from "react";
 //
 // A photo straight off a phone camera is 2-5MB, and the server only takes
 // a few: sent as it is, it failed with an error page. Drawn down to 256px
-// on a canvas it's a JPEG of about 15KB, which uploads in a blink even on a
-// bad signal; the server then keeps it as a WebP of a few KB, still sharp
-// in the biggest circle it's shown in (64px, on a 3x screen). Small
+// on a canvas it's a WebP of a few KB (or a JPEG the server makes one),
+// which uploads in a blink even on a bad signal and is still sharp in the
+// biggest circle it's shown in (64px, on a 3x screen). Small
 // matters: every face on every meetup page is one of these, and the free
 // plans are mostly spent storing and sending them. If the browser can't
 // read the file (an odd format, a very old phone), it goes as it is and
@@ -27,12 +27,15 @@ async function shrink(file: File): Promise<File> {
     canvas.width = Math.round(img.naturalWidth * scale);
     canvas.height = Math.round(img.naturalHeight * scale);
     canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((resolve) =>
-      // High quality, as the server compresses it again.
-      canvas.toBlob(resolve, "image/jpeg", 0.9)
-    );
-    if (!blob) return file;
-    return new File([blob], "photo.jpg", { type: "image/jpeg" });
+    const as = (type: string, quality: number) =>
+      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+    // A WebP where the browser can make one (an iPhone gives back a PNG
+    // instead); otherwise a good JPEG, which the server makes a WebP.
+    const webp = await as("image/webp", 0.75);
+    if (webp?.type === "image/webp") return new File([webp], "photo.webp", { type: "image/webp" });
+    const jpeg = await as("image/jpeg", 0.9);
+    if (!jpeg) return file;
+    return new File([jpeg], "photo.jpg", { type: "image/jpeg" });
   } finally {
     URL.revokeObjectURL(url);
   }

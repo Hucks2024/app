@@ -1,0 +1,18 @@
+// Packmates on Cloudflare Workers, built by OpenNext (npm run cf:build) and
+// sent up by .github/workflows/cloudflare.yml. Settings and secrets (the
+// database, the session key, Resend) live in Cloudflare, never here: this
+// repository is public.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "packmates",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Makes iPhone photos (JPEGs) into small WebPs: src/lib/images.ts.
+  "images": { "binding": "IMAGES" },
+  "observability": { "enabled": true }
+}

@@ -22,3 +22,9 @@ next-env.d.ts
 
 # Copied in at build time (scripts/copy-map-worker.mjs)
 public/maplibre-worker.js
+
+# Cloudflare build
+.open-next/
+.wrangler/
+.dev.vars
+wrangler.local.jsonc

@@ -1,0 +1,68 @@
+name: Cloudflare
+
+# Builds the app for Cloudflare Workers (OpenNext, see wrangler.jsonc) and
+# sends it up. Until the two Cloudflare secrets below are added it only
+# checks the app builds for Cloudflare.
+#
+# Secrets (Settings -> Secrets and variables -> Actions), never in this
+# file: the repository is public.
+#   CLOUDFLARE_API_TOKEN   Cloudflare -> My Profile -> API Tokens, from the
+#                          "Edit Cloudflare Workers" template
+#   CLOUDFLARE_ACCOUNT_ID  Cloudflare -> Workers & Pages -> Account ID
+# and the app's own, handed to it as Cloudflare secrets: TURSO_DATABASE_URL,
+# TURSO_AUTH_TOKEN, SESSION_SECRET, RESEND_API_KEY, and any of EMAIL_FROM,
+# APP_STORE_URL, GOOGLE_PLAY_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+# APPLE_CLIENT_ID that are set.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# One at a time, so an older build never lands after a newer one.
+concurrency:
+  group: cloudflare
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CAN_DEPLOY: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx opennextjs-cloudflare build
+
+      - name: Send to Cloudflare
+        if: env.CAN_DEPLOY == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          APP_STORE_URL: ${{ secrets.APP_STORE_URL }}
+          GOOGLE_PLAY_URL: ${{ secrets.GOOGLE_PLAY_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
+        run: |
+          # The app's secrets go up with it, from a file only this run can
+          # read, deleted straight after. Ones not set are left as they are.
+          SECRETS="$RUNNER_TEMP/secrets.json"
+          node -e '
+            const names = ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "SESSION_SECRET", "RESEND_API_KEY", "EMAIL_FROM",
+              "APP_STORE_URL", "GOOGLE_PLAY_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APPLE_CLIENT_ID"];
+            const set = Object.fromEntries(names.filter((n) => process.env[n]).map((n) => [n, process.env[n]]));
+            require("fs").writeFileSync(process.argv[1], JSON.stringify(set), { mode: 0o600 });
+            console.log("Secrets sent:", Object.keys(set).join(", ") || "none");
+          ' "$SECRETS"
+          npx opennextjs-cloudflare deploy -- --secrets-file "$SECRETS"
+          rm -f "$SECRETS"

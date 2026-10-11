@@ -19,6 +19,9 @@ const csp = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Named here so the Cloudflare build (OpenNext) copies Prisma whole,
+  // with its Workers version, not just the files a Node server would use.
+  serverExternalPackages: ["@prisma/client", ".prisma/client"],
   async headers() {
     return [
       {

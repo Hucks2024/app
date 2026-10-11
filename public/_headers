@@ -1,0 +1,7 @@
+# Cloudflare only (Vercel ignores this): how long phones may keep files
+# served straight from the build. Next's own files have their version in
+# their names, and MapLibre's worker in its link.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+/maplibre-worker.js
+  Cache-Control: public, max-age=31536000, immutable
