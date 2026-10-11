@@ -1,14 +1,15 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
-/** "42" -> "000042". Shown on the Me page as Member #000042. */
-export function formatMemberNumber(n: number): string {
+/** "42" -> "000042". Shown on the Me page as Member #000042; from a
+ * million on it just has more digits. */
+export function formatMemberNumber(n: number | bigint): string {
   return String(n).padStart(6, "0");
 }
 
 /** The member's number, given on first use: the highest so far plus one.
  * If two people join at once the unique index turns one away and the
  * retry takes the next number. */
-export async function ensureMemberNumber(prisma: PrismaClient, userId: string): Promise<number> {
+export async function ensureMemberNumber(prisma: PrismaClient, userId: string): Promise<bigint> {
   const existing = await prisma.user.findUnique({ where: { id: userId }, select: { memberNumber: true } });
   if (existing?.memberNumber != null) return existing.memberNumber;
 
@@ -18,7 +19,7 @@ export async function ensureMemberNumber(prisma: PrismaClient, userId: string): 
       orderBy: { memberNumber: "desc" },
       select: { memberNumber: true },
     });
-    const memberNumber = (highest?.memberNumber ?? 0) + 1;
+    const memberNumber = (highest?.memberNumber ?? BigInt(0)) + BigInt(1);
     try {
       await prisma.user.update({ where: { id: userId }, data: { memberNumber } });
       return memberNumber;

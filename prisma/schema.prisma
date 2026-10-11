@@ -53,10 +53,12 @@ model User {
   emailVerifiedAt DateTime?
 
   // Sequential membership number, #1 upwards, shown as a padded "#000042".
+  // BigInt, as Int stops at about 2.1 billion. The column was always
+  // SQLite INTEGER, which holds it, so the database needed no change.
   // Purely an identity/badge, never a credential: it's printed on profiles
   // and guessable by design, which is why the invite code below is random
   // rather than derived from it.
-  memberNumber Int? @unique
+  memberNumber BigInt? @unique
 
   // From the invite-only days, when every account needed a member's code
   // and invitedById recorded who vouched for them. Signup is open now and
