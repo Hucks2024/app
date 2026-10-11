@@ -53,7 +53,9 @@ await p.goto(BASE + "/", { waitUntil: "load" });
 await p.waitForTimeout(12000);
 ok("map draws from OpenFreeMap", tiles > 0 && (await p.locator("canvas").count()) > 0, `${tiles} tile responses`);
 await p.goto(BASE + "/login", { waitUntil: "load" });
-await p.getByRole("button", { name: /Continue with email/ }).click();
+// With no Apple or Google sign in set up, it starts at the email box.
+const email = p.getByRole("button", { name: /Continue with email/ });
+if (await email.isVisible()) await email.click();
 ok("sign in screen works", await p.locator("#signin-email").isVisible());
 ok("no page errors", errors.length === 0, JSON.stringify(errors));
 await b.close();
