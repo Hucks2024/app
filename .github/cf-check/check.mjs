@@ -1,6 +1,5 @@
-// One-off: opens the Cloudflare copy of the app in a real phone-sized
-// browser, before packmates.live moves to it. Public pages only; nothing
-// personal is read or printed, and the test address isn't printed either.
+// One-off: opens the live app, now on Cloudflare, in a real phone-sized
+// browser. Public pages only; nothing personal is read or printed.
 import { chromium } from "playwright";
 
 const BASE = process.env.BASE;
@@ -16,6 +15,9 @@ const get = (path, ua = UA) => fetch(BASE + path, { redirect: "manual", headers:
 const home = await get("/");
 const html = await home.text();
 ok("front page opens", home.status === 200, String(home.status));
+ok("...served by Cloudflare", home.headers.get("x-opennext") === "1" && /cloudflare/i.test(home.headers.get("server") ?? ""), home.headers.get("server"));
+const apex = await fetch("https://packmates.live/terms?x=1", { redirect: "manual", headers: { "User-Agent": UA } });
+ok("packmates.live goes to www", apex.status === 308 && apex.headers.get("location") === "https://www.packmates.live/terms?x=1", `${apex.status} ${apex.headers.get("location")}`);
 ok("...and it's the app", html.includes("A free map of meetups"));
 ok("...with the security rules", (home.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"));
 for (const path of ["/terms", "/privacy", "/info", "/login", "/robots.txt", "/manifest.webmanifest"]) {

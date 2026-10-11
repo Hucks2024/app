@@ -1,8 +1,7 @@
 name: Cloudflare check (one-off)
 
-# Opens the Cloudflare copy of the app in a real browser before
-# packmates.live moves to it. Public pages only. Its address has the
-# account's name in it, so it's looked up and hidden, never printed.
+# Opens the live app, now on Cloudflare, in a real browser. Public pages
+# only.
 on:
   workflow_dispatch:
 
@@ -20,15 +19,7 @@ jobs:
       - run: npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.55.0
       - run: npx playwright install --with-deps chromium
       - name: Check
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          SUB=$(curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
-            | node -e 'let s="";process.stdin.on("data",(c)=>s+=c).on("end",()=>console.log(JSON.parse(s).result.subdomain))')
-          echo "::add-mask::$SUB"
-          BASE="https://packmates.$SUB.workers.dev" node check.mjs
+        run: BASE="https://www.packmates.live" node check.mjs
       - name: Email records as a zone file
         run: node zone.mjs
       - name: What Cloudflare's name servers would answer
