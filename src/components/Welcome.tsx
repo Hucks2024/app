@@ -38,7 +38,7 @@ export default async function Welcome({
       </div>
 
       <h1 className="font-wordmark mt-6 text-balance text-[clamp(24px,7.4vw,34px)] font-bold leading-tight">
-        Every friend was once a stranger.
+        every friend was once a stranger
       </h1>
 
       {count > 0 && (
