@@ -10,9 +10,10 @@ name: Cloudflare
 #                          "Edit Cloudflare Workers" template
 #   CLOUDFLARE_ACCOUNT_ID  Cloudflare -> Workers & Pages -> Account ID
 # and the app's own, handed to it as Cloudflare secrets: TURSO_DATABASE_URL,
-# TURSO_AUTH_TOKEN, SESSION_SECRET, RESEND_API_KEY, and any of EMAIL_FROM,
+# TURSO_AUTH_TOKEN, RESEND_API_KEY, and any of SESSION_SECRET, EMAIL_FROM,
 # APP_STORE_URL, GOOGLE_PLAY_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-# APPLE_CLIENT_ID that are set.
+# APPLE_CLIENT_ID that are set. With no SESSION_SECRET, the first deploy
+# makes one that nobody ever sees, and it's kept from then on.
 on:
   workflow_dispatch:
   push:
@@ -54,6 +55,23 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
         run: |
+          # No session key anywhere yet (the first deploy): make one.
+          if [ -z "$SESSION_SECRET" ]; then
+            if LIST=$(npx wrangler secret list --format json 2>"$RUNNER_TEMP/list.err"); then
+              HAS=$(printf '%s' "$LIST" | node -e 'let s="";process.stdin.on("data",(c)=>s+=c).on("end",()=>console.log(JSON.parse(s.slice(s.indexOf("["), s.lastIndexOf("]") + 1)).some((x)=>x.name==="SESSION_SECRET")))')
+            elif grep -qiE "not found|10007" "$RUNNER_TEMP/list.err"; then
+              HAS=false
+            else
+              cat "$RUNNER_TEMP/list.err"; exit 1
+            fi
+            if [ "$HAS" = false ]; then
+              SESSION_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+              echo "::add-mask::$SESSION_SECRET"
+              export SESSION_SECRET
+              echo "Made a new session key."
+            fi
+          fi
+
           # The app's secrets go up with it, from a file only this run can
           # read, deleted straight after. Ones not set are left as they are.
           SECRETS="$RUNNER_TEMP/secrets.json"
