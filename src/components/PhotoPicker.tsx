@@ -5,15 +5,16 @@ import { useRef, useState } from "react";
 // Shrinks the photo before it's sent.
 //
 // A photo straight off a phone camera is 2-5MB, and the server only takes
-// a few: sent as it is, it failed with an error page. Drawn down to 320px
-// on a canvas it's a JPEG of about 30KB, which uploads in a blink even on a
-// bad signal and is still sharp in the biggest circle it's shown in (64px,
-// on a 3x screen). Small matters: every face on every meetup page is one
-// of these, and the free hosting plan is mostly spent sending them. If the
-// browser can't read the file (an odd format, a very old phone), it goes as
-// it is and the server shrinks it (src/lib/images.ts).
+// a few: sent as it is, it failed with an error page. Drawn down to 256px
+// on a canvas it's a JPEG of about 15KB, which uploads in a blink even on a
+// bad signal; the server then keeps it as a WebP of a few KB, still sharp
+// in the biggest circle it's shown in (64px, on a 3x screen). Small
+// matters: every face on every meetup page is one of these, and the free
+// plans are mostly spent storing and sending them. If the browser can't
+// read the file (an odd format, a very old phone), it goes as it is and
+// the server shrinks it (src/lib/images.ts).
 
-const MAX_SIDE = 320;
+const MAX_SIDE = 256;
 
 async function shrink(file: File): Promise<File> {
   const url = URL.createObjectURL(file);
@@ -27,7 +28,8 @@ async function shrink(file: File): Promise<File> {
     canvas.height = Math.round(img.naturalHeight * scale);
     canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", 0.85)
+      // High quality, as the server compresses it again.
+      canvas.toBlob(resolve, "image/jpeg", 0.9)
     );
     if (!blob) return file;
     return new File([blob], "photo.jpg", { type: "image/jpeg" });

@@ -27,22 +27,22 @@ export async function readImageFile(file: File | null): Promise<{
   return { bytes: new Uint8Array(arrayBuffer), type: file.type };
 }
 
-const PHOTO_SIDE = 320;
+const PHOTO_SIDE = 256;
 
-/** The photo at most 320px across, as a JPEG: what the browser already
- * sends, made sure of here for one that couldn't shrink it first. Left as
- * it is if it can't be read (sharp comes with Next, for its own images). */
+/** The photo at most 256px across, as a WebP of a few KB: about a third of
+ * a JPEG's size, and still sharp in the biggest circle it's shown in (64px,
+ * on a 3x screen). Always redone here, whatever the browser sent, so every
+ * photo is this small. Left as it is if it can't be read (sharp comes with
+ * Next, for its own images). */
 export async function shrinkPhoto(photo: { bytes: Uint8Array<ArrayBuffer>; type: string }) {
   try {
     const sharp = (await import("sharp")).default;
-    const meta = await sharp(photo.bytes).metadata();
-    if (Math.max(meta.width ?? 0, meta.height ?? 0) <= PHOTO_SIDE) return photo;
     const out = await sharp(photo.bytes)
       .rotate()
-      .resize(PHOTO_SIDE, PHOTO_SIDE, { fit: "inside" })
-      .jpeg({ quality: 82 })
+      .resize(PHOTO_SIDE, PHOTO_SIDE, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 75 })
       .toBuffer();
-    return { bytes: new Uint8Array(out), type: "image/jpeg" };
+    return { bytes: new Uint8Array(out), type: "image/webp" };
   } catch {
     return photo;
   }
