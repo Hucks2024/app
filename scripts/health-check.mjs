@@ -8,6 +8,7 @@
 // sends password reset codes, and a code is only recorded once its email
 // has gone (and is deleted once used), so this can only count the ones
 // still waiting.
+import { execSync } from "node:child_process";
 import { createClient } from "@libsql/client";
 
 const url = process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL;
@@ -61,6 +62,17 @@ async function dns(name, type) {
     return [];
   }
 }
+function registryNs(domain) {
+  try {
+    const tld = domain.split(".").pop();
+    const server = execSync(`dig +short NS ${tld}.`, { encoding: "utf8" }).trim().split("\n")[0];
+    const out = execSync(`dig +norecurse +noall +authority @${server} ${domain} NS`, { encoding: "utf8" });
+    const names = [...out.matchAll(/\sNS\s+(\S+)/g)].map((m) => m[1].replace(/\.$/, ""));
+    return names.length ? [...new Set(names)].join(", ") : "nothing found";
+  } catch {
+    return "couldn't ask";
+  }
+}
 async function opens(url, hops = 0) {
   try {
     // As a browser: the app turns away anything that looks like a script.
@@ -85,6 +97,9 @@ for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
   const ns = await dns(domain, "NS");
   console.log(`  ${domain}`);
   console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
+  // Straight from the registry, which knows a name server change before
+  // the rest of the world's caches catch up.
+  console.log(`    Registry says: ${registryNs(domain)}`);
   const ips = await dns(domain, "A");
   console.log(`    Points at: ${ips.length ? ips.join(", ") : "nothing"}`);
   console.log(`    https://${domain} -> ${await opens(`https://${domain}/`)}`);
