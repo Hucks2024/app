@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { SITE } from "@/lib/site";
 
 // Kept through the renames: it's an invisible implementation detail, and
 // changing it would sign every member out for no visible gain.
@@ -33,6 +34,11 @@ function isBot(ua: string): boolean {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // The address without www goes to www, one link for everything. (Vercel
+  // did this itself; on Cloudflare it's done here.)
+  if (req.headers.get("host")?.split(":")[0] === SITE.domain) {
+    return NextResponse.redirect(`https://www.${SITE.domain}${pathname}${req.nextUrl.search}`, 308);
+  }
   // robots.txt stays open, so the rules in it can be read.
   if (pathname !== "/robots.txt" && isBot(req.headers.get("user-agent") ?? "")) {
     return new NextResponse("No bots.", { status: 403 });
