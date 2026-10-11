@@ -17,7 +17,7 @@ export default function Error({
   retry: () => void;
 }) {
   useEffect(() => {
-    // Shows up in Vercel's logs with the digest, to match against the
+    // Shows up in the server's logs (Cloudflare → Workers → packmates → Logs) with the digest, to match against the
     // server-side error if it ever needs looking into.
     console.error(error);
   }, [error]);

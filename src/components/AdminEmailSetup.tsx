@@ -71,18 +71,19 @@ export default async function AdminEmailSetup({ error, checked }: { error: strin
         )}
       </p>
       <ol className="space-y-5">
-        <Step n={1} done={keyOk} title="Resend key in Vercel">
+        <Step n={1} done={keyOk} title="Resend key in GitHub">
           {!keyOk && (
             <p>
-              In Vercel, open the project&apos;s Settings → Environment Variables, add{" "}
-              <strong>RESEND_API_KEY</strong> with your key from resend.com → API Keys, then redeploy.
+              In GitHub, open the repository&apos;s Settings → Secrets and variables → Actions, add{" "}
+              <strong>RESEND_API_KEY</strong> with your key from resend.com → API Keys, then run Actions →
+              Cloudflare → Run workflow.
             </p>
           )}
           {setup.state === "restricted" && (
             <p className="text-amber-800">
               Your key can only send email, so this page can&apos;t set things up for you. On
               resend.com → API Keys, make a new key with <strong>Full access</strong>, put it in
-              Vercel as RESEND_API_KEY, and redeploy. Or add {SITE.domain} on resend.com → Domains
+              GitHub as RESEND_API_KEY, and run Actions → Cloudflare → Run workflow. Or add {SITE.domain} on resend.com → Domains
               yourself.
             </p>
           )}

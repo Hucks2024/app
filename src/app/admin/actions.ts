@@ -106,14 +106,14 @@ export async function resetPasswordAction(_prev: ResetState, formData: FormData)
 export type TestEmailState = { ok: boolean; message: string; detail?: string } | null;
 
 /** "Send me a test email" on /admin: the one place that shows exactly why
- * email isn't going out, so it can be fixed from Vercel and Resend
+ * email isn't going out, so it can be fixed from GitHub and Resend
  * without anybody digging through logs. */
 export async function testEmailAction(): Promise<TestEmailState> {
   const me = await requireAdmin();
   if (!canSendEmail()) {
     return {
       ok: false,
-      message: "Email is switched off: RESEND_API_KEY isn't set in Vercel (for Production), or the site hasn't been redeployed since it was added.",
+      message: "Email is switched off: RESEND_API_KEY isn't set in GitHub (Settings → Secrets and variables → Actions), or the Cloudflare workflow hasn't run since it was added.",
     };
   }
   const sent = await sendEmail({

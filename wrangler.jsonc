@@ -8,6 +8,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // The live addresses. packmates.live itself just redirects to www
+  // (src/proxy.ts).
+  "routes": [
+    { "pattern": "www.packmates.live", "custom_domain": true },
+    { "pattern": "packmates.live", "custom_domain": true }
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

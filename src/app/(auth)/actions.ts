@@ -188,7 +188,7 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
 
   const sent = await sendResetCode(prisma, user);
   if (!sent.ok) {
-    // Into Vercel's logs; the Email steps on /admin say the same thing in
+    // Into the server's logs; the Email steps on /admin say the same thing in
     // plain words.
     console.error("Password reset email failed:", sent.error);
     // The cooldown message is worth showing; a provider error isn't. And

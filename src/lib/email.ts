@@ -18,7 +18,7 @@ export function canSendEmail(): boolean {
 export function fromAddress(): string {
   // Resend only sends from a domain that's verified with them, so this is
   // an address on the site's own domain: verifying it (the steps on
-  // /admin) is the whole setup, with nothing else to set in Vercel.
+  // /admin) is the whole setup, with nothing else to set.
   // EMAIL_FROM still wins if it's set.
   return process.env.EMAIL_FROM || `${SITE.name} <noreply@${SITE.domain}>`;
 }
@@ -72,7 +72,7 @@ export function isTemporaryEmailError(error: string): boolean {
 export function explainEmailError(error: string): string {
   const e = error.toLowerCase();
   if (e.includes("api key is invalid") || e.includes("returned 401")) {
-    return "Resend doesn't recognise the API key. Copy it again from resend.com → API Keys into RESEND_API_KEY in Vercel, then redeploy.";
+    return "Resend doesn't recognise the API key. Copy it again from resend.com → API Keys into the RESEND_API_KEY secret in GitHub, then run Actions → Cloudflare → Run workflow.";
   }
   if (e.includes("domain is not verified") || e.includes("not verified")) {
     return "The domain isn't verified in Resend yet. Follow the Email steps at the top of the admin page. New DNS records can take a few hours to show.";
@@ -81,7 +81,7 @@ export function explainEmailError(error: string): string {
     return "Resend is still in testing mode, so it only sends to your own address. Follow the Email steps at the top of the admin page to verify the domain.";
   }
   if (e.includes("invalid `from`") || e.includes("invalid from")) {
-    return `EMAIL_FROM isn't in a form Resend accepts. Remove it in Vercel (the app picks noreply@${SITE.domain} itself), then redeploy.`;
+    return `EMAIL_FROM isn't in a form Resend accepts. Remove the EMAIL_FROM secret in GitHub (the app picks noreply@${SITE.domain} itself), then run Actions → Cloudflare → Run workflow.`;
   }
   if (e.includes("restricted") || e.includes("returned 403")) {
     return `Resend refused this key for sending from this address. Check the key has sending access for ${SITE.domain} on resend.com → API Keys, and the domain shows Verified.`;

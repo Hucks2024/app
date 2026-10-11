@@ -8,7 +8,7 @@ export const SITE = {
   domain: DOMAIN,
   // The address in every link the app makes: emails, shared meetups,
   // calendar files. Set here rather than from NEXT_PUBLIC_SITE_URL,
-  // because that variable in Vercel still names the old domain and would
+  // because that variable (once set in Vercel) named an old domain and would
   // quietly win. It's honoured only for an http:// address, which is to
   // say a computer running the app locally.
   url: process.env.NEXT_PUBLIC_SITE_URL?.startsWith("http://")

@@ -34,8 +34,7 @@ function isBot(ua: string): boolean {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  // The address without www goes to www, one link for everything. (Vercel
-  // did this itself; on Cloudflare it's done here.)
+  // The address without www goes to www, one link for everything.
   if (req.headers.get("host")?.split(":")[0] === SITE.domain) {
     return NextResponse.redirect(`https://www.${SITE.domain}${pathname}${req.nextUrl.search}`, 308);
   }

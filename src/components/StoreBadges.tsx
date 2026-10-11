@@ -1,7 +1,7 @@
 import { inApp } from "@/lib/in-app";
 
 // The app in the App Store and Google Play. Each button shows once its
-// link is set in Vercel (APP_STORE_URL, GOOGLE_PLAY_URL), and only if it
+// link is set (GitHub secrets APP_STORE_URL, GOOGLE_PLAY_URL), and only if it
 // really is a store link; with neither set, nothing shows.
 
 function storeLink(url: string | undefined, host: string): string | null {
