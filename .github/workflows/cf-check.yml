@@ -31,3 +31,5 @@ jobs:
           BASE="https://packmates.$SUB.workers.dev" node check.mjs
       - name: Email records as a zone file
         run: node zone.mjs
+      - name: What Cloudflare's name servers would answer
+        run: node compare.mjs
