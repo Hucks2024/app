@@ -29,3 +29,5 @@ jobs:
             | node -e 'let s="";process.stdin.on("data",(c)=>s+=c).on("end",()=>console.log(JSON.parse(s).result.subdomain))')
           echo "::add-mask::$SUB"
           BASE="https://packmates.$SUB.workers.dev" node check.mjs
+      - name: Email records as a zone file
+        run: node zone.mjs
