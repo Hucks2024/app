@@ -38,11 +38,8 @@ export default async function Welcome({
       </div>
 
       <h1 className="font-wordmark mt-6 text-balance text-[clamp(24px,7.4vw,34px)] font-bold leading-tight">
-        Meet people like you.
+        Every friend was once a stranger.
       </h1>
-      <p className="font-wordmark mt-1 text-lg font-semibold text-white">
-        your guide to the galaxy
-      </p>
 
       {count > 0 && (
         <p className="live-pill mt-5">
