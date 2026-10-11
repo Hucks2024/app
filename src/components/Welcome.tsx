@@ -37,7 +37,7 @@ export default async function Welcome({
         <Logo variant="white" size={62} />
       </div>
 
-      <h1 className="font-wordmark mt-6 text-balance text-[clamp(24px,7.4vw,34px)] font-bold leading-tight">
+      <h1 className="font-wordmark mt-6 text-balance text-[clamp(32px,10vw,48px)] font-bold leading-tight">
         every friend was once a stranger
       </h1>
 

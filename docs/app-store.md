@@ -9,7 +9,7 @@ this file: the repository is public.
 | Field | Value |
 | --- | --- |
 | Name | Packmates |
-| Subtitle | Meet people like you |
+| Subtitle | every friend was a stranger (Apple allows 30 characters, so "once" is left out) |
 | Category | Social Networking (secondary: Lifestyle) |
 | Price | Free |
 | Support URL | https://packmates.live/info#contact |
