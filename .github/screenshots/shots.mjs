@@ -32,7 +32,7 @@ async function shot(name, path, signedIn, wait) {
   await p.goto(BASE + path, { waitUntil: "load" });
   // Any tip over the map, closed, so the map shows.
   const close = p.getByRole("button", { name: "Close" });
-  if (await close.first().isVisible().catch(() => false)) await close.first().click();
+  await close.first().waitFor({ timeout: 4000 }).then(() => close.first().click()).catch(() => {});
   await p.waitForTimeout(wait);
   await p.screenshot({ path: `${OUT}/${name}.png` });
   console.log(name, p.url());
