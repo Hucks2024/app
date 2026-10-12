@@ -1,0 +1,43 @@
+name: App Store screenshots (one-off)
+
+# Runs the app here with the fictional demo meetups and takes App Store
+# screenshots (iPhone 6.9"), then saves them to the app-store-screenshots
+# branch, which never deploys anywhere.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:/tmp/shots.db
+      OUT: /tmp/shots
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: node .github/screenshots/load.mjs
+      - run: npm run build
+      - name: Screenshots
+        run: |
+          export SESSION_SECRET=$(openssl rand -hex 32)
+          npx next start -p 3100 > /tmp/server.log 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null -A "Mozilla/5.0 PackmatesApp" http://localhost:3100/robots.txt && break; sleep 1; done
+          npm i --no-save --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node .github/screenshots/shots.mjs
+      - name: Save to the app-store-screenshots branch
+        run: |
+          mkdir -p "$RUNNER_TEMP/branch" && cd "$RUNNER_TEMP/branch"
+          git init -q -b app-store-screenshots
+          cp /tmp/shots/*.png .
+          echo '{ "git": { "deploymentEnabled": false } }' > vercel.json
+          git add . && git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "App Store screenshots"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" app-store-screenshots
