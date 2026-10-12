@@ -28,3 +28,4 @@ public/maplibre-worker.js
 .wrangler/
 .dev.vars
 wrangler.local.jsonc
+app-store-screenshots/
