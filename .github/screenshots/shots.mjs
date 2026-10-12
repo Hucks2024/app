@@ -22,10 +22,17 @@ console.log("viewer", viewer);
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 PackmatesApp/1.0";
 const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 async function shot(name, path, signedIn, wait) {
-  const c = await b.newContext({ userAgent: UA, viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  // A UK phone: dates and times as people here write them.
+  const c = await b.newContext({
+    userAgent: UA, viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
+    locale: "en-GB", timezoneId: "Europe/London",
+  });
   if (signedIn) await c.addCookies([{ name: "pacemates_session", value: await token(viewer), url: BASE }]);
   const p = await c.newPage();
   await p.goto(BASE + path, { waitUntil: "load" });
+  // Any tip over the map, closed, so the map shows.
+  const close = p.getByRole("button", { name: "Close" });
+  if (await close.first().isVisible().catch(() => false)) await close.first().click();
   await p.waitForTimeout(wait);
   await p.screenshot({ path: `${OUT}/${name}.png` });
   console.log(name, p.url());
