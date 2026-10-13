@@ -93,7 +93,7 @@ async function opens(url, hops = 0) {
 }
 console.log("");
 console.log("DOMAINS");
-for (const domain of ["packmates.live", "doyoulikepizza.com"]) {
+for (const domain of ["packmates.live"]) {
   const ns = await dns(domain, "NS");
   console.log(`  ${domain}`);
   console.log(`    DNS run by: ${ns.length ? ns.join(", ") : "nothing found"}`);
