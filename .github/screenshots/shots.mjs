@@ -21,7 +21,7 @@ console.log("viewer", viewer);
 
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 PackmatesApp/1.0";
 const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-async function shot(name, path, signedIn, wait) {
+async function shot(name, path, signedIn, wait, before) {
   // A UK phone: dates and times as people here write them.
   const c = await b.newContext({
     userAgent: UA, viewport: { width: 440, height: 956 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
@@ -33,6 +33,7 @@ async function shot(name, path, signedIn, wait) {
   // Any tip over the map, closed, so the map shows.
   const close = p.getByRole("button", { name: "Close" });
   await close.first().waitFor({ timeout: 4000 }).then(() => close.first().click()).catch(() => {});
+  if (before) await before(p);
   await p.waitForTimeout(wait);
   await p.screenshot({ path: `${OUT}/${name}.png` });
   console.log(name, p.url());
@@ -40,6 +41,16 @@ async function shot(name, path, signedIn, wait) {
 }
 await shot("1-welcome", "/", false, 4000);
 await shot("2-map", "/", true, 15000);
+// The same map closer in: neighbourhoods, then streets.
+for (const [name, steps] of [["5-map-closer", 3], ["6-map-streets", 5]]) {
+  await shot(name, "/", true, 9000, async (p) => {
+    await p.locator(".leaflet-container").first().focus();
+    for (let i = 0; i < steps; i++) {
+      await p.keyboard.press("Equal");
+      await p.waitForTimeout(600);
+    }
+  });
+}
 await shot("3-meetup", `/activities/${meetup}`, true, 6000);
 await shot("4-post", "/activities/new", true, 3000);
 await b.close();

@@ -1085,9 +1085,30 @@ body:has(.map-screen) {
     display: none;
   }
 }
-/* The attribution stays (OpenStreetMap asks for it), small but legible. */
-.leaflet-container .leaflet-control-attribution {
+/* The map's credits (OpenStreetMap's licence asks for them): a small ⓘ in
+   the corner that opens them with a tap. See Credits in ActivitiesMap. */
+.leaflet-container .leaflet-control-attribution.map-credits {
+  margin: 0 8px 8px 0;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow: 0 2px 8px rgb(46 16 101 / 0.22);
   font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.leaflet-container .leaflet-control-attribution.map-credits:not(.map-credits-open) {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 0;
+}
+.leaflet-container .leaflet-control-attribution.map-credits:not(.map-credits-open)::after {
+  content: "i";
+  display: block;
+  font: italic 700 17px/32px Georgia, serif;
+  text-align: center;
+  color: #6d28d9;
 }
 /* Leaflet sets 12px on everything inside the map, popups included. */
 .leaflet-container,

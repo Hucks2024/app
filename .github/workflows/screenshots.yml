@@ -33,11 +33,14 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps chromium
           node .github/screenshots/shots.mjs
-      - name: Save to the app-store-screenshots branch
+      # From main, the App Store set; from any other branch, a preview.
+      - name: Save to a screenshots branch
+        env:
+          TARGET: ${{ github.ref_name == 'main' && 'app-store-screenshots' || 'preview-screenshots' }}
         run: |
           mkdir -p "$RUNNER_TEMP/branch" && cd "$RUNNER_TEMP/branch"
-          git init -q -b app-store-screenshots
+          git init -q -b "$TARGET"
           cp /tmp/shots/*.png .
           echo '{ "git": { "deploymentEnabled": false } }' > vercel.json
           git add . && git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "App Store screenshots"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" app-store-screenshots
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$TARGET"

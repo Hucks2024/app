@@ -13,6 +13,7 @@ import { callNative } from "@/lib/native";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 import { formatWhen } from "@/components/LocalTime";
+import { MAP_CREDITS, MAP_SOURCE_ID, MAP_STYLE } from "@/lib/map-style";
 
 // The app's own logo as the map marker: the same teardrop from
 // src/components/Logo.tsx, in the same brand violet, with the category
@@ -254,18 +255,10 @@ function LocateControl({
   );
 }
 
-// Where the map pictures come from: OpenFreeMap's "liberty" map, the same
-// OpenStreetMap data in a similar look. Free with no key, no account and
+// The map itself is Packmates' own style (src/lib/map-style.ts), drawn by
+// MapLibre from OpenFreeMap's free OpenStreetMap data: no key, no account,
 // no limit, and fine in an app, which OpenStreetMap's own tile servers
-// aren't: their policy asks apps not to use them without permission.
-// (CartoDB's "Voyager" tiles were tried once and started stamping "API KEY
-// REQUIRED" across every tile.) MapLibre draws it, under Leaflet, which
-// still does the pins, popups and Near me.
-const OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty";
-const OPENFREEMAP_ATTRIBUTION =
-  '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> ' +
-  '&copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> ' +
-  'Data from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+// aren't. Leaflet still does the pins, popups and Near me.
 // Where MapLibre's worker is (copied there by scripts/copy-map-worker.mjs):
 // it can't work it out itself once bundled. The version keeps phones from
 // using an old copy after an update.
@@ -313,15 +306,13 @@ function Tiles() {
     let layer: L.MaplibreGL | null = null;
     let ready = false;
     try {
-      layer = maplibreGL({
-        style: OPENFREEMAP_STYLE,
-        // The credits, in Leaflet's own line with the rest.
-        attributionControl: { customAttribution: OPENFREEMAP_ATTRIBUTION },
-      });
+      // The credits are the ⓘ button's (Credits, below), not MapLibre's.
+      layer = maplibreGL({ style: MAP_STYLE, attributionControl: false });
       layer.addTo(map);
       const gl = layer.getMaplibreMap();
-      gl.once("style.load", () => {
-        ready = true;
+      // OpenFreeMap has answered once the map data's description arrives.
+      gl.on("sourcedata", (e) => {
+        if (e.sourceId === MAP_SOURCE_ID && e.sourceDataType === "metadata") ready = true;
       });
       // Before the map has loaded, an error means it isn't coming.
       gl.on("error", () => {
@@ -360,7 +351,6 @@ function StandInTiles() {
   return (
     <TileLayer
       key={source}
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       url={TILE_SOURCES[source]}
       eventHandlers={{
         tileload: () => {
@@ -378,6 +368,46 @@ function StandInTiles() {
       }}
     />
   );
+}
+
+/** The credits OpenStreetMap's licence asks for, folded into a small ⓘ
+ * in the corner that opens them with a tap, rather than a line of small
+ * print across the bottom of the map. */
+function Credits() {
+  const map = useMap();
+  useEffect(() => {
+    const control = map.attributionControl;
+    if (!control) return;
+    control.setPrefix(false);
+    control.addAttribution(MAP_CREDITS);
+    const box = control.getContainer();
+    if (!box) return;
+    box.classList.add("map-credits");
+    box.setAttribute("role", "button");
+    box.setAttribute("tabindex", "0");
+    box.setAttribute("aria-label", "Map credits");
+    box.setAttribute("aria-expanded", "false");
+    const toggle = (e: Event) => {
+      // A tap on a link inside opens the link; anywhere else, open or close.
+      if ((e.target as HTMLElement).closest("a")) return;
+      const open = box.classList.toggle("map-credits-open");
+      box.setAttribute("aria-expanded", String(open));
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle(e);
+      }
+    };
+    box.addEventListener("click", toggle);
+    box.addEventListener("keydown", onKey);
+    return () => {
+      box.removeEventListener("click", toggle);
+      box.removeEventListener("keydown", onKey);
+      control.removeAttribution(MAP_CREDITS);
+    };
+  }, [map]);
+  return null;
 }
 
 export type MapActivity = {
@@ -480,6 +510,7 @@ export default function ActivitiesMap({
         className="h-full w-full"
       >
         <Tiles />
+        <Credits />
         {full && <ZoomControl position="bottomleft" />}
         <LocateControl onLocated={onLocated} full={full} />
         {activities.map((a) => (
