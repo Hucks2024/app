@@ -19,6 +19,7 @@ ok("...served by Cloudflare", home.headers.get("x-opennext") === "1" && /cloudfl
 const apex = await fetch("https://packmates.live/terms?x=1", { redirect: "manual", headers: { "User-Agent": UA } });
 ok("packmates.live goes to www", apex.status === 308 && apex.headers.get("location") === "https://www.packmates.live/terms?x=1", `${apex.status} ${apex.headers.get("location")}`);
 ok("...and it's the app", html.includes("A free map of meetups"));
+ok("...with Sign up at the top", html.includes(">Sign up</a>"));
 ok("...with the new heading", html.includes("every friend was once a stranger<"));
 ok("...with no tracking script added by Cloudflare", !html.includes("cloudflareinsights"));
 ok("...with the security rules", (home.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"));

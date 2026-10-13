@@ -63,9 +63,10 @@ export default async function Nav() {
                 Info
               </Link>
               {/* One button, because there's one way in: new and returning
-                  members both start here, and the screen works out which. */}
+                  members both start here, and the screen works out which.
+                  Worded for the newcomer. */}
               <Link href="/login" className="nav-signin">
-                Sign in
+                Sign up
               </Link>
             </>
           )}
