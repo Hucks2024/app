@@ -32,7 +32,7 @@ export const MAP_STYLE: StyleSpecification = {
     [SOURCE]: { type: "vector", url: "https://tiles.openfreemap.org/planet" },
   },
   layers: [
-    { id: "land", type: "background", paint: { "background-color": "#e6f7dc" } },
+    { id: "land", type: "background", paint: { "background-color": "#ddf4cf" } },
 
     // Fields, woods and towns.
     {
@@ -44,13 +44,13 @@ export const MAP_STYLE: StyleSpecification = {
         "fill-color": [
           "match",
           ["get", "class"],
-          "wood", "#a3df92",
-          "grass", "#c4eeb2",
-          "farmland", "#d6f3c6",
+          "wood", "#9cdb88",
+          "grass", "#bfeaa6",
+          "farmland", "#d1f0bd",
           "wetland", "#c9eedb",
           "sand", "#fbefc2",
           "ice", "#ffffff",
-          "#d6f3c6",
+          "#d1f0bd",
         ],
       },
     },
@@ -77,7 +77,7 @@ export const MAP_STYLE: StyleSpecification = {
       type: "fill",
       source: SOURCE,
       "source-layer": "park",
-      paint: { "fill-color": "#9ee08c", "fill-outline-color": "#82d272" },
+      paint: { "fill-color": "#93db80", "fill-outline-color": "#78cd66" },
     },
 
     // Water.
@@ -114,7 +114,21 @@ export const MAP_STYLE: StyleSpecification = {
       },
     },
 
-    // Buildings, close up: soft lavender blocks.
+    // Buildings, close up: lavender blocks that look raised, each one a
+    // pale top over a darker copy nudged down and right, like a game board.
+    {
+      id: "building-sides",
+      type: "fill",
+      source: SOURCE,
+      "source-layer": "building",
+      minzoom: 14,
+      paint: {
+        "fill-color": "#b7a3ee",
+        "fill-translate": [3, 3],
+        "fill-translate-anchor": "viewport",
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 1],
+      },
+    },
     {
       id: "buildings",
       type: "fill",
@@ -122,7 +136,7 @@ export const MAP_STYLE: StyleSpecification = {
       "source-layer": "building",
       minzoom: 14,
       paint: {
-        "fill-color": "#e2d7fc",
+        "fill-color": "#efe8ff",
         "fill-outline-color": "#c9b8f6",
         "fill-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 1],
       },
