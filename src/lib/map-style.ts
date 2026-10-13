@@ -32,7 +32,7 @@ export const MAP_STYLE: StyleSpecification = {
     [SOURCE]: { type: "vector", url: "https://tiles.openfreemap.org/planet" },
   },
   layers: [
-    { id: "land", type: "background", paint: { "background-color": "#ddf4cf" } },
+    { id: "land", type: "background", paint: { "background-color": "#d4f8bf" } },
 
     // Fields, woods and towns.
     {
@@ -44,13 +44,13 @@ export const MAP_STYLE: StyleSpecification = {
         "fill-color": [
           "match",
           ["get", "class"],
-          "wood", "#9cdb88",
-          "grass", "#bfeaa6",
-          "farmland", "#d1f0bd",
+          "wood", "#84e46c",
+          "grass", "#b0f293",
+          "farmland", "#c9f6ad",
           "wetland", "#c9eedb",
           "sand", "#fbefc2",
           "ice", "#ffffff",
-          "#d1f0bd",
+          "#c9f6ad",
         ],
       },
     },
@@ -66,8 +66,8 @@ export const MAP_STYLE: StyleSpecification = {
           ["residential", "suburb", "neighbourhood"], "#f3eefe",
           ["commercial", "retail", "industrial"], "#ece3fc",
           ["school", "college", "university", "hospital"], "#fde6f1",
-          ["cemetery"], "#c6eab6",
-          ["stadium", "pitch", "playground"], "#93dc85",
+          ["cemetery"], "#b8f0a0",
+          ["stadium", "pitch", "playground"], "#7ce466",
           "#f3eefe",
         ],
       },
@@ -77,7 +77,7 @@ export const MAP_STYLE: StyleSpecification = {
       type: "fill",
       source: SOURCE,
       "source-layer": "park",
-      paint: { "fill-color": "#93db80", "fill-outline-color": "#78cd66" },
+      paint: { "fill-color": "#7fe866", "fill-outline-color": "#5fd847" },
     },
 
     // Water.
@@ -86,7 +86,7 @@ export const MAP_STYLE: StyleSpecification = {
       type: "fill",
       source: SOURCE,
       "source-layer": "water",
-      paint: { "fill-color": "#6fd2f6" },
+      paint: { "fill-color": "#5cd3ff" },
     },
     {
       id: "water-edge",
@@ -94,7 +94,7 @@ export const MAP_STYLE: StyleSpecification = {
       source: SOURCE,
       "source-layer": "water",
       minzoom: 11,
-      paint: { "line-color": "#46b9e8", "line-width": grow([11, 0.5], [16, 2]) },
+      paint: { "line-color": "#2fb7f0", "line-width": grow([11, 0.5], [16, 2]) },
     },
     {
       id: "rivers",
@@ -103,7 +103,7 @@ export const MAP_STYLE: StyleSpecification = {
       "source-layer": "waterway",
       layout: roadLine,
       paint: {
-        "line-color": "#6fd2f6",
+        "line-color": "#5cd3ff",
         // Rivers wide, streams thin. (The zoom has to come first here.)
         "line-width": [
           "interpolate", ["exponential", 1.5], ["zoom"],
