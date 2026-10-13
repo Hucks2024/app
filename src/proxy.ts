@@ -32,10 +32,13 @@ function isBot(ua: string): boolean {
   return ANY_BOT.test(ua) && (/https?:\/\/|compatible;/i.test(ua) || !/mozilla/i.test(ua));
 }
 
+// Other addresses for the app, sent to www.packmates.live: one link for
+// everything. doyoulikepizza.com was its first name.
+const REDIRECT_HOSTS = new Set([SITE.domain, "doyoulikepizza.com", "www.doyoulikepizza.com"]);
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  // The address without www goes to www, one link for everything.
-  if (req.headers.get("host")?.split(":")[0] === SITE.domain) {
+  if (REDIRECT_HOSTS.has(req.headers.get("host")?.split(":")[0] ?? "")) {
     return NextResponse.redirect(`https://www.${SITE.domain}${pathname}${req.nextUrl.search}`, 308);
   }
   // robots.txt stays open, so the rules in it can be read.
