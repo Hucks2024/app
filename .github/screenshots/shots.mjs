@@ -42,12 +42,12 @@ async function shot(name, path, signedIn, wait, before) {
 await shot("1-welcome", "/", false, 4000);
 await shot("2-map", "/", true, 15000);
 // The same map closer in: neighbourhoods, then streets.
-for (const [name, steps] of [["5-map-closer", 3], ["6-map-streets", 5]]) {
+for (const [name, steps] of [["5-map-closer", 3], ["6-map-streets", 6]]) {
   await shot(name, "/", true, 9000, async (p) => {
     await p.locator(".leaflet-container").first().focus();
     for (let i = 0; i < steps; i++) {
       await p.keyboard.press("Equal");
-      await p.waitForTimeout(600);
+      await p.waitForTimeout(1000);
     }
   });
 }
