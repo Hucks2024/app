@@ -1081,7 +1081,7 @@ body:has(.map-screen) {
 }
 /* On a phone two fingers zoom; the + and - are for computers. */
 @media (max-width: 639px) {
-  .map-full .leaflet-control-zoom {
+  .map-shell .leaflet-control-zoom {
     display: none;
   }
 }

@@ -12,26 +12,15 @@ function jitter(value: number) {
   return value + (Math.random() - 0.5) * 0.02;
 }
 
+// How it works, in three words each.
 const STEPS = [
-  {
-    emoji: "📍",
-    title: "Find a meetup",
-    body: "Paint, walk, run, coffee. Anything.",
-  },
-  {
-    emoji: "🙌",
-    title: "Tap “I'm in”",
-    body: "Then turn up. That's it.",
-  },
-  {
-    emoji: "👍",
-    title: "Post your own",
-    body: "After your first meetup.",
-  },
+  { emoji: "📍", text: "Find a meetup" },
+  { emoji: "🙌", text: "Tap I'm in" },
+  { emoji: "👋", text: "Turn up" },
 ];
 
-/** The front door: hello and the way in, how it works in three lines, and
- * a blurred look at what's on. */
+/** The front door: hello and the way in, how it works in three words each,
+ * and a blurred look at what's on. */
 export default async function Landing() {
   const prisma = await getPrisma();
   const activities = await prisma.runActivity.findMany({
@@ -77,18 +66,13 @@ export default async function Landing() {
         <h2 id="how-heading" className="sr-only">
           How it works
         </h2>
-        <ol className="grid gap-3 sm:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="card !p-4 flex items-start gap-3 sm:flex-col sm:gap-2">
-              <span className="step-badge" aria-hidden="true">
+        <ol className="card !p-4 grid grid-cols-3 gap-2 text-center">
+          {STEPS.map((s) => (
+            <li key={s.text} className="flex flex-col items-center gap-1">
+              <span className="text-3xl leading-none" aria-hidden="true">
                 {s.emoji}
               </span>
-              <div>
-                <p className="font-semibold text-slate-900">
-                  <span className="text-brand-600">{i + 1}.</span> {s.title}
-                </p>
-                <p className="text-sm text-slate-600 mt-0.5">{s.body}</p>
-              </div>
+              <span className="text-base font-semibold leading-tight text-slate-900">{s.text}</span>
             </li>
           ))}
         </ol>
@@ -107,9 +91,6 @@ export default async function Landing() {
           what&apos;s on near you
         </h2>
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
-        <p className="text-base text-white text-center mt-3">
-          Sign in to see where and when.
-        </p>
       </section>
     </div>
   );
