@@ -260,19 +260,6 @@ export default async function ActivityDetailPage({
             <ShareButton url={pageUrl} title={activity.title} />
           </div>
         )}
-        {upcoming && (
-          <p className="mt-2 text-sm text-slate-600">
-            {android ? (
-              <a href={calendarFile} className="font-medium text-brand-700 underline">
-                Or save a calendar file
-              </a>
-            ) : (
-              <a href={googleCalendar} target="_blank" rel="noopener noreferrer" className="font-medium text-brand-700 underline">
-                Or add to Google Calendar
-              </a>
-            )}
-          </p>
-        )}
 
         {activity.description && (
           <p className="mt-5 whitespace-pre-wrap text-base text-slate-800">{activity.description}</p>
@@ -373,12 +360,11 @@ export default async function ActivityDetailPage({
       </div>
 
       <div id="people" className="card mt-6 scroll-mt-20">
-        <h2 className="text-lg font-bold mb-1">
+        <h2 className="text-lg font-bold">
           {happened ? "Who came" : "Who's going"} ({unblocked(joined).length}
           {activity.maxParticipants && !happened ? ` of ${activity.maxParticipants}` : ""})
         </h2>
-        <p className="text-sm text-slate-600 mb-4">✓ = been before · 👍 = thumbs up</p>
-        <ul className="space-y-4">
+        <ul className="mt-3 space-y-4">
           {unblocked(joined).map((p) => (
             <ParticipantRow
               key={p.id}
@@ -414,28 +400,24 @@ export default async function ActivityDetailPage({
         )}
       </div>
 
-      {!isHost && (
-        <details className="card mt-6">
-          <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-slate-900">
-            🚩 Report this meetup
-          </summary>
-          <ReportForm personId={activity.hostId} activityId={activity.id} fieldId="meetup" />
-        </details>
-      )}
-
-      {/* Meeting people you don't know yet: the few things worth doing,
-          one tap away and out of the way otherwise. */}
+      {/* Safety in one place, folded away: the few things worth doing when
+          meeting people you don't know yet, and reporting the meetup. */}
       <details className="card mt-6">
-        <summary className="cursor-pointer select-none text-base font-semibold text-slate-900 min-h-11 flex items-center">
-          🛟 Staying safe
+        <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-slate-900">
+          🛟 Stay safe{!isHost && " · 🚩 Report"}
         </summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-base text-slate-700">
           <li>Stay in public.</li>
           <li>Tell a friend where you are.</li>
-          <li>Get home your own way.</li>
           <li>Feels wrong? Leave.</li>
-          <li>Someone rude? Tap <strong>Report or block</strong> under their name.</li>
+          <li>Someone rude? Tap <strong>🚩 Report or block</strong> under their name.</li>
         </ul>
+        {!isHost && (
+          <>
+            <p className="mt-4 text-base font-semibold text-slate-900">🚩 Report this meetup</p>
+            <ReportForm personId={activity.hostId} activityId={activity.id} fieldId="meetup" />
+          </>
+        )}
       </details>
     </div>
   );
@@ -506,7 +488,7 @@ function ParticipantRow({
       {person.id !== viewer && (
         <details className="mt-1 pl-[3.25rem]">
           <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-slate-600 underline hover:text-red-700">
-            🚩 Report or block {person.name}
+            🚩 Report or block
           </summary>
           <ReportForm personId={person.id} activityId={activityId} fieldId={person.id} />
           <form action={blockUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">

@@ -65,7 +65,8 @@ email and password in the sign-in fields (not here).
 > - Names and all meetup text are filtered for offensive words, links,
 >   emails and phone numbers.
 > - Every person on a meetup has "Report or block" under their name, and
->   every meetup has "Report this meetup". Reports reach our moderators,
+>   every meetup has "Stay safe · Report" with "Report this meetup" in it.
+>   Reports reach our moderators,
 >   and three reports from people met at meetups ban an account
 >   automatically, with no moderator needed.
 > - Blocking hides both people's meetups from each other. Unblock on Me.
@@ -105,7 +106,7 @@ with them, each run signs the app and sends it to App Store Connect.
 | Guideline | How Packmates meets it |
 | --- | --- |
 | 1.2 User-generated content: filter | `looksOffensive` and `looksLikeAdvert` in `src/lib/bots.ts` on names and all meetup text |
-| 1.2 Report | "Report or block" under every person, "Report this meetup"; reports on /admin with a link to the meetup |
+| 1.2 Report | "Report or block" under every person, "Report this meetup" under "Stay safe · Report"; reports on /admin with a link to the meetup |
 | 1.2 Block | `src/lib/blocks.ts`; Blocked list with Unblock on Me |
 | 1.2 / 1.5 Contact | hello at packmates.live on Info, Terms, Privacy and Me |
 | 1.1.4 / random chat | No messaging; not a dating or hookup app (in the Terms) |
