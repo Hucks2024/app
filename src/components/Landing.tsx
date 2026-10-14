@@ -16,7 +16,7 @@ function jitter(value: number) {
 const STEPS = [
   { emoji: "📍", text: "Find a meetup" },
   { emoji: "🙌", text: "Tap I'm in" },
-  { emoji: "👋", text: "Turn up" },
+  { emoji: "🤘", text: "Turn up" },
 ];
 
 /** The front door: hello and the way in, how it works in three words each,

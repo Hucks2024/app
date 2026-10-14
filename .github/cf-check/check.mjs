@@ -20,7 +20,7 @@ const apex = await fetch("https://packmates.live/terms?x=1", { redirect: "manual
 ok("packmates.live goes to www", apex.status === 308 && apex.headers.get("location") === "https://www.packmates.live/terms?x=1", `${apex.status} ${apex.headers.get("location")}`);
 ok("...and it's the app", html.includes("A free map of meetups"));
 ok("...with Sign up at the top", html.includes(">Sign up</a>"));
-ok("...with the new heading", html.includes("every friend was once a stranger<"));
+ok("...with the new heading", html.includes("find your people<"));
 ok("...with no tracking script added by Cloudflare", !html.includes("cloudflareinsights"));
 ok("...with the security rules", (home.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"));
 for (const path of ["/terms", "/privacy", "/info", "/login", "/robots.txt", "/manifest.webmanifest"]) {
