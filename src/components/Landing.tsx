@@ -26,6 +26,7 @@ export default async function Landing() {
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() }, ...liveMeetup },
     orderBy: { startsAt: "asc" },
+    select: { latitude: true, longitude: true, category: true },
   });
 
   // Only what a public pin needs to exist: a rough position and a
@@ -60,7 +61,8 @@ export default async function Landing() {
 
   return (
     <div>
-      <Welcome />
+      {/* The same meetups, so the number up top and the pins below agree. */}
+      <Welcome count={activities.length} />
 
       <section className="mx-auto max-w-3xl px-4 pb-4" aria-labelledby="how-heading">
         <h2 id="how-heading" className="sr-only">

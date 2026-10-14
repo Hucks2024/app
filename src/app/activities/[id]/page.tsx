@@ -66,26 +66,29 @@ export default async function ActivityDetailPage({
   const error = readError(rawError, sig);
   const prisma = await getPrisma();
 
-  const activity = await prisma.runActivity.findUnique({
-    where: { id },
-    include: {
-      host: { select: { ...personSelect, accountStatus: true } },
-      participations: {
-        where: { status: { in: ["JOINED", "WAITLIST"] } },
-        include: { user: { select: personSelect } },
-        orderBy: { joinedAt: "asc" },
+  // Blocked either way: their meetups are gone for you, and they're left
+  // off the list of who's going on anyone else's. Asked for alongside the
+  // meetup, since neither waits on the other.
+  const [activity, blocked] = await Promise.all([
+    prisma.runActivity.findUnique({
+      where: { id },
+      include: {
+        host: { select: { ...personSelect, accountStatus: true } },
+        participations: {
+          where: { status: { in: ["JOINED", "WAITLIST"] } },
+          include: { user: { select: personSelect } },
+          orderBy: { joinedAt: "asc" },
+        },
       },
-    },
-  });
+    }),
+    blockedEitherWay(prisma, user.id),
+  ]);
 
   // A banned or suspended host's meetups are gone for everyone but the
   // admins, who may need to see what they were.
   if (!activity || (activity.host.accountStatus !== "ACTIVE" && user.role !== "ADMIN")) {
     notFound();
   }
-  // Blocked either way: their meetups are gone for you, and they're left
-  // off the list of who's going on anyone else's.
-  const blocked = await blockedEitherWay(prisma, user.id);
   if (blocked.has(activity.hostId) && user.role !== "ADMIN") notFound();
   const unblocked = <T extends { userId: string }>(list: T[]) => list.filter((p) => !blocked.has(p.userId));
 
@@ -105,17 +108,14 @@ export default async function ActivityDetailPage({
   const canManage = (isHost || user.role === "ADMIN") && !cancelled && !happened;
   const upcoming = !cancelled && !happened;
 
-  const thumbs = await thumbsFor(prisma, [activity.hostId, ...joined.map((p) => p.userId)]);
-  const givenByMe = new Set(
+  const [thumbs, givenByMe] = await Promise.all([
+    thumbsFor(prisma, [activity.hostId, ...joined.map((p) => p.userId)]),
     wasThere
-      ? (
-          await prisma.thumbsUp.findMany({
-            where: { activityId: activity.id, fromId: user.id },
-            select: { toId: true },
-          })
-        ).map((t) => t.toId)
-      : []
-  );
+      ? prisma.thumbsUp
+          .findMany({ where: { activityId: activity.id, fromId: user.id }, select: { toId: true } })
+          .then((rows) => new Set(rows.map((t) => t.toId)))
+      : new Set<string>(),
+  ]);
 
   const category = categoryFor(activity.category);
   const hasPin = activity.latitude != null && activity.longitude != null;

@@ -34,19 +34,20 @@ export default async function ProfilePage({
   const user = await requireUser();
 
   const prisma = await getPrisma();
-  const memberNumber = await ensureMemberNumber(prisma, user.id);
-  const { verified } = await refreshVerified(prisma, user);
-  const thumbs = (await thumbsFor(prisma, [user.id])).get(user.id) ?? 0;
-
   const now = new Date();
-  const [upcoming, past] = await Promise.all([
+  const meetup = { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } };
+
+  // None of these wait on each other, so they're all asked for at once.
+  const [memberNumber, { verified }, thumbs, upcoming, past, blocks, app] = await Promise.all([
+    // Given out the first time someone opens Me, and kept from then on.
+    user.memberNumber ?? ensureMemberNumber(prisma, user.id),
+    refreshVerified(prisma, user),
+    thumbsFor(prisma, [user.id]).then((t) => t.get(user.id) ?? 0),
     prisma.participation.findMany({
       where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: now } } },
       orderBy: { activity: { startsAt: "asc" } },
       take: 5,
-      select: {
-        activity: { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } },
-      },
+      select: { activity: meetup },
     }),
     prisma.participation.findMany({
       // Called-off ones didn't happen, so they're not somewhere you've been.
@@ -57,18 +58,16 @@ export default async function ProfilePage({
       },
       orderBy: { activity: { startsAt: "desc" } },
       take: 5,
-      select: {
-        activity: { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } },
-      },
+      select: { activity: meetup },
     }),
+    prisma.block.findMany({
+      where: { blockerId: user.id },
+      orderBy: { createdAt: "desc" },
+      select: { blocked: { select: { id: true, name: true, profilePhotoType: true, photoUpdatedAt: true } } },
+    }),
+    // In the App Store app: no "get the app" card.
+    inApp(),
   ]);
-  // In the App Store app: no "get the app" card.
-  const app = await inApp();
-  const blocks = await prisma.block.findMany({
-    where: { blockerId: user.id },
-    orderBy: { createdAt: "desc" },
-    select: { blocked: { select: { id: true, name: true, profilePhotoType: true, photoUpdatedAt: true } } },
-  });
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
@@ -154,8 +153,6 @@ export default async function ProfilePage({
         <p className="text-sm text-slate-600 mb-3">Send them this link.</p>
         <CopyableField value={SITE.url} shown={SITE.domain} />
       </div>
-
-
 
       {(blocks.length > 0 || justBlocked) && (
         <div id="blocked" className="card mt-4 scroll-mt-20">

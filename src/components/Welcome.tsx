@@ -23,13 +23,16 @@ export default async function Welcome({
   startWithEmail = false,
   error,
   next = "/",
+  count,
 }: {
   startWithEmail?: boolean;
   error?: string | null;
   // Where to land after signing in (see safeNext).
   next?: string;
+  // Already counted by the page, if it had the meetups to hand.
+  count?: number;
 }) {
-  const count = await meetupsComingUp();
+  count ??= await meetupsComingUp();
 
   return (
     <section className="mx-auto max-w-md px-4 pt-8 pb-6 text-center text-white">

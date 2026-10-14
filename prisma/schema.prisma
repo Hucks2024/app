@@ -231,6 +231,11 @@ model RunActivity {
   participations Participation[]
   comments       Comment[]
   thumbsUps      ThumbsUp[]
+
+  // The map asks for what's coming up, soonest first; a ban or a deleted
+  // account looks up one member's meetups.
+  @@index([startsAt])
+  @@index([hostId])
 }
 
 model Participation {
@@ -250,6 +255,8 @@ model Participation {
   reminderSentAt DateTime?
 
   @@unique([activityId, userId])
+  // Everything one member has said "I'm in" to, for Me and the map.
+  @@index([userId])
 }
 
 model Comment {
@@ -275,6 +282,9 @@ model Report {
   status String @default("OPEN")
 
   createdAt DateTime @default(now())
+
+  // The red flags about one member, counted on every new one.
+  @@index([reportedUserId])
 }
 
 /// One member blocking another. From then on neither sees the other's
