@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
-import { categoryFor } from "@/lib/categories";
 import MeetupList, { kmBetween } from "@/components/MeetupList";
 import type { MapActivity } from "@/components/ActivitiesMap";
 
@@ -62,7 +61,6 @@ export default function MeetupBoard({
   // A tip floating over the top of the map (see MapNotice).
   notice?: React.ReactNode;
 }) {
-  const [category, setCategory] = useState<string>("ALL");
   const [day, setDay] = useState<Day>("ANY");
   // Set once the viewer taps "Near me" and allows it; adds distances.
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
@@ -70,32 +68,12 @@ export default function MeetupBoard({
   const [view, setView] = useState<"map" | "list">("map");
   const [farClosed, setFarClosed] = useState(false);
 
-  // Only categories that actually have something in them get a chip: a row
-  // of filters that all lead to "nothing here" is just clutter.
-  const categoryChips = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const a of activities) {
-      if (!matchesDay(a.startsAt, day)) continue;
-      counts.set(a.category, (counts.get(a.category) ?? 0) + 1);
-    }
-    return [...counts.entries()]
-      .map(([value, count]) => {
-        // Label and emoji come from the catalogue, but the value stays the
-        // one actually stored: categoryFor falls back to "Something else"
-        // for anything it doesn't recognise, and spreading that over the
-        // real value would quietly point the chip at the wrong filter.
-        const meta = categoryFor(value);
-        return { value, count, label: meta.label, emoji: meta.emoji };
-      })
-      .sort((a, b) => b.count - a.count);
-  }, [activities, day]);
-
   const filtered = useMemo(
     () =>
       activities.filter(
-        (a) => matchesDay(a.startsAt, day) && (category === "ALL" || a.category === category)
+        (a) => matchesDay(a.startsAt, day)
       ),
-    [activities, category, day]
+    [activities, day]
   );
 
   const total = activities.filter((a) => matchesDay(a.startsAt, day)).length;
@@ -170,17 +148,13 @@ export default function MeetupBoard({
       )}
 
       <div className="map-overlay-top">
-        {/* Plain buttons rather than a dropdown: with this few options,
-            every one visible is quicker than opening a menu to find them. */}
+        {/* Three plain buttons: when, not what. The pins already say what. */}
         <div className="chip-row chip-row-float" role="group" aria-label="Filter meetups">
           <button
             type="button"
-            onClick={() => {
-              setCategory("ALL");
-              setDay("ANY");
-            }}
-            className={`chip ${category === "ALL" && day === "ANY" ? "chip-on" : ""}`}
-            aria-pressed={category === "ALL" && day === "ANY"}
+            onClick={() => setDay("ANY")}
+            className={`chip ${day === "ANY" ? "chip-on" : ""}`}
+            aria-pressed={day === "ANY"}
           >
             All ({activities.length})
           </button>
@@ -200,18 +174,6 @@ export default function MeetupBoard({
           >
             This week
           </button>
-          {categoryChips.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              onClick={() => setCategory(category === c.value ? "ALL" : c.value)}
-              className={`chip ${category === c.value ? "chip-on" : ""}`}
-              aria-pressed={category === c.value}
-            >
-              <span aria-hidden="true">{c.emoji}</span>
-              {c.label} ({c.count})
-            </button>
-          ))}
         </div>
         {view === "map" && (notice || (far && !farClosed)) && (
           <div className="map-cards">

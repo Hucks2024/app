@@ -71,7 +71,7 @@ email and password in the sign-in fields (not here).
 > - Blocking hides both people's meetups from each other. Unblock on Me.
 > - Contact: hello at packmates.live, shown on Info → Contact us.
 >
-> Account deletion (5.1.1(v)): Me → Delete my account.
+> Account deletion (5.1.1(v)): Me → Settings → Delete my account.
 > Location (5.1.5): only for "Near me" on the map; it stays on the device.
 
 ## Building and sending the app (no Mac needed)
@@ -114,6 +114,6 @@ with them, each run signs the app and sends it to App Store Connect.
 | 4.8 Login services | Email and password; Google sign in only ever shows alongside Sign in with Apple |
 | 5.1.1(i) Privacy policy | /privacy, linked at sign up, Info and Me |
 | 5.1.1(ii) Consent | The sign up tick box; withdrawn by deleting the account |
-| 5.1.1(v) Account deletion | Me → Delete my account |
+| 5.1.1(v) Account deletion | Me → Settings → Delete my account |
 | 5.1.2 No tracking | No adverts, analytics or tracking |
 | 5.1.5 Location | Near me only, on the device, with the purpose explained |

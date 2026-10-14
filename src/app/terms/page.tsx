@@ -72,7 +72,7 @@ export default function TermsPage() {
 
         <Section title="Leaving">
           <p>
-            You can delete your account any time: <strong>Me</strong> → <strong>Delete my account</strong>. We can
+            You can delete your account any time: <strong>Me</strong> → <strong>Settings</strong> → <strong>Delete my account</strong>. We can
             suspend or ban accounts that break these terms.
           </p>
         </Section>

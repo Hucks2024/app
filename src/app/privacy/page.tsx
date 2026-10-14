@@ -109,7 +109,7 @@ export default function PrivacyPage() {
 
         <Section title="How long we keep it">
           <p>
-            Until you delete your account: <strong>Me</strong> → <strong>Delete my account</strong>. That removes your
+            Until you delete your account: <strong>Me</strong> → <strong>Settings</strong> → <strong>Delete my account</strong>. That removes your
             account, photo, the meetups you host and your places on others, straight away. Server logs go within weeks.
           </p>
         </Section>

@@ -155,24 +155,6 @@ export default async function ProfilePage({
         <CopyableField value={SITE.url} shown={SITE.domain} />
       </div>
 
-      <form action={updateProfileAction} className="card space-y-4">
-        <div>
-          <label className="label" htmlFor="name">
-            Name
-          </label>
-          <input className="input" id="name" name="name" defaultValue={user.name} required />
-        </div>
-        <SubmitButton className="btn-primary w-full" pending="Saving…">
-          Save
-        </SubmitButton>
-      </form>
-
-      <div className="card mt-4">
-        <p className="font-semibold mb-3">
-          {hasOwnPassword(user) ? "Change password" : "Set a password"}
-        </p>
-        <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
-      </div>
 
 
       {(blocks.length > 0 || justBlocked) && (
@@ -203,26 +185,56 @@ export default async function ProfilePage({
         </div>
       )}
 
-      {/* Stacked, not side by side: a long email address pushed the
-          button off the card. */}
-      <div className="card mt-4">
-        <p className="text-base text-slate-700">Signed in as</p>
-        <p className="mb-3 break-all text-base font-semibold text-slate-900">{user.email}</p>
-        <LogoutButton className="btn-secondary min-h-12 w-full" />
-      </div>
-
-      {/* Folded away and two taps deep: it's for good, and it should take
-          meaning to do. */}
-      <details className="card mt-4">
-        <summary className="cursor-pointer select-none text-sm font-medium text-red-700">
-          Delete my account
+      {/* Everything that's set once and rarely touched, folded into one
+          tap, so the page is just you and your meetups. Open after a save
+          or an error, so the message is in view. */}
+      <details id="settings" className="card mt-4 help-item scroll-mt-20" open={Boolean(saved || error) || undefined}>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-lg font-semibold text-slate-900">
+          ⚙️ Settings
+          <span className="help-chevron text-2xl text-brand-700" aria-hidden="true">
+            +
+          </span>
         </summary>
-        <p className="text-base text-slate-700 mt-3">Deletes everything. You can&apos;t undo it.</p>
-        <form action={deleteAccountAction} className="mt-3">
-          <SubmitButton className="btn-danger w-full" pending="Deleting…">
-            Yes, delete it
-          </SubmitButton>
-        </form>
+        <div className="mt-4 space-y-6">
+          <form action={updateProfileAction} className="space-y-3">
+            <div>
+              <label className="label" htmlFor="name">
+                Name
+              </label>
+              <input className="input" id="name" name="name" defaultValue={user.name} required />
+            </div>
+            <SubmitButton className="btn-primary w-full" pending="Saving…">
+              Save
+            </SubmitButton>
+          </form>
+
+          <div>
+            <p className="font-semibold mb-3">{hasOwnPassword(user) ? "Change password" : "Set a password"}</p>
+            <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
+          </div>
+
+          {/* Stacked, not side by side: a long email address pushed the
+              button off the card. */}
+          <div>
+            <p className="text-base text-slate-700">Signed in as</p>
+            <p className="mb-3 break-all text-base font-semibold text-slate-900">{user.email}</p>
+            <LogoutButton className="btn-secondary min-h-12 w-full" />
+          </div>
+
+          {/* Folded away again: it's for good, and it should take meaning
+              to do. */}
+          <details>
+            <summary className="cursor-pointer select-none text-sm font-medium text-red-700">
+              Delete my account
+            </summary>
+            <p className="text-base text-slate-700 mt-3">Deletes everything. You can&apos;t undo it.</p>
+            <form action={deleteAccountAction} className="mt-3">
+              <SubmitButton className="btn-danger w-full" pending="Deleting…">
+                Yes, delete it
+              </SubmitButton>
+            </form>
+          </details>
+        </div>
       </details>
 
       <p className="mt-6 text-center text-sm text-white">

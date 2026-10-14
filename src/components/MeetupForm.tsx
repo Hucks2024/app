@@ -6,6 +6,10 @@ import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions
 import { geocodeLocation } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
 
+// The few most people want, shown first so the first question is one
+// glance, not a list of two dozen. Everything else is under "More ideas".
+const POPULAR = ["WALK", "RUN", "COFFEE", "DRINKS", "FOOD", "PAINT", "GYM", "SOCIAL"];
+
 export type MeetupInitial = {
   id: string;
   title: string;
@@ -49,6 +53,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const [step, setStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
   const [category, setCategory] = useState(initial?.category ?? "");
+  // The everyday ones first; the rest behind "More ideas".
+  const [allTypes, setAllTypes] = useState(!!initial?.category && !POPULAR.includes(initial.category));
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -168,37 +174,50 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       {/* 1. What */}
       <fieldset hidden={!show(0)}>
         <legend className="mb-3 text-xl font-bold text-slate-900">What are you doing?</legend>
-        {/* In groups, so two dozen choices read as four short lists. */}
-        {[...CATEGORY_GROUPS, null].map((group) => (
-          <div key={group ?? "other"} className="mb-4 last:mb-0">
-            {group && <p className="type-group">{group}</p>}
-            <div className="type-grid">
-              {CATEGORIES.filter((c) => c.group === group).map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => {
-                    setCategory(c.value);
-                    setStepError(null);
-                    setEdited(true);
-                    // On the first step, picking one is the answer: straight on.
-                    if (!editing) {
-                      setStep(1);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }
-                  }}
-                  className={`type-btn ${category === c.value ? "type-btn-on" : ""}`}
-                  aria-pressed={category === c.value}
-                >
-                  <span className="text-3xl leading-none" aria-hidden="true">
-                    {c.emoji}
-                  </span>
-                  <span>{c.label}</span>
+        {(() => {
+          const pick = (c: (typeof CATEGORIES)[number]) => (
+            <button
+              key={c.value}
+              type="button"
+              onClick={() => {
+                setCategory(c.value);
+                setStepError(null);
+                setEdited(true);
+                // On the first step, picking one is the answer: straight on.
+                if (!editing) {
+                  setStep(1);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+              className={`type-btn ${category === c.value ? "type-btn-on" : ""}`}
+              aria-pressed={category === c.value}
+            >
+              <span className="text-3xl leading-none" aria-hidden="true">
+                {c.emoji}
+              </span>
+              <span>{c.label}</span>
+            </button>
+          );
+          if (!allTypes) {
+            return (
+              <>
+                <div className="type-grid">
+                  {POPULAR.map((v) => CATEGORIES.find((c) => c.value === v)!).map(pick)}
+                </div>
+                <button type="button" onClick={() => setAllTypes(true)} className="btn-secondary mt-4 min-h-12 w-full text-base">
+                  More ideas ▾
                 </button>
-              ))}
+              </>
+            );
+          }
+          // In groups, so two dozen choices read as four short lists.
+          return [...CATEGORY_GROUPS, null].map((group) => (
+            <div key={group ?? "other"} className="mb-4 last:mb-0">
+              {group && <p className="type-group">{group}</p>}
+              <div className="type-grid">{CATEGORIES.filter((c) => c.group === group).map(pick)}</div>
             </div>
-          </div>
-        ))}
+          ));
+        })()}
       </fieldset>
 
       {/* 2. Where */}

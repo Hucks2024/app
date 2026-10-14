@@ -21,230 +21,98 @@ export default async function InfoPage() {
   const canEmail = canSendEmail();
   const app = await inApp();
 
-  const sections: { title: string; items: QA[] }[] = [
+  // Few questions, short answers: the ones people actually ask.
+  const questions: QA[] = [
     {
-      title: "The basics",
-      items: [
-        {
-          id: "what",
-          q: `What is ${SITE.name}?`,
-          a: <p>A map of meetups. Pick one. Turn up.</p>,
-        },
-        {
-          id: "free",
-          q: "Does it cost anything?",
-          a: <p>No. It&apos;s free.</p>,
-        },
-        {
-          id: "messages",
-          q: "Can people message me?",
-          a: <p>No. Nobody can message you here.</p>,
-        },
-      ],
+      id: "what",
+      q: `What is ${SITE.name}?`,
+      a: <p>A free map of meetups. Pick one. Turn up. Nobody can message you.</p>,
     },
     {
-      title: "Going to a meetup",
-      items: [
-        {
-          id: "join",
-          q: "How do I go to a meetup?",
-          a: (
-            <ol className="list-decimal space-y-1 pl-5">
-              <li>Tap <strong>Map</strong>.</li>
-              <li>Tap a meetup.</li>
-              <li>Tap <strong>I&apos;m in</strong>.</li>
-            </ol>
-          ),
-        },
-        {
-          id: "photo",
-          q: "Do I need a photo?",
-          a: <p>Yes, of your face. People need to know who to look for.</p>,
-        },
-        {
-          id: "near",
-          q: "What's near me?",
-          a: (
-            <p>
-              Tap <strong>Near me</strong> on the map.
-            </p>
-          ),
-        },
-        {
-          id: "reminder",
-          q: "Will I get a reminder?",
-          a: (
-            <p>
-              Tap <strong>Add to calendar</strong> on the meetup. Your phone will remind you.
-            </p>
-          ),
-        },
-        {
-          id: "find",
-          q: "How do I find the group?",
-          a: (
-            <p>
-              Look for <strong>How to find us</strong> on the meetup.
-            </p>
-          ),
-        },
-        {
-          id: "cant-go",
-          q: "I can't go any more",
-          a: (
-            <p>
-              Open the meetup. Tap <strong>I can&apos;t go now</strong>.
-            </p>
-          ),
-        },
-        {
-          id: "safe",
-          q: "How do I stay safe?",
-          a: (
-            <ul className="list-disc space-y-1 pl-5">
-              <li>Stay in public.</li>
-              <li>Tell a friend where you are.</li>
-              <li>Get home your own way.</li>
-              <li>Feels wrong? Leave.</li>
-            </ul>
-          ),
-        },
-        {
-          id: "report",
-          q: "Someone was rude",
-          a: (
-            <p>
-              Tap <strong>🚩 Report or block</strong> under their name.
-            </p>
-          ),
-        },
-        {
-          id: "block",
-          q: "Block someone",
-          a: (
-            <p>
-              Tap <strong>🚩 Report or block</strong> under their name, then <strong>Block</strong>. You won&apos;t see
-              each other&apos;s meetups. Undo it on <strong>Me</strong>.
-            </p>
-          ),
-        },
-      ],
+      id: "join",
+      q: "How do I go to a meetup?",
+      a: (
+        <ol className="list-decimal space-y-1 pl-5">
+          <li>Tap a pin on the <strong>Map</strong>.</li>
+          <li>Tap <strong>I&apos;m in</strong>.</li>
+          <li>Turn up. Can&apos;t go? Tap <strong>I can&apos;t go now</strong>.</li>
+        </ol>
+      ),
     },
     {
-      title: "Posting a meetup",
-      items: [
-        {
-          id: "post",
-          q: "How do I post a meetup?",
-          a: (
-            <p>
-              Tap <strong>Post</strong>. Answer 4 questions.
-            </p>
-          ),
-        },
-        {
-          id: "locked",
-          q: "Why can't I post yet?",
-          a: <p>Go to one meetup first. Any meetup, anywhere.</p>,
-        },
-        {
-          id: "change",
-          q: "How do I change or cancel it?",
-          a: (
-            <p>
-              Open it. Tap <strong>Change details</strong> or <strong>Cancel meetup</strong>.
-            </p>
-          ),
-        },
-      ],
+      id: "post",
+      q: "How do I post a meetup?",
+      a: (
+        <p>
+          Tap <strong>Post</strong> and answer 4 questions. You can post after your first meetup.
+        </p>
+      ),
     },
     {
-      title: "✓ and 👍",
-      items: [
-        {
-          id: "tick",
-          q: "What does ✓ Been before mean?",
-          a: <p>They&apos;ve been to a meetup.</p>,
-        },
-        {
-          id: "thumbs",
-          q: "What is 👍?",
-          a: <p>Thumbs up from people they met.</p>,
-        },
-      ],
+      id: "photo",
+      q: "Do I need a photo?",
+      a: <p>Yes, of your face, so people know who to look for.</p>,
     },
     {
-      title: "Your account",
-      items: [
-        {
-          id: "forgot",
-          q: "I forgot my password",
-          a: canEmail ? (
-            <p>
-              On sign in, tap <strong>Forgot your password?</strong>
-            </p>
-          ) : (
-            <p>Ask an admin.</p>
-          ),
-        },
-        {
-          id: "profile",
-          q: "Change my name, photo or password",
-          a: (
-            <p>
-              Tap <strong>Me</strong>.
-            </p>
-          ),
-        },
-        {
-          id: "delete",
-          q: "Delete my account",
-          a: (
-            <p>
-              Tap <strong>Me</strong>. Scroll down. Tap <strong>Delete my account</strong>.
-            </p>
-          ),
-        },
-        // Website only: the app is already on the phone, and has no
-        // Translate button.
-        ...(app
-          ? []
-          : [
-              {
-                id: "home-screen",
-                q: "Put it on my phone",
-                a: (
-                  <ul className="list-disc space-y-1 pl-5">
-                    <li>
-                      <strong>iPhone:</strong> Share → <strong>Add to Home Screen</strong>
-                    </li>
-                    <li>
-                      <strong>Android:</strong> ⋮ → <strong>Add to Home screen</strong>
-                    </li>
-                  </ul>
-                ),
-              },
-              {
-                id: "language",
-                q: "Read it in my language",
-                a: <p>Use your browser&apos;s Translate button.</p>,
-              },
-            ]),
-        {
-          id: "privacy",
-          q: "My data",
-          a: (
-            <p>
-              No adverts, no tracking. Read the{" "}
-              <Link href="/privacy" className="font-semibold text-brand-700 underline">
-                Privacy policy
-              </Link>
-              .
-            </p>
-          ),
-        },
-      ],
+      id: "safe",
+      q: "How do I stay safe?",
+      a: (
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Stay in public.</li>
+          <li>Tell a friend where you are.</li>
+          <li>Feels wrong? Leave.</li>
+        </ul>
+      ),
     },
+    {
+      id: "report",
+      q: "Someone was rude",
+      a: (
+        <p>
+          Tap <strong>🚩 Report or block</strong> under their name. Blocking hides you from each other. Undo it on{" "}
+          <strong>Me</strong>.
+        </p>
+      ),
+    },
+    {
+      id: "forgot",
+      q: "I forgot my password",
+      a: canEmail ? (
+        <p>
+          On sign in, tap <strong>Forgot your password?</strong>
+        </p>
+      ) : (
+        <p>Ask an admin.</p>
+      ),
+    },
+    {
+      id: "delete",
+      q: "Delete my account",
+      a: (
+        <p>
+          Tap <strong>Me</strong> → <strong>Settings</strong> → <strong>Delete my account</strong>.
+        </p>
+      ),
+    },
+    // Website only: the app is already on the phone.
+    ...(app
+      ? []
+      : [
+          {
+            id: "home-screen",
+            q: "Put it on my phone",
+            a: (
+              <ul className="list-disc space-y-1 pl-5">
+                <li>
+                  <strong>iPhone:</strong> Share → <strong>Add to Home Screen</strong>
+                </li>
+                <li>
+                  <strong>Android:</strong> ⋮ → <strong>Add to Home screen</strong>
+                </li>
+              </ul>
+            ),
+          },
+        ]),
   ];
 
   return (
@@ -285,28 +153,21 @@ export default async function InfoPage() {
         </p>
       </section>
 
-      <p className="mt-8 text-lg text-white">Questions? Tap one.</p>
+      <p className="mb-3 mt-8 text-lg font-semibold text-white">Questions? Tap one.</p>
 
-      {sections.map((section, i) => (
-        <section key={section.title} className="mt-8" aria-labelledby={`help-h${i}`}>
-          <h2 id={`help-h${i}`} className="mb-3 text-xl font-bold text-white">
-            {section.title}
-          </h2>
-          <div className="space-y-3">
-            {section.items.map((item) => (
-              <details key={item.id} id={item.id} className="card !p-0 help-item">
-                <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-lg font-semibold text-slate-900">
-                  {item.q}
-                  <span className="help-chevron text-2xl text-brand-700" aria-hidden="true">
-                    +
-                  </span>
-                </summary>
-                <div className="px-5 pb-5 text-base leading-relaxed text-slate-800">{item.a}</div>
-              </details>
-            ))}
-          </div>
-        </section>
-      ))}
+      <div className="space-y-3">
+        {questions.map((item) => (
+          <details key={item.id} id={item.id} className="card !p-0 help-item">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-lg font-semibold text-slate-900">
+              {item.q}
+              <span className="help-chevron text-2xl text-brand-700" aria-hidden="true">
+                +
+              </span>
+            </summary>
+            <div className="px-5 pb-5 text-base leading-relaxed text-slate-800">{item.a}</div>
+          </details>
+        ))}
+      </div>
 
       <section id="contact" className="card mt-10 scroll-mt-20 text-center" aria-labelledby="contact-heading">
         <h2 id="contact-heading" className="text-xl font-bold text-slate-900">
