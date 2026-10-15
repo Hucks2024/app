@@ -93,7 +93,7 @@ const places = (id: string, from: Kind["from"]): LayerSpecification => ({
   filter: [
     "all",
     ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
-    ["step", ["zoom"], ["<=", ["get", "rank"], 1], from + 1, true],
+    ["step", ["zoom"], ["<=", ["get", "rank"], 3], from + 1, true],
   ],
   layout: {
     "icon-image": ["concat", EMOJI_PREFIX, EMOJI],
