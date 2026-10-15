@@ -78,6 +78,7 @@ const EMOJI = [
   ["match", ["get", "class"], ...pairs("classes").flat(), ""],
 ] as unknown as ExpressionSpecification;
 const EMOJI_PREFIX = "emoji:";
+const PATTERN_PREFIX = "pattern:";
 const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
 
 /** The bubbles that show from one zoom in: well spread out at first, so
@@ -169,7 +170,35 @@ export const MAP_STYLE: StyleSpecification = {
       type: "fill",
       source: SOURCE,
       "source-layer": "park",
-      paint: { "fill-color": "#b2e799", "fill-outline-color": "#98da7c" },
+      paint: { "fill-color": "#b2e799" },
+    },
+    // Little cartoon trees, packed in woods and dotted about parks, drawn
+    // on the phone (mapImage, below) and faded in as you come closer.
+    {
+      id: "wood-trees",
+      type: "fill",
+      source: SOURCE,
+      "source-layer": "landcover",
+      minzoom: 11,
+      filter: is("class", ["wood"]),
+      paint: { "fill-pattern": `${PATTERN_PREFIX}forest`, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0, 12.5, 1] },
+    },
+    {
+      id: "park-trees",
+      type: "fill",
+      source: SOURCE,
+      "source-layer": "park",
+      minzoom: 12,
+      paint: { "fill-pattern": `${PATTERN_PREFIX}park`, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0, 13.5, 1] },
+    },
+    // A bold edge round every park, like a board game's.
+    {
+      id: "park-edge",
+      type: "line",
+      source: SOURCE,
+      "source-layer": "park",
+      minzoom: 11,
+      paint: { "line-color": "#7fcd62", "line-width": grow([11, 0.6], [14, 1.6], [18, 3]) },
     },
 
     // Water.
@@ -180,13 +209,22 @@ export const MAP_STYLE: StyleSpecification = {
       "source-layer": "water",
       paint: { "fill-color": "#8dd3ff" },
     },
+    // Ripples on the water, and a bold edge round it.
+    {
+      id: "water-waves",
+      type: "fill",
+      source: SOURCE,
+      "source-layer": "water",
+      minzoom: 11,
+      paint: { "fill-pattern": `${PATTERN_PREFIX}waves`, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0, 12.5, 1] },
+    },
     {
       id: "water-edge",
       type: "line",
       source: SOURCE,
       "source-layer": "water",
       minzoom: 11,
-      paint: { "line-color": "#62bff2", "line-width": grow([11, 0.5], [16, 1.5]) },
+      paint: { "line-color": "#4fb5ee", "line-width": grow([11, 0.6], [14, 1.6], [18, 3]) },
     },
     {
       id: "rivers",
@@ -385,42 +423,121 @@ export const MAP_STYLE: StyleSpecification = {
   ],
 };
 
-/** Draws a place's emoji bubble the first time the map asks for it (its
- * "styleimagemissing" event), with the phone's own emoji, so they look
- * like the ones in its messages. Anything else it asks for is left be. */
-export function mapIcon(map: MapLibreMap, id: string) {
-  if (!id.startsWith(EMOJI_PREFIX) || map.hasImage(id)) return;
-  const emoji = id.slice(EMOJI_PREFIX.length);
-  const look = lookOf(emoji);
-  if (!look) return;
+/** Draws the map's pictures the first time it asks for each one (its
+ * "styleimagemissing" event): the emoji bubbles and the tree and ripple
+ * patterns. Drawn here rather than downloaded, so they cost nothing to
+ * fetch, and the bubbles use the phone's own emoji, so they look like the
+ * ones in its messages. Anything else the map asks for is left be. */
+export function mapImage(map: MapLibreMap, id: string) {
+  if (map.hasImage(id)) return;
+  const draw = id.startsWith(EMOJI_PREFIX)
+    ? bubble(id.slice(EMOJI_PREFIX.length))
+    : id.startsWith(PATTERN_PREFIX)
+      ? PATTERNS[id.slice(PATTERN_PREFIX.length)]
+      : undefined;
+  if (!draw) return;
   const ratio = 2;
-  const size = 32 * ratio;
   const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
+  canvas.width = draw.width * ratio;
+  canvas.height = draw.height * ratio;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const middle = size / 2;
-  const radius = middle - 3 * ratio;
-  // A white ring with a soft shadow, filled with the kind's colour.
-  ctx.shadowColor = "rgba(46, 16, 101, 0.3)";
-  ctx.shadowBlur = 3 * ratio;
-  ctx.shadowOffsetY = ratio;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(middle, middle, radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowColor = "transparent";
-  ctx.fillStyle = BUBBLE[look];
-  ctx.beginPath();
-  ctx.arc(middle, middle, radius - 2 * ratio, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.font = `${16 * ratio}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#000000";
-  ctx.fillText(emoji, middle, middle + ratio);
-  map.addImage(id, ctx.getImageData(0, 0, size, size), { pixelRatio: ratio });
+  ctx.scale(ratio, ratio);
+  draw.paint(ctx);
+  map.addImage(id, ctx.getImageData(0, 0, canvas.width, canvas.height), { pixelRatio: ratio });
 }
+
+type Drawing = { width: number; height: number; paint: (ctx: CanvasRenderingContext2D) => void };
+
+/** An emoji in a white-ringed bubble of its kind's colour. */
+function bubble(emoji: string): Drawing | undefined {
+  const look = lookOf(emoji);
+  if (!look) return undefined;
+  return {
+    width: 32,
+    height: 32,
+    paint(ctx) {
+      ctx.shadowColor = "rgba(46, 16, 101, 0.3)";
+      ctx.shadowBlur = 3;
+      ctx.shadowOffsetY = 1;
+      ctx.fillStyle = "#ffffff";
+      circle(ctx, 16, 16, 13);
+      ctx.shadowColor = "transparent";
+      ctx.fillStyle = BUBBLE[look];
+      circle(ctx, 16, 16, 11);
+      ctx.font = `16px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#000000";
+      ctx.fillText(emoji, 16, 17);
+    },
+  };
+}
+
+function circle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** A round cartoon tree seen from above: a shadow, the leaves, a shine. */
+function tree(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  ctx.fillStyle = "rgba(30, 90, 20, 0.18)";
+  circle(ctx, x + r * 0.35, y + r * 0.45, r);
+  ctx.fillStyle = "#5fc24a";
+  circle(ctx, x, y, r);
+  ctx.fillStyle = "#8fdc6f";
+  circle(ctx, x - r * 0.3, y - r * 0.3, r * 0.45);
+}
+
+// Tiles that repeat across an area. Nothing touches an edge, so the
+// repeats join without a seam.
+const PATTERNS: Record<string, Drawing> = {
+  forest: {
+    width: 40,
+    height: 40,
+    paint(ctx) {
+      tree(ctx, 9, 9, 5.5);
+      tree(ctx, 29, 13, 6);
+      tree(ctx, 16, 28, 6);
+      tree(ctx, 33, 32, 4.5);
+    },
+  },
+  park: {
+    width: 64,
+    height: 64,
+    paint(ctx) {
+      tree(ctx, 16, 18, 6);
+      tree(ctx, 46, 46, 5.5);
+      // A couple of tufts of grass.
+      ctx.strokeStyle = "#86d06b";
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = "round";
+      for (const [x, y] of [[44, 14], [14, 48]]) {
+        ctx.beginPath();
+        ctx.moveTo(x - 3, y - 3);
+        ctx.lineTo(x, y + 2);
+        ctx.lineTo(x + 3, y - 3);
+        ctx.stroke();
+      }
+    },
+  },
+  waves: {
+    width: 48,
+    height: 32,
+    paint(ctx) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = "round";
+      for (const [x, y] of [[8, 9], [30, 24]]) {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.arc(x + 6, y, 3, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+      }
+    },
+  },
+};
 
 /** The credits the map's licence asks for, shown behind the ⓘ button. */
 export const MAP_CREDITS =

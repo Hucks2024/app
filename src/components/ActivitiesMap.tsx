@@ -13,7 +13,7 @@ import { callNative } from "@/lib/native";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 import { formatWhen } from "@/components/LocalTime";
-import { MAP_CREDITS, MAP_SOURCE_ID, MAP_STYLE, mapIcon } from "@/lib/map-style";
+import { MAP_CREDITS, MAP_SOURCE_ID, MAP_STYLE, mapImage } from "@/lib/map-style";
 
 // The app's own logo as the map marker: the same teardrop from
 // src/components/Logo.tsx, in the same brand violet, with the category
@@ -310,8 +310,9 @@ function Tiles() {
       layer = maplibreGL({ style: MAP_STYLE, attributionControl: false });
       layer.addTo(map);
       const gl = layer.getMaplibreMap();
-      // The emoji for cafés, pubs and parks, drawn as they're first needed.
-      gl.on("styleimagemissing", (e) => mapIcon(gl, e.id));
+      // The emoji bubbles and the tree and ripple patterns, drawn as they're
+      // first needed.
+      gl.on("styleimagemissing", (e) => mapImage(gl, e.id));
       // OpenFreeMap has answered once the map data's description arrives.
       gl.on("sourcedata", (e) => {
         if (e.sourceId === MAP_SOURCE_ID && e.sourceDataType === "metadata") ready = true;

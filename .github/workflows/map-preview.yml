@@ -1,0 +1,37 @@
+name: Map preview (one-off)
+
+# Pictures of the map style (src/lib/map-style.ts) at a few places and
+# zooms, saved to the preview-screenshots branch, which never deploys.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/running-activity-app-x8ptko]
+    paths: [src/lib/map-style.ts, .github/map-preview/**, .github/workflows/map-preview.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    env:
+      OUT: /tmp/shots
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx esbuild .github/map-preview/entry.ts --bundle --format=esm --outfile=/tmp/preview/app.js
+      - run: |
+          npm i --no-save --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - run: node .github/map-preview/preview.mjs
+      - name: Save to the preview-screenshots branch
+        run: |
+          mkdir -p "$RUNNER_TEMP/branch" && cd "$RUNNER_TEMP/branch"
+          git init -q -b preview-screenshots
+          cp /tmp/shots/*.png .
+          git add . && git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Map preview"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" preview-screenshots
