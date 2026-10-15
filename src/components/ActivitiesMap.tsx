@@ -312,7 +312,7 @@ function Tiles() {
       const gl = layer.getMaplibreMap();
       // The emoji bubbles and the tree and ripple patterns, drawn as they're
       // first needed.
-      gl.on("styleimagemissing", (e) => mapImage(gl, e.id));
+      gl.setMissingStyleImageResolver((id) => mapImage(gl, id));
       // OpenFreeMap has answered once the map data's description arrives.
       gl.on("sourcedata", (e) => {
         if (e.sourceId === MAP_SOURCE_ID && e.sourceDataType === "metadata") ready = true;

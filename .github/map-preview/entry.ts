@@ -5,12 +5,5 @@ import { MAP_STYLE, mapImage } from "../../src/lib/map-style";
 setWorkerUrl("/worker.js");
 const [lat, lng, zoom] = location.hash.slice(1).split(",").map(Number);
 const map = new Map({ container: "map", style: MAP_STYLE, center: [lng, lat], zoom, attributionControl: false });
-map.on("styleimagemissing", (e) => mapImage(map, e.id));
+map.setMissingStyleImageResolver((id) => mapImage(map, id));
 map.on("idle", () => (document.title = "idle"));
-map.on("idle", () => {
-  for (const layer of ["water", "water-waves", "wood-trees", "park-trees", "park-edge"]) {
-    const f = map.queryRenderedFeatures({ layers: [layer] });
-    console.log(`${layer}: ${f.length} features`);
-  }
-  console.log("images:", map.listImages().join(" "));
-});

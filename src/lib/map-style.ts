@@ -429,7 +429,7 @@ export const MAP_STYLE: StyleSpecification = {
 };
 
 /** Draws the map's pictures the first time it asks for each one (its
- * "styleimagemissing" event): the emoji bubbles and the tree and ripple
+ * missing-image resolver): the emoji bubbles and the tree and ripple
  * patterns. Drawn here rather than downloaded, so they cost nothing to
  * fetch, and the bubbles use the phone's own emoji, so they look like the
  * ones in its messages. Anything else the map asks for is left be. */
