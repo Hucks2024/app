@@ -23,9 +23,5 @@
   },
   // Makes iPhone photos (JPEGs) into small WebPs: src/lib/images.ts.
   "images": { "binding": "IMAGES" },
-  // Run the app next to the database (Turso, in AWS Tokyo), so a page's
-  // few trips to it are short and only the finished page crosses the
-  // world. Static files are still served from near each phone.
-  "placement": { "mode": "targeted", "region": "aws:ap-northeast-1" },
   "observability": { "enabled": true }
 }
