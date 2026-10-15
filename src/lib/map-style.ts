@@ -48,28 +48,28 @@ const road = (id: string, classes: string[], minzoom: number, color: string, wid
 // takeaways only right up close, or they'd bury everything else.
 const BUBBLE = { green: "#d6f5c4", food: "#ffe2c2", fun: "#e9ddff", travel: "#d3e9ff", sport: "#fff0b3" };
 const TEXT = { green: "#2d8a3e", food: "#b4531d", fun: "#6d4fc2", travel: "#2b6fb0", sport: "#8a6a00" };
-type Kind = { emoji: string; look: keyof typeof BUBBLE; classes?: string[]; subclasses?: string[]; from: 13 | 15 | 17 };
+type Kind = { emoji: string; look: keyof typeof BUBBLE; classes?: string[]; subclasses?: string[]; from: 13 | 14 | 16 };
 const KINDS: Kind[] = [
   { emoji: "🌳", look: "green", classes: ["park"], from: 13 },
-  { emoji: "☕", look: "food", classes: ["cafe"], from: 15 },
-  { emoji: "🍺", look: "food", classes: ["beer"], subclasses: ["pub"], from: 15 },
-  { emoji: "🍸", look: "food", classes: ["bar"], from: 15 },
-  { emoji: "🚉", look: "travel", subclasses: ["station", "halt"], from: 15 },
-  { emoji: "🚇", look: "travel", subclasses: ["subway"], from: 15 },
-  { emoji: "🎬", look: "fun", classes: ["cinema"], from: 15 },
-  { emoji: "🎭", look: "fun", classes: ["theatre"], from: 15 },
-  { emoji: "🎨", look: "fun", classes: ["art_gallery"], from: 15 },
-  { emoji: "🏛️", look: "fun", classes: ["museum"], from: 15 },
-  { emoji: "🏰", look: "fun", classes: ["castle"], from: 15 },
-  { emoji: "🦁", look: "fun", classes: ["zoo"], from: 15 },
-  { emoji: "🏟️", look: "sport", classes: ["stadium"], from: 15 },
-  { emoji: "🏊", look: "sport", classes: ["swimming"], subclasses: ["swimming_pool"], from: 15 },
-  { emoji: "💪", look: "sport", subclasses: ["fitness_centre"], from: 15 },
-  { emoji: "⚽", look: "sport", subclasses: ["pitch"], from: 17 },
-  { emoji: "🍽️", look: "food", classes: ["restaurant"], from: 17 },
-  { emoji: "🍔", look: "food", classes: ["fast_food"], from: 17 },
-  { emoji: "🍦", look: "food", classes: ["ice_cream"], from: 17 },
-  { emoji: "📚", look: "fun", classes: ["library"], from: 17 },
+  { emoji: "☕", look: "food", classes: ["cafe"], from: 14 },
+  { emoji: "🍺", look: "food", classes: ["beer"], subclasses: ["pub"], from: 14 },
+  { emoji: "🍸", look: "food", classes: ["bar"], from: 14 },
+  { emoji: "🚉", look: "travel", subclasses: ["station", "halt"], from: 14 },
+  { emoji: "🚇", look: "travel", subclasses: ["subway"], from: 14 },
+  { emoji: "🎬", look: "fun", classes: ["cinema"], from: 14 },
+  { emoji: "🎭", look: "fun", classes: ["theatre"], from: 14 },
+  { emoji: "🎨", look: "fun", classes: ["art_gallery"], from: 14 },
+  { emoji: "🏛️", look: "fun", classes: ["museum"], from: 14 },
+  { emoji: "🏰", look: "fun", classes: ["castle"], from: 14 },
+  { emoji: "🦁", look: "fun", classes: ["zoo"], from: 14 },
+  { emoji: "🏟️", look: "sport", classes: ["stadium"], from: 14 },
+  { emoji: "🏊", look: "sport", classes: ["swimming"], subclasses: ["swimming_pool"], from: 14 },
+  { emoji: "💪", look: "sport", subclasses: ["fitness_centre"], from: 14 },
+  { emoji: "⚽", look: "sport", subclasses: ["pitch"], from: 16 },
+  { emoji: "🍽️", look: "food", classes: ["restaurant"], from: 16 },
+  { emoji: "🍔", look: "food", classes: ["fast_food"], from: 16 },
+  { emoji: "🍦", look: "food", classes: ["ice_cream"], from: 16 },
+  { emoji: "📚", look: "fun", classes: ["library"], from: 16 },
 ];
 const pairs = (key: "classes" | "subclasses") => KINDS.flatMap((k) => (k[key] ?? []).map((c) => [c, k.emoji]));
 /** A place's emoji, or "" for one that doesn't get one. */
@@ -311,8 +311,8 @@ export const MAP_STYLE: StyleSpecification = {
 
     // The places people meet (KINDS, above).
     places("parks-places", 13),
-    places("places", 15),
-    places("places-close", 17),
+    places("places", 14),
+    places("places-close", 16),
     {
       id: "neighbourhoods",
       type: "symbol",
