@@ -28,20 +28,20 @@ for (let i = 0; i < 6; i++) {
 }
 console.log("database trips from here:", dbTimes.map(ms).join(" "), "(first includes connecting)");
 
-// Pages, straight requests: time to first byte, first then warm.
+// Pages, straight requests: until the whole page has arrived (pages
+// stream, so the first byte comes before the database has answered).
 for (const path of ["/robots.txt", "/terms", "/info", "/login", "/"]) {
   const times = [];
   let colo = "", cache = "";
   for (let i = 0; i < 6; i++) {
     const t = performance.now();
     const r = await fetch(BASE + path, { headers: { "User-Agent": UA } });
-    const first = performance.now() - t;
     await r.arrayBuffer();
-    times.push(first);
+    times.push(performance.now() - t);
     colo = r.headers.get("cf-ray")?.split("-")[1] ?? "";
     cache = r.headers.get("x-nextjs-cache") ?? r.headers.get("cf-cache-status") ?? "";
   }
-  console.log(`${path.padEnd(12)} first ${ms(times[0])}, then ${times.slice(1).map(ms).join(" ")}  (Cloudflare ${colo}${cache ? ", cache " + cache : ""})`);
+  console.log(`${path.padEnd(12)} first ${ms(times[0])}, then ${times.slice(1).map(ms).join(" ")}, median ${ms(median(times.slice(1)))}  (Cloudflare ${colo}${cache ? ", cache " + cache : ""})`);
 }
 
 // The front page in a phone-sized browser, with its map.
