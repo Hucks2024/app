@@ -4,7 +4,6 @@ import { canSendEmail } from "@/lib/email";
 import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
 import { inApp } from "@/lib/in-app";
-import { POINTS } from "@/lib/level";
 
 export const metadata = { title: "Info" };
 
@@ -46,16 +45,6 @@ export default async function InfoPage() {
       a: (
         <p>
           Tap <strong>Post</strong> and answer 4 questions. You can post after your first meetup.
-        </p>
-      ),
-    },
-    {
-      id: "level",
-      q: "What's my level?",
-      a: (
-        <p>
-          Go to meetups to level up: +{POINTS.meetup} for each one, +{POINTS.thumbsUp} for each 👍 you get. See it
-          on <strong>Me</strong>.
         </p>
       ),
     },

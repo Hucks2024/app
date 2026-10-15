@@ -4,11 +4,9 @@ import type { CurrentUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { goingCounts, liveMeetup } from "@/lib/meetups";
-import { levelFor, meetupsBeenTo, type Level } from "@/lib/level";
 import { blockedEitherWay } from "@/lib/blocks";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
-import PlayerBadge from "@/components/PlayerBadge";
 
 // The map of upcoming meetups. Only reachable by members, both "/" and
 // "/activities" gate on requireUser() before rendering this, so there's
@@ -18,7 +16,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
   const now = new Date();
 
   // Nothing here waits on anything else, so it's all asked for at once.
-  const [{ verified, justVerified }, blocked, upcoming, toThank, beenTo] = await Promise.all([
+  const [{ verified, justVerified }, blocked, upcoming, toThank] = await Promise.all([
     refreshVerified(prisma, user),
     // Not the meetups of anyone they've blocked, or who's blocked them.
     blockedEitherWay(prisma, user.id),
@@ -42,25 +40,22 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
       },
     }),
     meetupToThank(prisma, user.id, now),
-    meetupsBeenTo(prisma, user.id, now),
   ]);
   const activities = upcoming.filter((a) => !blocked.has(a.hostId));
   const hostIds = [...new Set(activities.map((a) => a.hostId))];
 
   // The host's 👍 is the trust signal at the point of choosing: it's what
-  // somebody new looks at before saying they'll turn up. (And this
-  // member's own, for their level.) And how many are going, for the
-  // number on the pin.
+  // somebody new looks at before saying they'll turn up. And how many are
+  // going, for the number on the pin.
   const [hosts, thumbs, going] = await Promise.all([
     hostIds.length ? prisma.user.findMany({ where: { id: { in: hostIds } }, select: { id: true, name: true } }) : [],
-    thumbsFor(prisma, [...hostIds, user.id]),
+    thumbsFor(prisma, hostIds),
     goingCounts(
       prisma,
       activities.map((a) => a.id)
     ),
   ]);
   const hostName = new Map(hosts.map((h) => [h.id, h.name]));
-  const level = levelFor(beenTo, thumbs.get(user.id) ?? 0);
 
   const mapActivities = activities.map((a) => ({
     id: a.id,
@@ -89,8 +84,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
         activities={mapActivities}
         post={{ href: "/activities/new", label: verified ? "Post a meetup" : "How to post a meetup" }}
         canPost={verified}
-        notice={noticeFor(verified, justVerified, toThank, level)}
-        player={<PlayerBadge user={user} level={level} />}
+        notice={noticeFor(verified, justVerified, toThank)}
       />
     </>
   );
@@ -119,7 +113,7 @@ async function meetupToThank(prisma: PrismaClient, userId: string, now: Date) {
 
 /** The one thing worth saying to this member on the map right now, most
  * important first, or nothing. */
-function noticeFor(verified: boolean, justVerified: boolean, recent: { id: string; title: string } | null, level: Level) {
+function noticeFor(verified: boolean, justVerified: boolean, recent: { id: string; title: string } | null) {
   if (justVerified) {
     return (
       <MapNotice id="verified">
@@ -140,19 +134,6 @@ function noticeFor(verified: boolean, justVerified: boolean, recent: { id: strin
         <strong className="text-slate-900">How was {recent.title}? 👍</strong>
         <br />
         Thank the people you met.
-      </MapNotice>
-    );
-  }
-
-  // Each new level, until it's closed; then nothing until the next one.
-  if (level.level > 1) {
-    return (
-      <MapNotice id={`level-${level.level}`} href="/profile#level" cta="See your level">
-        <strong className="text-slate-900">
-          🎉 Level {level.level}: {level.title} {level.emoji}
-        </strong>
-        <br />
-        Keep going to meetups.
       </MapNotice>
     );
   }
