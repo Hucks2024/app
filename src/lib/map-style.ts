@@ -80,15 +80,21 @@ const EMOJI = [
 const EMOJI_PREFIX = "emoji:";
 const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
 
-/** The bubbles that show from one zoom in. Park names always; every other
- * name only right up close, where there's room for them. */
+/** The bubbles that show from one zoom in: at first only the best known
+ * in each patch of the map (OpenMapTiles ranks them), then all of them a
+ * step closer. Park names always; every other name only right up close,
+ * where there's room for them. */
 const places = (id: string, from: Kind["from"]): LayerSpecification => ({
   id,
   type: "symbol",
   source: SOURCE,
   "source-layer": "poi",
   minzoom: from,
-  filter: ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
+  filter: [
+    "all",
+    ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
+    ["step", ["zoom"], ["<=", ["get", "rank"], 1], from + 1, true],
+  ],
   layout: {
     "icon-image": ["concat", EMOJI_PREFIX, EMOJI],
     "symbol-sort-key": ["get", "rank"],
@@ -309,10 +315,11 @@ export const MAP_STYLE: StyleSpecification = {
       paint: { "text-color": "#5d5668", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
     },
 
-    // The places people meet (KINDS, above).
-    places("parks-places", 13),
-    places("places", 14),
+    // The places people meet (KINDS, above). Parks last, so they're
+    // placed first and win their spot over a café next door.
     places("places-close", 16),
+    places("places", 14),
+    places("parks-places", 13),
     {
       id: "neighbourhoods",
       type: "symbol",

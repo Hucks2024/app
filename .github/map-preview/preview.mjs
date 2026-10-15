@@ -28,6 +28,9 @@ const VIEWS = [
   ["6-riverside", 51.5055, -0.0865, 15.5],
   ["7-close", 51.5133, -0.1335, 16.3],
   ["8-closest", 51.5145, -0.1318, 17.2],
+  ["9-near-me-centre", 51.513, -0.13, 14],
+  ["10-near-me-suburb", 51.4618, -0.138, 14],
+  ["11-near-me-oxford", 51.752, -1.2577, 14],
 ];
 const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 for (const [name, lat, lng, zoom] of VIEWS) {
