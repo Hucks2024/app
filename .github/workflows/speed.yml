@@ -1,0 +1,25 @@
+name: Speed check (one-off)
+
+# Times the live app from here: pages, the database trip and the map.
+# Public pages only. See .github/speed/speed.mjs.
+on:
+  workflow_dispatch:
+
+jobs:
+  speed:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .github/speed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Speed
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: node speed.mjs
