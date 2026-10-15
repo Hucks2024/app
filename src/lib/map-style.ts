@@ -80,23 +80,20 @@ const EMOJI = [
 const EMOJI_PREFIX = "emoji:";
 const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
 
-/** The bubbles that show from one zoom in: at first only the best known
- * in each patch of the map (OpenMapTiles ranks them), then all of them a
- * step closer. Park names always; every other name only right up close,
- * where there's room for them. */
+/** The bubbles that show from one zoom in: well spread out at first, so
+ * there's a sprinkling rather than a crowd, then closer together a step
+ * in. Park names always; every other name only right up close, where
+ * there's room for them. */
 const places = (id: string, from: Kind["from"]): LayerSpecification => ({
   id,
   type: "symbol",
   source: SOURCE,
   "source-layer": "poi",
   minzoom: from,
-  filter: [
-    "all",
-    ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
-    ["step", ["zoom"], ["<=", ["get", "rank"], 3], from + 1, true],
-  ],
+  filter: ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
   layout: {
     "icon-image": ["concat", EMOJI_PREFIX, EMOJI],
+    "icon-padding": ["step", ["zoom"], 22, from + 1, 2],
     "symbol-sort-key": ["get", "rank"],
     "text-field": ["step", ["zoom"], ["case", ["==", ["get", "class"], "park"], NAME, ""], 17, NAME],
     "text-font": ["Noto Sans Bold"],
