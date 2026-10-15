@@ -81,6 +81,7 @@ jobs:
           { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$BODY" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$KEY_PATH"
           openssl pkey -in "$KEY_PATH" -noout 2>/dev/null ||
             bad "ASC_KEY isn't a whole .p8 key: it has ${#BODY} key characters, and Apple's have about 184. Paste all of the .p8 file into it again."
+          KEY_PATH="$KEY_PATH" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" node ../.github/asc-check.mjs
           AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
 
