@@ -71,7 +71,6 @@ jobs:
             echo "::add-mask::${!v}"
           done
           bad() { echo "::error::$1"; exit 1; }
-          [[ $TEAM_ID =~ ^[A-Z0-9]{10}$ ]] || bad "APPLE_TEAM_ID should be 10 capital letters and numbers (developer.apple.com, Account, Membership details)."
           [[ $ASC_KEY_ID =~ ^[A-Z0-9]{10}$ ]] || bad "ASC_KEY_ID should be 10 capital letters and numbers (the key's Key ID)."
           [[ $ASC_ISSUER_ID =~ ^[0-9a-fA-F-]{36}$ ]] || bad "ASC_ISSUER_ID should look like 1a2b3c4d-1a2b-1a2b-1a2b-1a2b3c4d5e6f (the Issuer ID)."
 
@@ -81,7 +80,18 @@ jobs:
           { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$BODY" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$KEY_PATH"
           openssl pkey -in "$KEY_PATH" -noout 2>/dev/null ||
             bad "ASC_KEY isn't a whole .p8 key: it has ${#BODY} key characters, and Apple's have about 184. Paste all of the .p8 file into it again."
-          KEY_PATH="$KEY_PATH" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" node ../.github/asc-check.mjs
+          TEAM_FILE="$RUNNER_TEMP/team" KEY_PATH="$KEY_PATH" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" node ../.github/asc-check.mjs
+          if [[ -s $RUNNER_TEMP/team ]]; then
+            ACCOUNT_TEAM=$(cat "$RUNNER_TEMP/team")
+            echo "::add-mask::$ACCOUNT_TEAM"
+            if [[ $ACCOUNT_TEAM == "$TEAM_ID" ]]; then
+              echo "APPLE_TEAM_ID matches the account."
+            else
+              echo "::warning::APPLE_TEAM_ID isn't this account's Team ID (which ends in ${ACCOUNT_TEAM: -3}), so the build uses the account's."
+              TEAM_ID=$ACCOUNT_TEAM
+            fi
+          fi
+          [[ $TEAM_ID =~ ^[A-Z0-9]{10}$ ]] || bad "APPLE_TEAM_ID should be 10 capital letters and numbers (developer.apple.com, Account, Membership details)."
           AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH"
                 -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
 
