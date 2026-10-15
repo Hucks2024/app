@@ -1,4 +1,4 @@
-import type { ExpressionSpecification, Map as MapLibreMap, StyleSpecification } from "maplibre-gl";
+import type { ExpressionSpecification, LayerSpecification, Map as MapLibreMap, StyleSpecification } from "maplibre-gl";
 
 // Packmates' own map: laid out like the maps everyone already knows (pale
 // land, green parks, blue water, yellow main roads, orange motorways), so
@@ -21,46 +21,95 @@ const grow = (...stops: [number, number][]): ExpressionSpecification =>
   ["interpolate", ["exponential", 1.5], ["zoom"], ...stops.flat()] as ExpressionSpecification;
 
 const MOTORWAY = ["motorway"];
-const MAIN = ["trunk", "primary"];
+const TRUNK = ["trunk"];
+const PRIMARY = ["primary"];
 const SECONDARY = ["secondary", "tertiary"];
 const MINOR = ["minor", "service"];
 
 const roadLine = { "line-cap": "round", "line-join": "round" } as const;
 
-/** The emoji for a place, or "" for one not worth a picture. Stations by
- * kind first, then everything else by what it is. */
-const PLACE_EMOJI: ExpressionSpecification = [
-  "match",
-  ["get", "subclass"],
-  ["station", "halt"], "🚉",
-  "subway", "🚇",
-  "pub", "🍺",
-  "fitness_centre", "💪",
-  "pitch", "⚽",
-  "swimming_pool", "🏊",
-  [
-    "match",
-    ["get", "class"],
-    "cafe", "☕",
-    "beer", "🍺",
-    "bar", "🍸",
-    "restaurant", "🍽️",
-    "fast_food", "🍔",
-    "ice_cream", "🍦",
-    "park", "🌳",
-    "stadium", "🏟️",
-    "swimming", "🏊",
-    "zoo", "🦁",
-    "library", "📚",
-    "cinema", "🎬",
-    "theatre", "🎭",
-    "art_gallery", "🎨",
-    "museum", "🏛️",
-    "castle", "🏰",
-    "",
-  ],
+/** One kind of road: its edge or its middle, drawn as a line that grows
+ * with the zoom. */
+const road = (id: string, classes: string[], minzoom: number, color: string, width: ExpressionSpecification): LayerSpecification => ({
+  id,
+  type: "line",
+  source: SOURCE,
+  "source-layer": "transportation",
+  minzoom,
+  filter: is("class", classes),
+  layout: roadLine,
+  paint: { "line-color": color, "line-width": width },
+});
+
+// The places people meet, as emoji in a coloured bubble: what each looks
+// like, which OpenStreetMap places it's for (by class, or by subclass
+// where the class is too broad), and how close in it shows. Parks first,
+// since "meet at the park gates" is half of all meetups; restaurants and
+// takeaways only right up close, or they'd bury everything else.
+const BUBBLE = { green: "#d6f5c4", food: "#ffe2c2", fun: "#e9ddff", travel: "#d3e9ff", sport: "#fff0b3" };
+const TEXT = { green: "#2d8a3e", food: "#b4531d", fun: "#6d4fc2", travel: "#2b6fb0", sport: "#8a6a00" };
+type Kind = { emoji: string; look: keyof typeof BUBBLE; classes?: string[]; subclasses?: string[]; from: 13 | 15 | 17 };
+const KINDS: Kind[] = [
+  { emoji: "🌳", look: "green", classes: ["park"], from: 13 },
+  { emoji: "☕", look: "food", classes: ["cafe"], from: 15 },
+  { emoji: "🍺", look: "food", classes: ["beer"], subclasses: ["pub"], from: 15 },
+  { emoji: "🍸", look: "food", classes: ["bar"], from: 15 },
+  { emoji: "🚉", look: "travel", subclasses: ["station", "halt"], from: 15 },
+  { emoji: "🚇", look: "travel", subclasses: ["subway"], from: 15 },
+  { emoji: "🎬", look: "fun", classes: ["cinema"], from: 15 },
+  { emoji: "🎭", look: "fun", classes: ["theatre"], from: 15 },
+  { emoji: "🎨", look: "fun", classes: ["art_gallery"], from: 15 },
+  { emoji: "🏛️", look: "fun", classes: ["museum"], from: 15 },
+  { emoji: "🏰", look: "fun", classes: ["castle"], from: 15 },
+  { emoji: "🦁", look: "fun", classes: ["zoo"], from: 15 },
+  { emoji: "🏟️", look: "sport", classes: ["stadium"], from: 15 },
+  { emoji: "🏊", look: "sport", classes: ["swimming"], subclasses: ["swimming_pool"], from: 15 },
+  { emoji: "💪", look: "sport", subclasses: ["fitness_centre"], from: 15 },
+  { emoji: "⚽", look: "sport", subclasses: ["pitch"], from: 17 },
+  { emoji: "🍽️", look: "food", classes: ["restaurant"], from: 17 },
+  { emoji: "🍔", look: "food", classes: ["fast_food"], from: 17 },
+  { emoji: "🍦", look: "food", classes: ["ice_cream"], from: 17 },
+  { emoji: "📚", look: "fun", classes: ["library"], from: 17 },
 ];
+const pairs = (key: "classes" | "subclasses") => KINDS.flatMap((k) => (k[key] ?? []).map((c) => [c, k.emoji]));
+/** A place's emoji, or "" for one that doesn't get one. */
+const EMOJI = [
+  "match", ["get", "subclass"], ...pairs("subclasses").flat(),
+  ["match", ["get", "class"], ...pairs("classes").flat(), ""],
+] as unknown as ExpressionSpecification;
 const EMOJI_PREFIX = "emoji:";
+const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
+
+/** The bubbles that show from one zoom in. Park names always; every other
+ * name only right up close, where there's room for them. */
+const places = (id: string, from: Kind["from"]): LayerSpecification => ({
+  id,
+  type: "symbol",
+  source: SOURCE,
+  "source-layer": "poi",
+  minzoom: from,
+  filter: ["match", EMOJI, KINDS.filter((k) => k.from === from).map((k) => k.emoji), true, false],
+  layout: {
+    "icon-image": ["concat", EMOJI_PREFIX, EMOJI],
+    "symbol-sort-key": ["get", "rank"],
+    "text-field": ["step", ["zoom"], ["case", ["==", ["get", "class"], "park"], NAME, ""], 17, NAME],
+    "text-font": ["Noto Sans Bold"],
+    "text-size": 12,
+    "text-max-width": 8,
+    "text-anchor": "top",
+    "text-offset": [0, 1.4],
+    "text-optional": true,
+  },
+  paint: {
+    "text-color": [
+      "match", EMOJI,
+      ...KINDS.flatMap((k) => [k.emoji, TEXT[k.look]]),
+      "#5d5668",
+    ] as ExpressionSpecification,
+    "text-halo-color": "#ffffff",
+    "text-halo-width": 1.5,
+  },
+});
 
 export const MAP_STYLE: StyleSpecification = {
   version: 8,
@@ -191,7 +240,7 @@ export const MAP_STYLE: StyleSpecification = {
       minzoom: 14,
       filter: is("class", ["path", "track"]),
       layout: roadLine,
-      paint: { "line-color": "#c9a979", "line-width": grow([14, 1], [18, 2.5]), "line-dasharray": [2, 1.5] },
+      paint: { "line-color": "#d9c19b", "line-width": grow([14, 0.8], [18, 2]), "line-dasharray": [2, 1.5] },
     },
     {
       id: "rail",
@@ -200,88 +249,18 @@ export const MAP_STYLE: StyleSpecification = {
       "source-layer": "transportation",
       minzoom: 11,
       filter: is("class", ["rail", "transit"]),
-      paint: { "line-color": "#bdb6c9", "line-width": grow([11, 1], [18, 3]), "line-dasharray": [3, 2] },
+      paint: { "line-color": "#cbc4d6", "line-width": grow([11, 1], [18, 2.5]), "line-dasharray": [3, 2] },
     },
-    {
-      id: "minor-edge",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 13,
-      filter: is("class", MINOR),
-      layout: roadLine,
-      paint: { "line-color": "#e3dbcf", "line-width": grow([13, 1.5], [14, 4], [16, 11], [18, 28]) },
-    },
-    {
-      id: "secondary-edge",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 10,
-      filter: is("class", SECONDARY),
-      layout: roadLine,
-      paint: { "line-color": "#dccfb9", "line-width": grow([10, 1.5], [12, 3.5], [14, 7], [16, 15], [18, 34]) },
-    },
-    {
-      id: "main-edge",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 6,
-      filter: is("class", MAIN),
-      layout: roadLine,
-      paint: { "line-color": "#e8bf55", "line-width": grow([6, 0.8], [8, 1.8], [10, 3], [12, 5], [14, 9], [16, 17], [18, 38]) },
-    },
-    {
-      id: "motorway-edge",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 5,
-      filter: is("class", MOTORWAY),
-      layout: roadLine,
-      paint: { "line-color": "#e8933a", "line-width": grow([5, 1], [8, 2.6], [10, 3.8], [12, 6], [14, 10], [16, 19], [18, 40]) },
-    },
-    {
-      id: "minor",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 13,
-      filter: is("class", MINOR),
-      layout: roadLine,
-      paint: { "line-color": "#ffffff", "line-width": grow([13, 0.8], [14, 2.6], [16, 8], [18, 24]) },
-    },
-    {
-      id: "secondary",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 10,
-      filter: is("class", SECONDARY),
-      layout: roadLine,
-      paint: { "line-color": "#ffffff", "line-width": grow([10, 0.8], [12, 2.2], [14, 5], [16, 12], [18, 30]) },
-    },
-    {
-      id: "main",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 6,
-      filter: is("class", MAIN),
-      layout: roadLine,
-      paint: { "line-color": "#ffe27a", "line-width": grow([6, 0.4], [8, 1], [10, 1.8], [12, 3.4], [14, 7], [16, 14], [18, 34]) },
-    },
-    {
-      id: "motorway",
-      type: "line",
-      source: SOURCE,
-      "source-layer": "transportation",
-      minzoom: 5,
-      filter: is("class", MOTORWAY),
-      layout: roadLine,
-      paint: { "line-color": "#ffb653", "line-width": grow([5, 0.5], [8, 1.5], [10, 2.4], [12, 4.2], [14, 8], [16, 16], [18, 36]) },
-    },
+    road("minor-edge", MINOR, 13, "#e3dbcf", grow([13, 1.5], [14, 4], [16, 11], [18, 28])),
+    road("secondary-edge", SECONDARY, 10, "#ddd0ba", grow([10, 1.4], [12, 3.4], [14, 7], [16, 15], [18, 34])),
+    road("primary-edge", PRIMARY, 8, "#ead08a", grow([8, 0.9], [10, 2.4], [12, 4.4], [14, 8.5], [16, 16], [18, 36])),
+    road("trunk-edge", TRUNK, 6, "#e6bb4e", grow([6, 0.7], [8, 1.6], [10, 3], [12, 5], [14, 9], [16, 17], [18, 38])),
+    road("motorway-edge", MOTORWAY, 5, "#e8953a", grow([5, 1], [8, 2.6], [10, 3.8], [12, 6], [14, 10], [16, 19], [18, 40])),
+    road("minor", MINOR, 13, "#ffffff", grow([13, 0.8], [14, 2.6], [16, 8], [18, 24])),
+    road("secondary", SECONDARY, 10, "#ffffff", grow([10, 0.7], [12, 2], [14, 5], [16, 12], [18, 30])),
+    road("primary", PRIMARY, 8, "#fff3b8", grow([8, 0.5], [10, 1.4], [12, 3], [14, 6.5], [16, 13.5], [18, 33])),
+    road("trunk", TRUNK, 6, "#ffdf73", grow([6, 0.4], [8, 1], [10, 1.8], [12, 3.4], [14, 7], [16, 14], [18, 34])),
+    road("motorway", MOTORWAY, 5, "#ffbf5e", grow([5, 0.5], [8, 1.5], [10, 2.4], [12, 4.2], [14, 8], [16, 16], [18, 36])),
 
     // Names: water, then streets close up, then places.
     {
@@ -320,7 +299,7 @@ export const MAP_STYLE: StyleSpecification = {
       source: SOURCE,
       "source-layer": "transportation_name",
       minzoom: 15,
-      filter: is("class", [...MAIN, ...SECONDARY, ...MINOR]),
+      filter: is("class", [...TRUNK, ...PRIMARY, ...SECONDARY, ...MINOR]),
       layout: {
         "symbol-placement": "line",
         "text-field": NAME,
@@ -330,34 +309,10 @@ export const MAP_STYLE: StyleSpecification = {
       paint: { "text-color": "#5d5668", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
     },
 
-    // The places people meet, as emoji in a white bubble, drawn on the
-    // phone the first time each one is needed (mapIcon, below). Park names
-    // from the start, since "meet at the park gates" is half of all
-    // meetups; everywhere else's name only right up close.
-    {
-      id: "places",
-      type: "symbol",
-      source: SOURCE,
-      "source-layer": "poi",
-      minzoom: 15,
-      filter: ["!=", PLACE_EMOJI, ""],
-      layout: {
-        "icon-image": ["concat", EMOJI_PREFIX, PLACE_EMOJI],
-        "symbol-sort-key": ["get", "rank"],
-        "text-field": ["step", ["zoom"], ["case", ["==", ["get", "class"], "park"], NAME, ""], 17, NAME],
-        "text-font": ["Noto Sans Bold"],
-        "text-size": 12,
-        "text-max-width": 8,
-        "text-anchor": "top",
-        "text-offset": [0, 1.3],
-        "text-optional": true,
-      },
-      paint: {
-        "text-color": ["match", ["get", "class"], "park", "#2d8a3e", ["cafe", "beer", "bar", "restaurant", "fast_food", "ice_cream"], "#b4531d", "#5d5668"],
-        "text-halo-color": "#ffffff",
-        "text-halo-width": 1.5,
-      },
-    },
+    // The places people meet (KINDS, above).
+    places("parks-places", 13),
+    places("places", 15),
+    places("places-close", 17),
     {
       id: "neighbourhoods",
       type: "symbol",
@@ -431,25 +386,35 @@ export const MAP_STYLE: StyleSpecification = {
  * like the ones in its messages. Anything else it asks for is left be. */
 export function mapIcon(map: MapLibreMap, id: string) {
   if (!id.startsWith(EMOJI_PREFIX) || map.hasImage(id)) return;
+  const emoji = id.slice(EMOJI_PREFIX.length);
+  const look = lookOf(emoji);
+  if (!look) return;
   const ratio = 2;
-  const size = 26 * ratio;
+  const size = 32 * ratio;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const middle = size / 2;
-  ctx.shadowColor = "rgba(46, 16, 101, 0.28)";
+  const radius = middle - 3 * ratio;
+  // A white ring with a soft shadow, filled with the kind's colour.
+  ctx.shadowColor = "rgba(46, 16, 101, 0.3)";
   ctx.shadowBlur = 3 * ratio;
   ctx.shadowOffsetY = ratio;
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(middle, middle, middle - 3 * ratio, 0, Math.PI * 2);
+  ctx.arc(middle, middle, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowColor = "transparent";
-  ctx.font = `${13 * ratio}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.fillStyle = BUBBLE[look];
+  ctx.beginPath();
+  ctx.arc(middle, middle, radius - 2 * ratio, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = `${16 * ratio}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(id.slice(EMOJI_PREFIX.length), middle, middle + ratio);
+  ctx.fillStyle = "#000000";
+  ctx.fillText(emoji, middle, middle + ratio);
   map.addImage(id, ctx.getImageData(0, 0, size, size), { pixelRatio: ratio });
 }
 
