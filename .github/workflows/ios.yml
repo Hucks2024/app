@@ -50,9 +50,11 @@ jobs:
           quiet build xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
             -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 
-      # Apple keeps the signing certificate (cloud signing), so nothing
-      # secret lives on this machine beyond the API key, for this run only.
-      # Each run's number is the build number, which must always go up.
+      # The API key does all the talking to Apple (xcodebuild's own sign in
+      # is refused for this account): each run makes its own distribution
+      # certificate and App Store profile, signs the app with them, sends
+      # it, and removes them again, so nothing outlives the run. Each run's
+      # number is the build number, which must always go up.
       - name: Sign and send to App Store Connect
         if: env.CAN_UPLOAD == 'true'
         env:
@@ -80,41 +82,70 @@ jobs:
           { echo "-----BEGIN PRIVATE KEY-----"; printf '%s' "$BODY" | fold -w 64; echo; echo "-----END PRIVATE KEY-----"; } > "$KEY_PATH"
           openssl pkey -in "$KEY_PATH" -noout 2>/dev/null ||
             bad "ASC_KEY isn't a whole .p8 key: it has ${#BODY} key characters, and Apple's have about 184. Paste all of the .p8 file into it again."
-          TEAM_FILE="$RUNNER_TEMP/team" KEY_PATH="$KEY_PATH" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" node ../.github/asc-check.mjs
-          if [[ -s $RUNNER_TEMP/team ]]; then
-            ACCOUNT_TEAM=$(cat "$RUNNER_TEMP/team")
-            echo "::add-mask::$ACCOUNT_TEAM"
-            if [[ $ACCOUNT_TEAM == "$TEAM_ID" ]]; then
-              echo "APPLE_TEAM_ID matches the account."
-            else
-              echo "::warning::APPLE_TEAM_ID isn't this account's Team ID (which ends in ${ACCOUNT_TEAM: -3}), so the build uses the account's."
-              TEAM_ID=$ACCOUNT_TEAM
-            fi
-          fi
-          [[ $TEAM_ID =~ ^[A-Z0-9]{10}$ ]] || bad "APPLE_TEAM_ID should be 10 capital letters and numbers (developer.apple.com, Account, Membership details)."
-          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH"
-                -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
 
-          # Built unsigned: signing it here would need an iPhone registered
-          # to the account. The export below signs it for the App Store.
+          S="$RUNNER_TEMP/sign"
+          KEYCHAIN="$RUNNER_TEMP/sign.keychain-db"
+          mkdir -p "$S"
+          asc() { KEY_PATH="$KEY_PATH" ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" node ../.github/asc.mjs "$@"; }
+          finish() {
+            asc cleanup "$S" || true
+            security delete-keychain "$KEYCHAIN" 2> /dev/null || true
+            rm -rf "$S" "$KEY_PATH"
+          }
+          trap finish EXIT
+
+          asc check "$S/team"
+          ACCOUNT_TEAM=$(cat "$S/team")
+          echo "::add-mask::$ACCOUNT_TEAM"
+          if [[ $ACCOUNT_TEAM != "$TEAM_ID" ]]; then
+            echo "::warning::APPLE_TEAM_ID isn't this account's Team ID (which ends in ${ACCOUNT_TEAM: -3}), so the build uses the account's."
+            TEAM_ID=$ACCOUNT_TEAM
+          fi
+
+          # This run's certificate (its private key never leaves this
+          # machine) and profile, in a keychain of their own.
+          /usr/bin/openssl req -new -newkey rsa:2048 -nodes -subj "/CN=Packmates/C=GB" \
+            -keyout "$S/dist.key" -out "$S/dist.csr" 2> /dev/null
+          asc sign "$S"
+          PASS=$(/usr/bin/openssl rand -hex 16)
+          /usr/bin/openssl x509 -inform DER -in "$S/dist.cer" -out "$S/dist.pem"
+          /usr/bin/openssl pkcs12 -export -inkey "$S/dist.key" -in "$S/dist.pem" -out "$S/dist.p12" -passout "pass:$PASS"
+          security create-keychain -p "$PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASS" "$KEYCHAIN"
+          security import "$S/dist.p12" -k "$KEYCHAIN" -P "$PASS" -T /usr/bin/codesign -T /usr/bin/security > /dev/null
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PASS" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          for d in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$d"
+            cp "$S/profile.mobileprovision" "$d/$(cat "$S/profile.uuid").mobileprovision"
+          done
+          PROFILE=$(cat "$S/profile.name")
+
+          # Only the app's own target is signed with them (the plugins it's
+          # built from aren't signed separately).
+          sed -i '' "s/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual; DEVELOPMENT_TEAM = $TEAM_ID; CODE_SIGN_IDENTITY = \"Apple Distribution\"; \"CODE_SIGN_IDENTITY[sdk=iphoneos*]\" = \"Apple Distribution\"; PROVISIONING_PROFILE_SPECIFIER = \"$PROFILE\";/" \
+            ios/App/App.xcodeproj/project.pbxproj
+
           quiet archive xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            archive
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" archive
 
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>upload</string>
+            <key>destination</key><string>export</string>
             <key>teamID</key><string>$TEAM_ID</string>
-            <key>signingStyle</key><string>automatic</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict><key>live.packmates.app</key><string>$PROFILE</string></dict>
             <key>manageAppVersionAndBuildNumber</key><false/>
           </dict></plist>
           PLIST
 
-          quiet upload xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
-            "${AUTH[@]}"
-          rm -f "$KEY_PATH"
+          quiet export xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :ApplicationProperties:CFBundleShortVersionString" "$RUNNER_TEMP/App.xcarchive/Info.plist")
+          asc upload "$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)" "$VERSION" "$BUILD_NUMBER"
