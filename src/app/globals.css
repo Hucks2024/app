@@ -97,6 +97,8 @@ body {
   width: 100%;
   height: 100%;
   display: block;
+  /* So today's gold edge isn't clipped at the sides. */
+  overflow: visible;
 }
 .map-pin-emoji {
   position: absolute;
@@ -133,6 +135,33 @@ body {
 
 .map-pin:hover {
   transform: scale(1.12);
+}
+
+/* On today: a gold edge, and a gold ring pulsing out across the ground
+   under the tip, like a quest marker in a game. The pin itself stays
+   still; only the ring moves. */
+.map-pin-today::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 44px;
+  height: 16px;
+  margin-left: -22px;
+  border: 3px solid #fbbf24;
+  border-radius: 50%;
+  z-index: -1;
+  animation: quest-ring 1.6s ease-out infinite;
+}
+@keyframes quest-ring {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 /* Leaflet map wrapper (ActivitiesMap). iOS Safari's address bar
@@ -638,6 +667,7 @@ button[aria-busy="true"] {
    moving things gets the app without any of it. */
 @media (prefers-reduced-motion: reduce) {
   .map-pin,
+  .map-pin-today::before,
   .locate-btn svg,
   .soon-badge,
   .chip-on,
@@ -1151,6 +1181,81 @@ body:has(.map-screen) {
     0 0 0 2px #fff,
     0 4px 14px rgb(46 16 101 / 0.22);
 }
+/* The filters and, in the corner, the member's level (PlayerBadge). */
+.map-top-row {
+  display: flex;
+  align-items: flex-start;
+}
+.map-top-row > .chip-row {
+  flex: 1;
+  min-width: 0;
+}
+/* A little narrower, to make room for the badge on a phone. */
+.map-top-row .chip {
+  padding: 0 13px;
+}
+.player-badge {
+  position: relative;
+  flex: none;
+  width: 60px;
+  height: 68px;
+  margin: 4px 10px 0 0;
+}
+.player-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 60px;
+  overflow: visible;
+  filter: drop-shadow(0 4px 10px rgb(46 16 101 / 0.3));
+}
+.player-ring-track {
+  fill: #fff;
+  stroke: #ede9fe;
+  stroke-width: 5;
+}
+.player-ring-fill {
+  fill: none;
+  stroke: #fbbf24;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.player-face {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+.player-level {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #6d28d9;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(46 16 101 / 0.3);
+}
+/* Points to the next level, on Me. */
+.level-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #ede9fe;
+  overflow: hidden;
+}
+.level-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
 .map-cards {
   display: flex;
   flex-direction: column;

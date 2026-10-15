@@ -79,7 +79,7 @@ const EMOJI = [
 ] as unknown as ExpressionSpecification;
 const EMOJI_PREFIX = "emoji:";
 const PATTERN_PREFIX = "pattern:";
-const CITY_PARKS = ["park", "garden", "village_green", "recreation_ground", "common"];
+const CITY_PARKS = ["park", "village_green", "recreation_ground", "common"];
 const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
 
 /** The bubbles that show from one zoom in: well spread out at first, so

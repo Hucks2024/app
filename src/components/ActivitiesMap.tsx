@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
+import { isToday } from "date-fns";
 import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
 import { getVersion, setWorkerUrl } from "maplibre-gl";
 import Link from "next/link";
@@ -33,21 +34,23 @@ import { MAP_CREDITS, MAP_SOURCE_ID, MAP_STYLE, mapImage } from "@/lib/map-style
 const PIN_W = 58;
 const PIN_H = 83;
 
-function emojiIcon(emoji: string, going: number) {
+function emojiIcon(emoji: string, going: number, today: boolean) {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this
   // replaced needed one copy per marker with a unique id, or whichever
   // marker Leaflet unmounted first took the definition down and left the
   // rest unpainted.
   const svg = `
     <svg class="map-pin-svg" viewBox="136 74 240 344" aria-hidden="true">
-      <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="${BRAND}"/>
+      <path d="M256 74 q-120 0 -120 120 q0 90 120 224 q120 -134 120 -224 q0 -120 -120 -120 Z" fill="${BRAND}"${
+        today ? ` stroke="#fbbf24" stroke-width="16"` : ""
+      }/>
       <circle cx="256" cy="196" r="80" fill="#fff"/>
     </svg>`;
   // How many are going, the host included. Nothing on the logged-out map,
   // where that's members-only and comes through as 0.
   const count = going > 0 ? `<span class="map-pin-count">${going}</span>` : "";
   const html =
-    `<div class="map-pin">` +
+    `<div class="map-pin${today ? " map-pin-today" : ""}">` +
     `${svg}<span class="map-pin-emoji">${emoji}</span>` +
     `${count}</div>`;
 
@@ -473,7 +476,10 @@ export default function ActivitiesMap({
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
     for (const a of activities) {
-      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, a.joinedCount));
+      // On today, it shines (see .map-pin-today). The logged-out map has
+      // no times, so nothing there does.
+      const today = isToday(new Date(a.startsAt));
+      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, a.joinedCount, today));
     }
     return map;
   }, [activities]);

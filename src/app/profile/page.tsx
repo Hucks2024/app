@@ -3,6 +3,7 @@ import { hasOwnPassword, requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ensureMemberNumber, formatMemberNumber } from "@/lib/member";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
+import { POINTS, levelFor, meetupsBeenTo } from "@/lib/level";
 import { categoryFor } from "@/lib/categories";
 import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
@@ -38,11 +39,12 @@ export default async function ProfilePage({
   const meetup = { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } };
 
   // None of these wait on each other, so they're all asked for at once.
-  const [memberNumber, { verified }, thumbs, upcoming, past, blocks, app] = await Promise.all([
+  const [memberNumber, { verified }, thumbs, beenTo, upcoming, past, blocks, app] = await Promise.all([
     // Given out the first time someone opens Me, and kept from then on.
     user.memberNumber ?? ensureMemberNumber(prisma, user.id),
     refreshVerified(prisma, user),
     thumbsFor(prisma, [user.id]).then((t) => t.get(user.id) ?? 0),
+    meetupsBeenTo(prisma, user.id, now),
     prisma.participation.findMany({
       where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: now } } },
       orderBy: { activity: { startsAt: "asc" } },
@@ -68,6 +70,7 @@ export default async function ProfilePage({
     // In the App Store app: no "get the app" card.
     inApp(),
   ]);
+  const level = levelFor(beenTo, thumbs);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
@@ -95,6 +98,32 @@ export default async function ProfilePage({
           ✓ Saved.
         </p>
       )}
+
+      {/* The game: what level you're on, how far to the next, and the two
+          ways to get there (see src/lib/level.ts). */}
+      <div id="level" className="card mb-4 scroll-mt-20">
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-lg font-bold text-slate-900">
+            {level.emoji} Level {level.level} · {level.title}
+          </p>
+          <p className="flex-none text-sm font-semibold text-slate-500">
+            {level.into} / {level.span}
+          </p>
+        </div>
+        <div
+          className="level-bar mt-2"
+          role="progressbar"
+          aria-label="Points to the next level"
+          aria-valuemin={0}
+          aria-valuemax={level.span}
+          aria-valuenow={level.into}
+        >
+          <span style={{ width: `${Math.round((100 * level.into) / level.span)}%` }} />
+        </div>
+        <p className="mt-2 text-sm text-slate-600">
+          Go to a meetup: +{POINTS.meetup} · Get a 👍: +{POINTS.thumbsUp}
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="card !p-4 text-center">

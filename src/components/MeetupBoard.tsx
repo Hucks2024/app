@@ -46,6 +46,7 @@ export default function MeetupBoard({
   post,
   canPost = false,
   notice,
+  player,
   stage = "fill",
 }: {
   activities: MapActivity[];
@@ -60,6 +61,8 @@ export default function MeetupBoard({
   canPost?: boolean;
   // A tip floating over the top of the map (see MapNotice).
   notice?: React.ReactNode;
+  // The member's level, in the top corner (see PlayerBadge).
+  player?: React.ReactNode;
 }) {
   const [day, setDay] = useState<Day>("ANY");
   // Set once the viewer taps "Near me" and allows it; adds distances.
@@ -148,32 +151,35 @@ export default function MeetupBoard({
       )}
 
       <div className="map-overlay-top">
-        {/* Three plain buttons: when, not what. The pins already say what. */}
-        <div className="chip-row chip-row-float" role="group" aria-label="Filter meetups">
-          <button
-            type="button"
-            onClick={() => setDay("ANY")}
-            className={`chip ${day === "ANY" ? "chip-on" : ""}`}
-            aria-pressed={day === "ANY"}
-          >
-            All ({activities.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setDay(day === "TODAY" ? "ANY" : "TODAY")}
-            className={`chip ${day === "TODAY" ? "chip-on" : ""}`}
-            aria-pressed={day === "TODAY"}
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => setDay(day === "WEEK" ? "ANY" : "WEEK")}
-            className={`chip ${day === "WEEK" ? "chip-on" : ""}`}
-            aria-pressed={day === "WEEK"}
-          >
-            This week
-          </button>
+        <div className="map-top-row">
+          {/* Three plain buttons: when, not what. The pins already say what. */}
+          <div className="chip-row chip-row-float" role="group" aria-label="Filter meetups">
+            <button
+              type="button"
+              onClick={() => setDay("ANY")}
+              className={`chip ${day === "ANY" ? "chip-on" : ""}`}
+              aria-pressed={day === "ANY"}
+            >
+              All ({activities.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setDay(day === "TODAY" ? "ANY" : "TODAY")}
+              className={`chip ${day === "TODAY" ? "chip-on" : ""}`}
+              aria-pressed={day === "TODAY"}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setDay(day === "WEEK" ? "ANY" : "WEEK")}
+              className={`chip ${day === "WEEK" ? "chip-on" : ""}`}
+              aria-pressed={day === "WEEK"}
+            >
+              This week
+            </button>
+          </div>
+          {player}
         </div>
         {view === "map" && (notice || (far && !farClosed)) && (
           <div className="map-cards">
