@@ -36,7 +36,7 @@ const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-un
 for (const [name, lat, lng, zoom] of VIEWS) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   p.on("pageerror", (e) => console.log(name, "PAGE ERROR", e.message));
-  p.on("console", (m) => m.type() === "error" && console.log(name, "console:", m.text()));
+  p.on("console", (m) => console.log(name, "console:", m.text()));
   await p.goto(`http://localhost:8080/#${lat},${lng},${zoom}`);
   await p.waitForFunction(() => document.title === "idle", null, { timeout: 60000 }).catch(() => console.log(name, "never idle"));
   await p.waitForTimeout(1500);

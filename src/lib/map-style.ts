@@ -79,6 +79,7 @@ const EMOJI = [
 ] as unknown as ExpressionSpecification;
 const EMOJI_PREFIX = "emoji:";
 const PATTERN_PREFIX = "pattern:";
+const CITY_PARKS = ["park", "garden", "village_green", "recreation_ground", "common"];
 const lookOf = (emoji: string) => KINDS.find((k) => k.emoji === emoji)?.look;
 
 /** The bubbles that show from one zoom in: well spread out at first, so
@@ -183,22 +184,26 @@ export const MAP_STYLE: StyleSpecification = {
       filter: is("class", ["wood"]),
       paint: { "fill-pattern": `${PATTERN_PREFIX}forest`, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0, 12.5, 1] },
     },
+    // (City parks are "grass" in the map data, with what kind of grass as
+    // the subclass; the "park" layer above is national parks.)
     {
       id: "park-trees",
       type: "fill",
       source: SOURCE,
-      "source-layer": "park",
+      "source-layer": "landcover",
       minzoom: 12,
+      filter: is("subclass", CITY_PARKS),
       paint: { "fill-pattern": `${PATTERN_PREFIX}park`, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0, 13.5, 1] },
     },
-    // A bold edge round every park, like a board game's.
+    // A bold edge round every park and wood, like a board game's.
     {
       id: "park-edge",
       type: "line",
       source: SOURCE,
-      "source-layer": "park",
-      minzoom: 11,
-      paint: { "line-color": "#7fcd62", "line-width": grow([11, 0.6], [14, 1.6], [18, 3]) },
+      "source-layer": "landcover",
+      minzoom: 12,
+      filter: ["any", is("subclass", CITY_PARKS), is("class", ["wood"])],
+      paint: { "line-color": "#7fcd62", "line-width": grow([12, 0.8], [14, 1.6], [18, 3]) },
     },
 
     // Water.
@@ -523,16 +528,18 @@ const PATTERNS: Record<string, Drawing> = {
     },
   },
   waves: {
-    width: 48,
+    width: 64,
     height: 32,
     paint(ctx) {
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
-      ctx.lineWidth = 1.5;
+      // Two little "~" ripples.
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+      ctx.lineWidth = 1.6;
       ctx.lineCap = "round";
-      for (const [x, y] of [[8, 9], [30, 24]]) {
+      for (const [x, y] of [[8, 9], [40, 24]]) {
         ctx.beginPath();
-        ctx.arc(x, y, 3, Math.PI * 0.15, Math.PI * 0.85);
-        ctx.arc(x + 6, y, 3, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + 3, y - 3.5, x + 6, y);
+        ctx.quadraticCurveTo(x + 9, y + 3.5, x + 12, y);
         ctx.stroke();
       }
     },
