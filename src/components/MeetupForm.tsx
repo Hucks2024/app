@@ -4,15 +4,15 @@ import { startTransition, useActionState, useCallback, useRef, useState } from "
 import dynamic from "next/dynamic";
 import { CATEGORIES, CATEGORY_GROUPS, categoryFor } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
-import { geocodeLocation } from "@/lib/geocode";
+import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
 
-// The map only loads once there's a place to show, and only in the
-// browser (Leaflet needs a window). The same height while it loads, so
+// Only in the browser (Leaflet needs a window), and only once the
+// meeting point step is showing. The same height while it loads, so
 // nothing below jumps.
 const PinPicker = dynamic(() => import("@/components/PinPicker"), {
   ssr: false,
-  loading: () => <div className="h-60 rounded-xl border border-slate-200 bg-slate-100" />,
+  loading: () => <div className="h-72 rounded-xl border border-slate-200 bg-slate-100" />,
 });
 
 // The few most people want, shown first so the first question is one
@@ -42,8 +42,15 @@ type PlaceCheck =
   | { status: "found"; for: string; label: string; latitude: number; longitude: number }
   | { status: "not_found" | "unavailable"; for: string };
 
-/** Where the pin goes, and the place text it was found for. */
-type Pin = { lat: number; lng: number; for: string };
+/** Where the pin goes: found from the place text it's for, or put on the
+ * map by hand, which holds whatever the text says. */
+type Pin = { lat: number; lng: number; for: string; byHand: boolean };
+
+/** Roughly how far apart two spots are, near enough for under a few km. */
+function kmApart(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const x = (b.lng - a.lng) * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+  return Math.hypot(x, b.lat - a.lat) * 111.32;
+}
 
 const STEPS = ["What", "Where", "When", "Name"] as const;
 
@@ -70,19 +77,21 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // The everyday ones first; the rest behind "More ideas".
   const [allTypes, setAllTypes] = useState(!!initial?.category && !POPULAR.includes(initial.category));
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
-  // Found from the place name, then moved by the host to the exact spot.
-  // Kept in a ref too, for the send, which runs straight after a look-up
-  // that may have just set it.
+  // Found from the place name, or marked on the map. Kept in a ref too,
+  // for Next and the send, which run straight after a look-up that may
+  // have just set it. A saved meetup's pin counts as marked.
   const startPin =
     initial?.latitude != null && initial.longitude != null
-      ? { lat: initial.latitude, lng: initial.longitude, for: initial.location }
+      ? { lat: initial.latitude, lng: initial.longitude, for: initial.location, byHand: true }
       : null;
   const [pin, setPinState] = useState<Pin | null>(startPin);
   const pinRef = useRef<Pin | null>(startPin);
-  const setPin = (p: Pin) => {
+  const setPin = (p: Pin | null) => {
     pinRef.current = p;
     setPinState(p);
   };
+  // Goes up when a place is found from its name, to take the map there.
+  const [focus, setFocus] = useState(0);
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [titleTouched, setTitleTouched] = useState(editing);
@@ -115,12 +124,42 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       const next: PlaceCheck =
         found.status === "found" ? { ...found, for: text } : { status: found.status, for: text };
       setPlace(next);
-      if (found.status === "found") setPin({ lat: found.latitude, lng: found.longitude, for: text });
+      const mine = pinRef.current?.byHand ? pinRef.current : null;
+      if (found.status === "found") {
+        // A pin marked by hand stays put while the name is tidied up (a
+        // big park's name finds its middle, maybe a km or two away); a
+        // place found somewhere else entirely moves it there.
+        const at = { lat: found.latitude, lng: found.longitude };
+        if (mine && (mine.for === text || kmApart(mine, at) < 3)) setPin({ ...mine, for: text });
+        else {
+          setPin({ ...at, for: text, byHand: false });
+          setFocus((n) => n + 1);
+        }
+      } else if (found.status === "not_found" && !mine) {
+        setPin(null);
+      }
       if (lookingUp.current?.text === text) lookingUp.current = null;
       return next;
     });
     lookingUp.current = { text, result };
     return result;
+  }
+
+  /** A pin put on the map by hand. With no name for the place typed yet,
+   * the name of the spot goes in the box to start from. */
+  function markByHand(lat: number, lng: number) {
+    setPin({ lat, lng, for: locationText(), byHand: true });
+    setStepError(null);
+    setEdited(true);
+    if (locationText()) return;
+    void placeName(lat, lng).then((name) => {
+      const box = formRef.current?.elements.namedItem("location") as HTMLInputElement | null;
+      if (!name || !box || box.value.trim()) return;
+      box.value = name;
+      // The name came from the pin, so looking it up never moves the pin.
+      const now = pinRef.current;
+      if (now?.byHand && now.lat === lat && now.lng === lng) setPin({ ...now, for: name });
+    });
   }
 
   /** A suggested name from what they've picked, until they type their own. */
@@ -137,14 +176,17 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     if (step === 1) {
       const text = locationText();
       if (text.length < 3) return setStepError("Type where to meet.");
-      // Found just now, by this tap: stay, so the pin can be checked first.
-      const seen = place.status === "found" && place.for === text;
+      const before = pinRef.current;
       const found = await lookUp(text);
-      if (found.status === "not_found") {
-        return setStepError(`Can't find "${text}". Add the town, like "Hyde Park, London".`);
+      const now = pinRef.current;
+      if (found.status === "not_found" && !now?.byHand) {
+        return setStepError(`Can't find "${text}". Add the town, or mark it on the map.`);
       }
-      if (found.status === "found" && !seen) return;
-      suggestTitle(found.status === "found" ? found.label : undefined);
+      // The map has just gone to the place found: stay, so the pin can be
+      // checked first.
+      if (now && now !== before && !now.byHand) return;
+      // A marked spot's name is whatever the host has in the box.
+      suggestTitle(found.status === "found" && !now?.byHand ? found.label : undefined);
     }
     if (step === 2 && !when) return setStepError("Pick a day and time.");
     setStep(step + 1);
@@ -170,8 +212,9 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
         const data = new FormData(formRef.current!);
-        // The pin as the host left it, if it's for this place.
-        const at = pinRef.current?.for === text ? pinRef.current : null;
+        // The pin as the host left it: marked by hand, or found for this place.
+        const p = pinRef.current;
+        const at = p && (p.byHand || p.for === text) ? p : null;
         if (at) {
           data.set("latitude", String(at.lat));
           data.set("longitude", String(at.lng));
@@ -259,7 +302,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {/* 2. Where */}
       <fieldset hidden={!show(1)} className="space-y-4">
-        <legend className="mb-1 text-xl font-bold text-slate-900">Where?</legend>
+        <legend className="mb-1 text-xl font-bold text-slate-900">Meeting point</legend>
         <div>
           <label className="label !text-base" htmlFor="location">
             Meeting place
@@ -277,9 +320,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             aria-describedby="location-hint location-check"
             onBlur={(e) => void lookUp(e.target.value.trim())}
           />
-          {/* A line's room kept for "Finding it…", so it appearing doesn't
-              push Next down from under a finger mid-tap. */}
-          <p id="location-check" className="mt-2 min-h-6 text-base" aria-live="polite">
+          {/* A line's room kept for "Finding it…", and never more than a
+              line, so what appears here doesn't push Next down from under
+              a finger mid-tap. */}
+          <p id="location-check" className="mt-2 min-h-6 truncate text-base" aria-live="polite">
             {place.status === "checking" && <span className="text-slate-600">Finding it…</span>}
             {place.status === "found" && (
               <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
@@ -288,9 +332,9 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
             )}
           </p>
-          {show(1) && pin && place.status !== "checking" && place.status !== "not_found" && (
+          {show(1) && (
             <div className="mt-2">
-              <PinPicker key={pin.for} start={pin} onMove={(lat, lng) => setPin({ lat, lng, for: pin.for })} />
+              <PinPicker spot={pin} focus={focus} onMark={markByHand} />
             </div>
           )}
         </div>

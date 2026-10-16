@@ -78,7 +78,7 @@ function emojiIcon(emoji: string, going: number, today: boolean) {
 // request before a prompt ever shows if Location Services is off for
 // Safari at the OS level, or if this site was denied before, so that one
 // gets a much more specific, actionable message than the rest.
-export function locationErrorMessage(code: number | undefined): string {
+function locationErrorMessage(code: number | undefined): string {
   if (code === 1) {
     return "Location is blocked. Allow it in your phone's Settings, then try again.";
   }
@@ -130,7 +130,7 @@ function LocationErrorModal({ message, onClose }: { message: string; onClose: ()
   );
 }
 
-function LocateControl({
+export function LocateControl({
   onLocated,
   full = false,
 }: {

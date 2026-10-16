@@ -104,6 +104,27 @@ async function photon(query: string): Promise<GeocodeResult> {
   }
 }
 
+/** The name of the place at a spot, for a pin put on the map by hand
+ * with the place's name still to type: a starting point, not the final
+ * word. Null if Nominatim doesn't say. */
+export async function placeName(latitude: number, longitude: number): Promise<string | null> {
+  try {
+    const url = new URL("https://nominatim.openstreetmap.org/reverse");
+    url.searchParams.set("lat", String(latitude));
+    url.searchParams.set("lon", String(longitude));
+    url.searchParams.set("format", "jsonv2");
+    const res = await fetch(url, {
+      headers: headers({ "Accept-Language": "en" }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const place = (await res.json()) as { display_name?: string };
+    return place.display_name ? shortLabel(place.display_name.split(",").map((s) => s.trim())) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function geocodeLocation(query: string): Promise<GeocodeResult> {
   const trimmed = query.trim();
   if (!trimmed) return { status: "not_found" };
