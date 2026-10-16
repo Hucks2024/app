@@ -117,7 +117,7 @@ console.log("EMAIL (only used for password resets)");
 console.log(`  Reset codes sent and not used yet: ${codes.length}${lastCode ? ` (latest ${since(lastCode)})` : ""}`);
 // A reset that worked shows here: the code is used up and the password changed.
 console.log(`  Latest password change: ${lastPasswordChange ? since(lastPasswordChange) : "none recorded"}`);
-console.log("  To check email works: /admin -> Email -> Send me a test email.");
+console.log("  To check email works: Sign in -> Forgot your password? with your own address.");
 // The records Resend asks for, so it can send from packmates.live.
 for (const name of ["resend._domainkey", "send", "_dmarc"]) {
   const found = [];

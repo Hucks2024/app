@@ -4,8 +4,6 @@ import { requireAdmin } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import Avatar from "@/components/Avatar";
 import AdminResetPassword from "@/components/AdminResetPassword";
-import AdminEmailSetup from "@/components/AdminEmailSetup";
-import { readError } from "@/lib/flash";
 import { formatMemberNumber } from "@/lib/member";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
@@ -17,13 +15,8 @@ import {
   setAdminAction,
 } from "@/app/admin/actions";
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; sig?: string; checked?: string }>;
-}) {
+export default async function AdminPage() {
   const me = await requireAdmin();
-  const { error: rawError, sig, checked } = await searchParams;
   const prisma = await getPrisma();
 
   const [openReports, users] = await Promise.all([
@@ -58,14 +51,6 @@ export default async function AdminPage({
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 space-y-10">
       <h1 className="text-2xl font-bold text-white drop-shadow">Admin</h1>
-
-      {/* First on the page because it's the thing most likely to need a
-          look: without working email, members can't reset their own
-          passwords. */}
-      <section id="email" className="scroll-mt-20">
-        <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Email</h2>
-        <AdminEmailSetup error={readError(rawError, sig)} checked={checked === "1"} />
-      </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-3 text-white drop-shadow">Open reports ({openReports.length})</h2>
