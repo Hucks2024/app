@@ -40,6 +40,13 @@ export function typeName(t: Messages, value: string): string {
   return names[value] ?? names.SOCIAL;
 }
 
+/** An example for the comment that fits the type: coffee gets a coffee
+ * one, not "bring water". */
+export function commentHint(t: Messages, value: string): string {
+  const hints: Record<string, string> = t.commentHints;
+  return hints[value] ?? hints.SOCIAL;
+}
+
 /** A check's message in this language: the name of one of t.errors (the
  * schemas use names, since they're written before anyone's language is
  * known), or failing that the fallback. */

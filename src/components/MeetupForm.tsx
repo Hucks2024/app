@@ -7,7 +7,7 @@ import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
 import { useT } from "@/i18n/client";
-import { fill, typeName } from "@/i18n/format";
+import { commentHint, fill, typeName } from "@/i18n/format";
 
 // Only in the browser (Leaflet needs a window), and only once the
 // meeting point step is showing. The same height while it loads, so
@@ -55,6 +55,13 @@ function kmApart(a: { lat: number; lng: number }, b: { lat: number; lng: number 
 }
 
 const STEPS = ["What", "Where", "When", "Name"] as const;
+
+/** The part of a place's name that says where it is, for a suggested
+ * meetup name: "1a, High Street, Clapham" is "High Street", not "1a". */
+function placeWord(text: string): string {
+  const parts = text.split(",").map((part) => part.trim()).filter(Boolean);
+  return parts.find((part) => !/^\d+[a-z]?([-/]\d+[a-z]?)?$/i.test(part)) ?? parts[0] ?? "";
+}
 
 /** Posting a meetup, one question per screen; or editing one, all on one
  * page.
@@ -196,7 +203,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   function suggestTitle(placeLabel?: string) {
     if (titleTouched) return;
     const kind = typeName(t, category).split(" / ")[0];
-    const where = (placeLabel ?? locationText()).split(",")[0].trim();
+    const where = placeWord(placeLabel ?? locationText());
     setTitle(where ? fill(t.form.titleAt, { kind, place: where }) : kind);
   }
 
@@ -456,7 +463,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             {t.form.comment} <span className="font-normal text-slate-600">{t.common.optional}</span>
           </label>
           <p id="description-hint" className="text-sm text-slate-600 mb-2">
-            {t.form.commentHint}
+            {commentHint(t, category)}
           </p>
           <textarea
             className="input !text-base"
