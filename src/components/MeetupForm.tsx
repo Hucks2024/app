@@ -14,6 +14,10 @@ const PinPicker = dynamic(() => import("@/components/PinPicker"), {
   ssr: false,
   loading: () => <div className="h-72 rounded-xl border border-slate-200 bg-slate-100" />,
 });
+const MeetingPointMap = dynamic(() => import("@/components/MeetingPointMap"), {
+  ssr: false,
+  loading: () => <div className="map-screen z-[1300] bg-slate-100" />,
+});
 
 // The few most people want, shown first so the first question is one
 // glance, not a list of two dozen. Everything else is under "More ideas".
@@ -77,6 +81,16 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // The everyday ones first; the rest behind "More ideas".
   const [allTypes, setAllTypes] = useState(!!initial?.category && !POPULAR.includes(initial.category));
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
+  // The place's name and the comment live here rather than in their boxes:
+  // posting, the boxes sit on the full-screen map, outside the form, and
+  // hidden inputs carry them. A ref too, for look-ups that finish later.
+  const [placeText, setPlaceTextState] = useState(initial?.location ?? "");
+  const placeRef = useRef(placeText);
+  const setPlaceText = (text: string) => {
+    placeRef.current = text;
+    setPlaceTextState(text);
+  };
+  const [findUs, setFindUs] = useState(initial?.findUs ?? "");
   // Found from the place name, or marked on the map. Kept in a ref too,
   // for Next and the send, which run straight after a look-up that may
   // have just set it. A saved meetup's pin counts as marked.
@@ -109,7 +123,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const show = (i: number) => editing || step === i;
 
   function locationText(): string {
-    return String(new FormData(formRef.current!).get("location") ?? "").trim();
+    return placeRef.current.trim();
   }
 
   /** Looks the place up from this browser, once per distinct text. */
@@ -153,9 +167,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     setEdited(true);
     if (locationText()) return;
     void placeName(lat, lng).then((name) => {
-      const box = formRef.current?.elements.namedItem("location") as HTMLInputElement | null;
-      if (!name || !box || box.value.trim()) return;
-      box.value = name;
+      if (!name || placeRef.current.trim()) return;
+      setPlaceText(name);
       // The name came from the pin, so looking it up never moves the pin.
       const now = pinRef.current;
       if (now?.byHand && now.lat === lat && now.lng === lng) setPin({ ...now, for: name });
@@ -192,6 +205,15 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  const placeStatus =
+    place.status === "checking" ? (
+      <span className="text-slate-600">Finding it…</span>
+    ) : place.status === "found" ? (
+      <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
+    ) : place.status === "not_found" ? (
+      <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
+    ) : null;
 
   function back() {
     setStepError(null);
@@ -231,6 +253,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     >
       {initial && <input type="hidden" name="activityId" value={initial.id} />}
       <input type="hidden" name="category" value={category} />
+      <input type="hidden" name="location" value={placeText} />
+      <input type="hidden" name="findUs" value={findUs} />
 
       {!editing && (
         <div aria-live="polite">
@@ -300,60 +324,83 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         })()}
       </fieldset>
 
-      {/* 2. Where */}
+      {/* 2. Meeting point. Posting, it's the whole screen, a map like the
+          main one (MeetingPointMap); editing, a map in the page. */}
       <fieldset hidden={!show(1)} className="space-y-4">
-        <legend className="mb-1 text-xl font-bold text-slate-900">Meeting point</legend>
-        <div>
-          <label className="label !text-base" htmlFor="location">
-            Meeting place
-          </label>
-          <p id="location-hint" className="text-sm text-slate-600 mb-2">
-            e.g. Hyde Park Corner, London
-          </p>
-          <input
-            className="input !text-base min-h-12"
-            id="location"
-            name="location"
-            defaultValue={initial?.location}
-            maxLength={200}
-            autoComplete="off"
-            aria-describedby="location-hint location-check"
-            onBlur={(e) => void lookUp(e.target.value.trim())}
-          />
-          {/* A line's room kept for "Finding it…", and never more than a
-              line, so what appears here doesn't push Next down from under
-              a finger mid-tap. */}
-          <p id="location-check" className="mt-2 min-h-6 truncate text-base" aria-live="polite">
-            {place.status === "checking" && <span className="text-slate-600">Finding it…</span>}
-            {place.status === "found" && (
-              <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
-            )}
-            {place.status === "not_found" && (
-              <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
-            )}
-          </p>
-          {show(1) && (
-            <div className="mt-2">
-              <PinPicker spot={pin} focus={focus} onMark={markByHand} />
+        {editing ? (
+          <>
+            <legend className="mb-1 text-xl font-bold text-slate-900">Meeting point</legend>
+            <div>
+              <label className="label !text-base" htmlFor="location">
+                Meeting place
+              </label>
+              <p id="location-hint" className="text-sm text-slate-600 mb-2">
+                e.g. Hyde Park Corner, London
+              </p>
+              <input
+                className="input !text-base min-h-12"
+                id="location"
+                value={placeText}
+                onChange={(e) => setPlaceText(e.target.value)}
+                maxLength={200}
+                autoComplete="off"
+                aria-describedby="location-hint location-check"
+                onBlur={(e) => void lookUp(e.target.value.trim())}
+              />
+              {/* A line's room kept for "Finding it…", and never more than a
+                  line, so what appears here doesn't push Save down from
+                  under a finger mid-tap. */}
+              <p id="location-check" className="mt-2 min-h-6 truncate text-base" aria-live="polite">
+                {placeStatus}
+              </p>
+              <div className="mt-2">
+                <PinPicker spot={pin} focus={focus} onMark={markByHand} />
+              </div>
             </div>
-          )}
-        </div>
-        <div>
-          <label className="label !text-base" htmlFor="findUs">
-            How to spot you <span className="font-normal text-slate-600">(optional)</span>
-          </label>
-          <p id="findUs-hint" className="text-sm text-slate-600 mb-2">
-            e.g. Yellow jacket, by the gate
-          </p>
-          <input
-            className="input !text-base min-h-12"
-            id="findUs"
-            name="findUs"
-            defaultValue={initial?.findUs ?? ""}
-            maxLength={200}
-            aria-describedby="findUs-hint"
-          />
-        </div>
+            <div>
+              <label className="label !text-base" htmlFor="findUs">
+                How to spot you <span className="font-normal text-slate-600">(optional)</span>
+              </label>
+              <p id="findUs-hint" className="text-sm text-slate-600 mb-2">
+                e.g. Yellow jacket, by the gate
+              </p>
+              <input
+                className="input !text-base min-h-12"
+                id="findUs"
+                value={findUs}
+                onChange={(e) => setFindUs(e.target.value)}
+                maxLength={200}
+                aria-describedby="findUs-hint"
+              />
+            </div>
+          </>
+        ) : (
+          step === 1 && (
+            <MeetingPointMap
+              step={`Step 2 of ${STEPS.length}`}
+              place={placeText}
+              onPlace={(text) => {
+                setPlaceText(text);
+                setEdited(true);
+              }}
+              onFind={(text) => void lookUp(text)}
+              status={placeStatus}
+              error={stepError}
+              spot={pin}
+              focus={focus}
+              onMark={markByHand}
+              comment={findUs}
+              onComment={(text) => {
+                setFindUs(text);
+                setEdited(true);
+              }}
+              onBack={back}
+              onNext={() => void next()}
+              nextLabel={place.status === "checking" ? "Finding it…" : "Next"}
+              busy={place.status === "checking"}
+            />
+          )
+        )}
       </fieldset>
 
       {/* 3. When */}

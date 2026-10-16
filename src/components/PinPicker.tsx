@@ -10,7 +10,7 @@ import { Credits, LocateControl, Tiles } from "@/components/ActivitiesMap";
 
 // Where the map opens with nothing found or marked yet: London, like the
 // main map.
-const LONDON: [number, number] = [51.5074, -0.1278];
+export const LONDON: [number, number] = [51.5074, -0.1278];
 
 // The app's teardrop with a white dot, its tip on the spot.
 const PIN = L.divIcon({
@@ -109,7 +109,7 @@ function Mark({ spot, onMark }: { spot: { lat: number; lng: number } | null; onM
 
 /** Takes the map to the spot whenever `trigger` changes (not when it first
  * opens: it opens there already). */
-function FlyTo({ spot, trigger, zoom }: { spot: { lat: number; lng: number } | null; trigger: number; zoom: number }) {
+export function FlyTo({ spot, trigger, zoom }: { spot: { lat: number; lng: number } | null; trigger: number; zoom: number }) {
   const map = useMap();
   const last = useRef(trigger);
   useEffect(() => {
