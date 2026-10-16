@@ -430,52 +430,42 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           )}
         </div>
 
-        <details
-          className="rounded-xl border border-slate-200 px-4 py-2"
-          open={Boolean(initial && (initial.description || (route && initial.pace)))}
-        >
-          <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-brand-700">
-            More (optional)
-          </summary>
-          <div className="space-y-4 py-3">
-            <div>
-              <label className="label !text-base" htmlFor="description">
-                Comment
-              </label>
-              <p id="description-hint" className="text-sm text-slate-600 mb-2">
-                e.g. Bring water. All levels welcome.
-              </p>
-              <textarea
-                className="input !text-base"
-                id="description"
-                name="description"
-                rows={3}
-                maxLength={2000}
-                defaultValue={initial?.description ?? ""}
-                aria-describedby="description-hint"
-              />
-            </div>
-            {/* Only for a walk, run, ride and the like. */}
-            {route && (
-              <div>
-                <label className="label !text-base" htmlFor="pace">
-                  Pace
-                </label>
-                <p id="pace-hint" className="text-sm text-slate-600 mb-2">
-                  e.g. Easy, chatty
-                </p>
-                <input
-                  className="input !text-base min-h-12"
-                  id="pace"
-                  name="pace"
-                  defaultValue={initial?.pace ?? ""}
-                  maxLength={40}
-                  aria-describedby="pace-hint"
-                />
-              </div>
-            )}
+        <div>
+          <label className="label !text-base" htmlFor="description">
+            Comment <span className="font-normal text-slate-600">(optional)</span>
+          </label>
+          <p id="description-hint" className="text-sm text-slate-600 mb-2">
+            e.g. Bring water. All levels welcome.
+          </p>
+          <textarea
+            className="input !text-base"
+            id="description"
+            name="description"
+            rows={3}
+            maxLength={2000}
+            defaultValue={initial?.description ?? ""}
+            aria-describedby="description-hint"
+          />
+        </div>
+        {/* Only for a walk, run, ride and the like. */}
+        {route && (
+          <div>
+            <label className="label !text-base" htmlFor="pace">
+              Pace <span className="font-normal text-slate-600">(optional)</span>
+            </label>
+            <p id="pace-hint" className="text-sm text-slate-600 mb-2">
+              e.g. Easy, chatty
+            </p>
+            <input
+              className="input !text-base min-h-12"
+              id="pace"
+              name="pace"
+              defaultValue={initial?.pace ?? ""}
+              maxLength={40}
+              aria-describedby="pace-hint"
+            />
           </div>
-        </details>
+        )}
       </fieldset>
 
       <div className="flex gap-3">
