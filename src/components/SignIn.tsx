@@ -436,6 +436,7 @@ export default function SignIn({
               Privacy policy
             </a>
             .
+            <span className="mt-1 block text-white/85">Made for {SITE.recommendedAges}s.</span>
           </span>
         </label>
       )}

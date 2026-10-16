@@ -8,7 +8,7 @@ export const metadata = { title: "Terms" };
 // asks for exactly this of apps where people post things and meet: zero
 // tolerance for nastiness, a way to report it, and a way to block people.
 
-const UPDATED = "9 October 2026";
+const UPDATED = "16 October 2026";
 
 export default function TermsPage() {
   return (
@@ -19,7 +19,7 @@ export default function TermsPage() {
       <div className="card mt-6 space-y-6 text-base leading-relaxed text-slate-800">
         <Section title="The short version">
           <ul className="list-disc space-y-1 pl-5">
-            <li>You must be {SITE.minimumAge} or over.</li>
+            <li>You must be {SITE.minimumAge} or over. It&apos;s made for {SITE.recommendedAges}s.</li>
             <li>Be kind. Meet in public. No selling.</li>
             <li>We don&apos;t put up with abuse, hate or sexual content. At all.</li>
             <li>Report anything wrong.</li>
@@ -28,7 +28,8 @@ export default function TermsPage() {
 
         <Section title="Who can join">
           <p>
-            You must be {SITE.minimumAge} or over. One account each, in your own first name, with a real photo of your
+            You must be {SITE.minimumAge} or over. {SITE.name} is made for {SITE.recommendedAges}s, but that&apos;s a
+            guide, not a rule. One account each, in your own first name, with a real photo of your
             face. {SITE.name} is for meeting people to do things together. It isn&apos;t a dating or hookup app.
           </p>
         </Section>

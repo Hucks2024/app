@@ -20,6 +20,9 @@ export const SITE = {
   contactName: "hello",
   // Who can join. In the Terms, and asked for at sign up.
   minimumAge: 18,
+  // Who it's made for: a recommendation shown around the site, not a
+  // rule. Anyone the minimum age or over can still join.
+  recommendedAges: "18-35",
   tagline: "We all belong in a pack… mate",
-  description: "We all belong in a pack… mate. A free map of meetups: paint, walk, run, coffee, anything.",
+  description: "We all belong in a pack… mate. A free map of meetups for 18-35s: paint, walk, run, coffee, anything.",
 };

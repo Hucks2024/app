@@ -22,7 +22,8 @@ this file: the repository is public.
 > A free map of meetups near you: walks, runs, painting, sketching, board
 > games, coffee, a pint. Pick one, tap "I'm in", turn up. No messages, no
 > adverts, no fuss. Everyone has a real photo so you know who to look for,
-> and three reports from people you've met means banned for life.
+> and three reports from people you've met means banned for life. Made for
+> 18-35s.
 
 **Keywords:** meetup,friends,walk,run,social,club,group,local,art,sketch,hobby
 
@@ -30,7 +31,8 @@ this file: the repository is public.
 
 Answer the questionnaire honestly; with user-generated content and meeting
 people in person, choose **18+**. The app asks every new member to confirm
-they're 18 or over.
+they're 18 or over. It's made for 18-35s (shown on the front page, at sign
+up, on Info and in the Terms), as a guide rather than a rule.
 
 ## App Privacy ("nutrition label")
 

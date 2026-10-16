@@ -5,6 +5,7 @@ import { canSendEmail } from "@/lib/email";
 import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
 import StoreBadges from "@/components/StoreBadges";
+import { SITE } from "@/lib/site";
 
 /** How many meetups are coming up, for the live pill. A real count, never
  * a padded one: it's the first number anyone sees here, and the same
@@ -43,6 +44,7 @@ export default async function Welcome({
       <h1 className="font-wordmark mt-6 text-balance text-[clamp(32px,10vw,48px)] font-bold leading-tight">
         find your people
       </h1>
+      <p className="mt-2 text-lg font-semibold text-white/90">Made for {SITE.recommendedAges}s</p>
 
       {count > 0 && (
         <p className="live-pill mt-5">

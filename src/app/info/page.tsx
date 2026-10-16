@@ -29,6 +29,16 @@ export default async function InfoPage() {
       a: <p>A free map of meetups. Pick one. Turn up. Nobody can message you.</p>,
     },
     {
+      id: "who",
+      q: "Who is it for?",
+      a: (
+        <p>
+          It&apos;s made for {SITE.recommendedAges}s, so that&apos;s who you&apos;ll mostly meet. Anyone {SITE.minimumAge} or
+          over can join.
+        </p>
+      ),
+    },
+    {
       id: "join",
       q: "How do I go to a meetup?",
       a: (
