@@ -432,7 +432,7 @@ const zh: Messages = {
     homeQ: "放到我的手机上",
     quote: "每个朋友都曾是陌生人。",
     diamondHeading: "人人都是钻石+",
-    diamondText: "每位会员都免费享有钻石+，永久有效。没人能花钱买更多。在这个应用里，每个人都被平等对待。",
+    diamondText: "在这个应用里，人人平等。",
     rules: "规则",
     rule1: "仅限 {min} 岁以上。",
     rule2: "友善待人。",

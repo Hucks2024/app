@@ -440,7 +440,7 @@ const fr: Messages = {
     homeQ: "L'avoir sur mon téléphone",
     quote: "Chaque ami a d'abord été un inconnu.",
     diamondHeading: "Tout le monde est Diamant+",
-    diamondText: "Chaque membre est Diamant+, gratuitement et pour toujours. Personne ne peut payer pour avoir plus. Dans cette app, tout le monde est traité pareil.",
+    diamondText: "Dans cette app, tout le monde est traité pareil.",
     rules: "Règles de la maison",
     rule1: "{min} ans et plus uniquement.",
     rule2: "Sois sympa.",
