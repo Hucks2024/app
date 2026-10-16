@@ -196,8 +196,6 @@ const es: Messages = {
     findUs: "Cómo encontrarnos:",
     findUsLine: "Cómo encontrarnos: {text}",
     youreIn: "¡Ya estás dentro!",
-    dontMiss: "No te lo pierdas",
-    addToCalendar: "Añadir al calendario",
     saved: "Guardado.",
     reported: "Gracias. Un moderador lo revisará.",
     blocked: "Bloqueado. No veréis los planes del otro. Puedes deshacerlo en {me}.",

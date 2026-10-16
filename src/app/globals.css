@@ -943,8 +943,8 @@ button[aria-busy="true"] {
   color: #fff;
 }
 
-/* Directions / Add to calendar / Share on a meetup: three equal, square-ish
-   buttons with the word under the emoji, comfortably over a fingertip. */
+/* Directions / Share on a meetup: two equal buttons with the word under
+   the emoji, comfortably over a fingertip. */
 .tool-btn {
   display: flex;
   flex-direction: column;
@@ -1356,18 +1356,3 @@ body:has(.map-screen) {
   overflow-wrap: anywhere;
 }
 
-/* Smaller phones (lots of Androids are 360 wide): three across leaves
-   "Directions" no room, so the meetup's buttons become full-width rows,
-   icon then words. */
-@media (max-width: 379px) {
-  .tool-grid {
-    grid-template-columns: 1fr;
-  }
-  .tool-grid .tool-btn {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    min-height: 52px;
-    padding: 8px 16px;
-  }
-}

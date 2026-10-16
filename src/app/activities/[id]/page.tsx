@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 import { categoryFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
 import { blockedEitherWay } from "@/lib/blocks";
-import { inApp } from "@/lib/in-app";
 import Avatar from "@/components/Avatar";
 import JoinedBurst from "@/components/JoinedBurst";
 import LocalTime from "@/components/LocalTime";
@@ -43,11 +41,6 @@ type Person = {
   role: string;
   memberVerifiedAt: Date | null;
 };
-
-/** "20261010T070000Z", the form calendar links want. */
-function calStamp(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-}
 
 export default async function ActivityDetailPage({
   params,
@@ -128,28 +121,6 @@ export default async function ActivityDetailPage({
     hasPin ? `${activity.latitude},${activity.longitude}` : encodeURIComponent(activity.location)
   }`;
   const pageUrl = `${SITE.url}/activities/${activity.id}`;
-  const end = new Date(activity.startsAt.getTime() + 2 * 60 * 60 * 1000);
-  const googleCalendar =
-    "https://calendar.google.com/calendar/render?" +
-    new URLSearchParams({
-      action: "TEMPLATE",
-      text: activity.title,
-      dates: `${calStamp(activity.startsAt)}/${calStamp(end)}`,
-      location: activity.location,
-      details: `${activity.findUs ? `${fill(t.meetup.findUsLine, { text: activity.findUs })}\n\n` : ""}${pageUrl}`,
-    });
-  // Google Calendar on Android can't open a calendar file, so Android
-  // phones go straight to it; everything else gets the file, which opens
-  // in whatever calendar the phone or computer uses.
-  const android = /Android/i.test((await headers()).get("user-agent") ?? "");
-  const calendarFile = `/activities/${activity.id}/calendar`;
-  // The app's web view can't open a calendar file itself; a new window is
-  // Safari, which hands it to Calendar.
-  const addToCalendar = android
-    ? { href: googleCalendar, target: "_blank", rel: "noopener noreferrer" }
-    : (await inApp())
-      ? { href: `${SITE.url}${calendarFile}`, target: "_blank", rel: "noopener" }
-      : { href: calendarFile };
 
   return (
     // Room at the bottom on a phone for the action bar pinned there.
@@ -160,19 +131,6 @@ export default async function ActivityDetailPage({
         </p>
       )}
       {justJoined && <JoinedBurst label={`${t.meetup.youreIn} 🙌`} />}
-      {justJoined && going && (
-        // Right when they've said yes is when people act on a nudge: a
-        // calendar entry is what reminds them on the day, and a face is
-        // how the group knows who to look out for.
-        <div className="card mb-4 !p-4">
-          <p className="text-base font-bold text-slate-900">{t.meetup.dontMiss}</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <a {...addToCalendar} className="btn-primary min-h-12 flex-1 text-base">
-              📆 {t.meetup.addToCalendar}
-            </a>
-          </div>
-        </div>
-      )}
       {saved && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
           ✓ {t.meetup.saved}
@@ -257,14 +215,10 @@ export default async function ActivityDetailPage({
         {/* Big, labelled, and in thumb reach: the things people do with a
             meetup once they've decided to go. */}
         {upcoming && (
-          <div className="tool-grid mt-5 grid grid-cols-3 gap-2">
+          <div className="tool-grid mt-5 grid grid-cols-2 gap-2">
             <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
               <span aria-hidden="true">🧭</span>
               {t.meetup.directions}
-            </a>
-            <a {...addToCalendar} className="tool-btn">
-              <span aria-hidden="true">📆</span>
-              {t.meetup.addToCalendar}
             </a>
             <ShareButton url={pageUrl} title={activity.title} />
           </div>

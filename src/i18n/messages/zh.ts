@@ -195,8 +195,6 @@ const zh: Messages = {
     findUs: "怎么找到我们：",
     findUsLine: "怎么找到我们：{text}",
     youreIn: "报名成功！",
-    dontMiss: "别错过",
-    addToCalendar: "加入日历",
     saved: "已保存。",
     reported: "谢谢，管理员会查看。",
     blocked: "已屏蔽。你们将看不到彼此的活动。可在{me}里撤销。",

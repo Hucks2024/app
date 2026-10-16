@@ -6,8 +6,8 @@ const DOMAIN = "packmates.live";
 export const SITE = {
   name: "Packmates",
   domain: DOMAIN,
-  // The address in every link the app makes: emails, shared meetups,
-  // calendar files. Set here rather than from NEXT_PUBLIC_SITE_URL,
+  // The address in every link the app makes: emails and shared meetups.
+  // Set here rather than from NEXT_PUBLIC_SITE_URL,
   // because that variable (once set in Vercel) named an old domain and would
   // quietly win. It's honoured only for an http:// address, which is to
   // say a computer running the app locally.

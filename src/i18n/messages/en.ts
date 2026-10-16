@@ -196,8 +196,6 @@ const en = {
     findUs: "How to find us:",
     findUsLine: "How to find us: {text}",
     youreIn: "You're in!",
-    dontMiss: "Don't miss it",
-    addToCalendar: "Add to calendar",
     saved: "Saved.",
     reported: "Thanks. A moderator will look.",
     blocked: "Blocked. You won't see each other's meetups. Undo it on {me}.",

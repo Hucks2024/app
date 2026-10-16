@@ -197,8 +197,6 @@ const fr: Messages = {
     findUs: "Pour nous trouver :",
     findUsLine: "Pour nous trouver : {text}",
     youreIn: "C'est noté !",
-    dontMiss: "Ne la rate pas",
-    addToCalendar: "Ajouter au calendrier",
     saved: "Enregistré.",
     reported: "Merci. Un modérateur va regarder.",
     blocked: "Bloqué. Vous ne verrez plus les sorties l'un de l'autre. Annule-le dans {me}.",
