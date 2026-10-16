@@ -728,12 +728,19 @@ button[aria-busy="true"] {
 .nav-signin:active {
   transform: scale(0.95);
 }
-/* Room for the name on a small phone, whatever the word for Sign up. */
-@media (max-width: 374px) {
-  .nav-signin {
-    padding: 0 12px;
-    font-size: 15px;
-  }
+
+/* Diamond+, on Me: everyone's membership. */
+.diamond-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff 0%, #e0f2fe 55%, #ede9fe 100%);
+  color: #5b21b6;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgb(46 16 101 / 0.25);
 }
 
 /* MapNotice: a card floating at the top of the map, under the filters,

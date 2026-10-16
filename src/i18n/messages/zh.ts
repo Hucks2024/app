@@ -365,7 +365,7 @@ const zh: Messages = {
   },
   me: {
     changePhoto: "更换照片",
-    member: "会员",
+    diamond: "钻石+ 会员",
     thumbsUp: "个赞",
     canPost: "你可以发布活动",
     goToPost: "参加 1 个活动后就能发布",
@@ -431,6 +431,8 @@ const zh: Messages = {
     tapPath: "点 {path}。",
     homeQ: "放到我的手机上",
     quote: "每个朋友都曾是陌生人。",
+    diamondHeading: "人人都是钻石+",
+    diamondText: "每位会员都免费享有钻石+，永久有效。没人能花钱买更多。在这个应用里，每个人都被平等对待。",
     rules: "规则",
     rule1: "仅限 {min} 岁以上。",
     rule2: "友善待人。",

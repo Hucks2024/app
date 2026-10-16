@@ -132,6 +132,15 @@ export default async function InfoPage() {
         </blockquote>
       </figure>
 
+      {/* One membership, the same for everyone: nobody pays to be seen
+          first or treated better. */}
+      <section id="diamond" className="card mt-6 scroll-mt-20" aria-labelledby="diamond-heading">
+        <h2 id="diamond-heading" className="text-xl font-bold text-slate-900">
+          <span aria-hidden="true">💎</span> {i.diamondHeading}
+        </h2>
+        <p className="mt-2 text-base text-slate-800">{i.diamondText}</p>
+      </section>
+
       {/* The rules, up top and always open: short enough to read in ten
           seconds, and the thing everyone agrees to when they join. */}
       <section id="rules" className="card mt-6 scroll-mt-20" aria-labelledby="rules-heading">

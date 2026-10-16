@@ -372,7 +372,7 @@ const es: Messages = {
   },
   me: {
     changePhoto: "Cambiar tu foto",
-    member: "Miembro",
+    diamond: "Miembro Diamante+",
     thumbsUp: "pulgares arriba",
     canPost: "Puedes publicar",
     goToPost: "Ve a 1 plan para publicar",
@@ -438,6 +438,8 @@ const es: Messages = {
     tapPath: "Toca {path}.",
     homeQ: "Ponerla en mi móvil",
     quote: "Cada amigo fue una vez un desconocido.",
+    diamondHeading: "Todo el mundo es Diamante+",
+    diamondText: "Cada miembro tiene Diamante+, gratis y para siempre. Nadie puede pagar por más. En esta app, todo el mundo recibe el mismo trato.",
     rules: "Normas de la casa",
     rule1: "Solo {min}+.",
     rule2: "Sé amable.",

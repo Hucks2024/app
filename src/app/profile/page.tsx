@@ -86,7 +86,13 @@ export default async function ProfilePage({
         </Link>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
-          <p className="text-sm text-white">{t.me.member} #{formatMemberNumber(memberNumber)}</p>
+          {/* Everyone's Diamond+: one membership, the same for all. */}
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white">
+            <Link href="/info#diamond" className="diamond-badge">
+              <span aria-hidden="true">💎</span> {t.me.diamond}
+            </Link>
+            <span className="tabular-nums">#{formatMemberNumber(memberNumber)}</span>
+          </p>
         </div>
       </div>
 

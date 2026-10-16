@@ -366,7 +366,7 @@ const en = {
   },
   me: {
     changePhoto: "Change your photo",
-    member: "Member",
+    diamond: "Diamond+ member",
     thumbsUp: "thumbs up",
     canPost: "You can post",
     goToPost: "Go to 1 meetup to post",
@@ -432,6 +432,8 @@ const en = {
     tapPath: "Tap {path}.",
     homeQ: "Put it on my phone",
     quote: "Every friend was once a stranger.",
+    diamondHeading: "Everyone is Diamond+",
+    diamondText: "Every member gets Diamond+, free, for good. Nobody can pay for more. Everyone is treated equally in this app.",
     rules: "House rules",
     rule1: "{min}+ only.",
     rule2: "Be kind.",
