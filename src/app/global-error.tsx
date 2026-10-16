@@ -2,7 +2,26 @@
 
 // The last resort, for when even the page frame (the nav, the layout)
 // couldn't be drawn. It replaces the whole document, so none of the app's
-// styles are here: everything it needs is inline.
+// styles are here: everything it needs is inline. Nor is the app's
+// language, so its three lines carry their own, chosen the same way.
+const WORDS = {
+  en: ["That didn't load", "Try again", "Back to the map"],
+  zh: ["加载失败", "再试一次", "回到地图"],
+  hi: ["यह लोड नहीं हुआ", "फिर से कोशिश करें", "मैप पर वापस जाएँ"],
+  es: ["No se ha cargado", "Reintentar", "Volver al mapa"],
+  fr: ["Le chargement a échoué", "Réessayer", "Retour à la carte"],
+};
+type Lang = keyof typeof WORDS;
+
+function language(): Lang {
+  if (typeof document === "undefined") return "en";
+  const isLang = (code: string | undefined): code is Lang => !!code && code in WORDS;
+  const chosen = document.cookie.match(/(?:^|; )lang=(\w+)/)?.[1];
+  if (isLang(chosen)) return chosen;
+  const device = navigator.language?.slice(0, 2).toLowerCase();
+  return isLang(device) ? device : "en";
+}
+
 export default function GlobalError({
   error,
   retry,
@@ -11,8 +30,10 @@ export default function GlobalError({
   retry: () => void;
 }) {
   console.error(error);
+  const lang = language();
+  const [heading, tryAgain, backToMap] = WORDS[lang];
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body
         style={{
           margin: 0,
@@ -29,7 +50,7 @@ export default function GlobalError({
       >
         <title>packmates</title>
         <div style={{ maxWidth: 340 }}>
-          <h1 style={{ fontSize: 26, margin: "0 0 24px" }}>That didn&apos;t load</h1>
+          <h1 style={{ fontSize: 26, margin: "0 0 24px" }}>{heading}</h1>
           <button
             type="button"
             onClick={() => retry()}
@@ -45,11 +66,11 @@ export default function GlobalError({
               cursor: "pointer",
             }}
           >
-            Try again
+            {tryAgain}
           </button>
           <p style={{ marginTop: 16 }}>
             <a href="/" style={{ color: "#fff" }}>
-              Back to the map
+              {backToMap}
             </a>
           </p>
         </div>

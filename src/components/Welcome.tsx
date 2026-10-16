@@ -6,6 +6,8 @@ import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
 import StoreBadges from "@/components/StoreBadges";
 import { SITE } from "@/lib/site";
+import { getLocale, getT } from "@/i18n/server";
+import { fill, pick, rich } from "@/i18n/format";
 
 /** How many meetups are coming up, for the live pill. A real count, never
  * a padded one: it's the first number anyone sees here, and the same
@@ -34,6 +36,7 @@ export default async function Welcome({
   count?: number;
 }) {
   count ??= await meetupsComingUp();
+  const [locale, t] = await Promise.all([getLocale(), getT()]);
 
   return (
     <section className="mx-auto max-w-md px-4 pt-8 pb-6 text-center text-white">
@@ -42,16 +45,15 @@ export default async function Welcome({
       </div>
 
       <h1 className="font-wordmark mt-6 text-balance text-[clamp(32px,10vw,48px)] font-bold leading-tight">
-        find your people
+        {t.welcome.heading}
       </h1>
-      <p className="mt-2 text-lg font-semibold text-white/90">Made for {SITE.recommendedAges}s</p>
+      <p className="mt-2 text-lg font-semibold text-white/90">{fill(t.welcome.madeFor, { ages: SITE.recommendedAges })}</p>
 
       {count > 0 && (
         <p className="live-pill mt-5">
           <span className="live-dot" aria-hidden="true" />
           <span>
-            <strong className="text-amber-200">{count}</strong>{" "}
-            {count === 1 ? "meetup" : "meetups"} coming up
+            {rich(pick(t.welcome.comingUp, count, locale), { n: <strong className="text-amber-200">{count}</strong> })}
           </span>
           <span aria-hidden="true">🌍</span>
         </p>

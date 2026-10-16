@@ -9,6 +9,8 @@ import {
   startResetAction,
   type AuthState,
 } from "@/app/(auth)/actions";
+import { useT } from "@/i18n/client";
+import { fill, rich } from "@/i18n/format";
 
 // The buttons under "welcome to packmates": one big tap to get in.
 //
@@ -72,6 +74,7 @@ export default function SignIn({
   next?: string;
 }) {
   const anyProvider = providers.apple || providers.google;
+  const t = useT();
   // With email the only way in, the box is right there: no "Continue with
   // email" button to tap first.
   const [step, setStep] = useState<Step>(anyProvider ? "start" : "email");
@@ -158,7 +161,7 @@ export default function SignIn({
             className="pill-btn pill-black"
           >
             {leaving === "apple" ? <Spinner /> : <AppleMark />}
-            Continue with Apple
+            {fill(t.signIn.continueWith, { provider: "Apple" })}
           </a>
         )}
         {providers.google && (
@@ -168,7 +171,7 @@ export default function SignIn({
             className="pill-btn pill-white"
           >
             {leaving === "google" ? <Spinner /> : <GoogleMark />}
-            Continue with Google
+            {fill(t.signIn.continueWith, { provider: "Google" })}
           </a>
         )}
         <button
@@ -182,21 +185,24 @@ export default function SignIn({
           className={`pill-btn ${anyProvider ? "pill-ghost" : "pill-black"}`}
         >
           <span aria-hidden="true">✉️</span>
-          Continue with email
+          {t.signIn.continueWithEmail}
         </button>
         {/* Apple and Google make the account without our sign up form, so
             the agreement is said here instead of ticked. */}
         {anyProvider && (
           <p className="text-center text-sm text-white">
-            By continuing you confirm you&apos;re {SITE.minimumAge} or over and agree to the{" "}
-            <a href="/terms" className="font-semibold underline">
-              Terms
-            </a>{" "}
-            and{" "}
-            <a href="/privacy" className="font-semibold underline">
-              Privacy policy
-            </a>
-            .
+            {rich(fill(t.signIn.byContinuing, { age: SITE.minimumAge }), {
+              terms: (
+                <a href="/terms" className="font-semibold underline">
+                  {t.common.terms}
+                </a>
+              ),
+              privacy: (
+                <a href="/privacy" className="font-semibold underline">
+                  {t.common.privacy}
+                </a>
+              ),
+            })}
           </p>
         )}
       </div>
@@ -213,15 +219,15 @@ export default function SignIn({
       }}
       className="text-sm font-medium text-white underline underline-offset-2"
     >
-      {step === "email" || step === "reset" || step === "no-reset" ? "← Back" : "← Other email"}
+      {step === "email" || step === "reset" || step === "no-reset" ? t.common.back : t.signIn.otherEmail}
     </button>
   );
 
   if (step === "no-reset") {
     return (
       <div className="space-y-3 text-center text-white">
-        <p className="text-lg font-bold">Forgot it? 🔑</p>
-        <p className="rounded-2xl bg-white/15 px-4 py-3 text-base">Ask an admin to reset it.</p>
+        <p className="text-lg font-bold">{t.signIn.forgotIt} 🔑</p>
+        <p className="rounded-2xl bg-white/15 px-4 py-3 text-base">{t.signIn.askAdmin}</p>
         <div className="pt-1">{back}</div>
       </div>
     );
@@ -234,14 +240,14 @@ export default function SignIn({
         <input type="hidden" name="next" value={next} />
         <input type="email" value={email} autoComplete="username" readOnly hidden />
         <p className="text-center text-white">
-          <span className="block text-lg font-bold">Check your email 📬</span>
+          <span className="block text-lg font-bold">{t.signIn.checkEmail} 📬</span>
           <span className="text-sm text-white">
-            We sent a code to <strong className="text-white">{email}</strong>
+            {rich(t.signIn.sentCode, { email: <strong className="text-white">{email}</strong> })}
           </span>
         </p>
         {errorBox}
         <label htmlFor="reset-code" className="field-label">
-          Code from the email
+          {t.signIn.code}
         </label>
         <input
           id="reset-code"
@@ -255,7 +261,7 @@ export default function SignIn({
           className="pill-input text-center tracking-[0.3em]"
         />
         <label htmlFor="reset-password" className="field-label">
-          New password
+          {t.signIn.newPassword}
         </label>
         <div className="relative">
           <input
@@ -277,15 +283,15 @@ export default function SignIn({
             aria-pressed={showPassword}
             className="absolute right-2 top-1/2 h-11 -translate-y-1/2 rounded-full px-4 text-base font-semibold text-brand-700 hover:bg-brand-50"
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? t.common.hide : t.common.show}
           </button>
         </div>
         <p id="reset-password-hint" className="field-hint">
-          8 or more characters.
+          {t.signIn.passwordHint}
         </p>
         <button type="submit" disabled={resetting} className="pill-btn pill-black">
           {resetting && <Spinner />}
-          Save and sign in
+          {t.signIn.saveAndSignIn}
         </button>
         <div className="text-center pt-1">{back}</div>
       </form>
@@ -297,7 +303,7 @@ export default function SignIn({
       <form onSubmit={lookUp} className="space-y-3">
         {errorBox}
         <label htmlFor="signin-email" className="field-label">
-          Your email
+          {t.signIn.yourEmail}
         </label>
         <input
           ref={emailRef}
@@ -315,7 +321,7 @@ export default function SignIn({
         />
         <button type="submit" disabled={looking} className="pill-btn pill-black">
           {looking && <Spinner />}
-          Continue
+          {t.signIn.continue}
         </button>
         {anyProvider && <div className="text-center pt-1">{back}</div>}
       </form>
@@ -336,14 +342,14 @@ export default function SignIn({
       <p className="text-center text-white">
         {creating ? (
           <>
-            <span className="block text-lg font-bold">Nice to meet you 👋</span>
+            <span className="block text-lg font-bold">{t.signIn.niceToMeet} 👋</span>
             <span className="text-sm text-white">
               <strong className="text-white">{email}</strong>
             </span>
           </>
         ) : (
           <>
-            <span className="block text-lg font-bold">Welcome back 🙌</span>
+            <span className="block text-lg font-bold">{t.signIn.welcomeBack} 🙌</span>
             <span className="text-sm text-white">
               <strong className="text-white">{email}</strong>
             </span>
@@ -355,9 +361,9 @@ export default function SignIn({
 
       {!creating && joinedWith && (
         <p className="rounded-2xl bg-white/15 px-4 py-2.5 text-sm text-white">
-          You joined with {joinedWith === "apple" ? "Apple" : "Google"}.{" "}
+          {fill(t.signIn.joinedWith, { provider: joinedWith === "apple" ? "Apple" : "Google" })}{" "}
           <a href={`/auth/${joinedWith}`} className="font-semibold underline">
-            Continue with {joinedWith === "apple" ? "Apple" : "Google"}
+            {fill(t.signIn.continueWith, { provider: joinedWith === "apple" ? "Apple" : "Google" })}
           </a>
         </p>
       )}
@@ -375,7 +381,7 @@ export default function SignIn({
             className="absolute -left-[9999px] h-px w-px opacity-0"
           />
           <label htmlFor="signin-name" className="field-label">
-            Your first name
+            {t.signIn.firstName}
           </label>
           <input
             id="signin-name"
@@ -390,7 +396,7 @@ export default function SignIn({
         </>
       )}
       <label htmlFor="signin-password" className="field-label">
-        {creating ? "Choose a password" : "Your password"}
+        {creating ? t.signIn.choosePassword : t.signIn.yourPassword}
       </label>
       {/* Show lets people check what they typed on a phone keyboard,
           rather than finding out from "wrong password". */}
@@ -415,34 +421,37 @@ export default function SignIn({
           aria-pressed={showPassword}
           className="absolute right-2 top-1/2 h-11 -translate-y-1/2 rounded-full px-4 text-base font-semibold text-brand-700 hover:bg-brand-50"
         >
-          {showPassword ? "Hide" : "Show"}
+          {showPassword ? t.common.hide : t.common.show}
         </button>
       </div>
       {creating && (
         <p id="signin-password-hint" className="field-hint">
-          8 or more characters.
+          {t.signIn.passwordHint}
         </p>
       )}
       {creating && (
         <label className="flex items-start gap-3 rounded-2xl bg-white/15 px-4 py-3 text-sm text-white">
           <input type="checkbox" name="agree" required className="mt-0.5 h-6 w-6 flex-none accent-white" />
           <span>
-            I&apos;m {SITE.minimumAge} or over and agree to the{" "}
-            <a href="/terms" target="_blank" rel="noopener" className="font-semibold underline">
-              Terms
-            </a>{" "}
-            and{" "}
-            <a href="/privacy" target="_blank" rel="noopener" className="font-semibold underline">
-              Privacy policy
-            </a>
-            .
-            <span className="mt-1 block text-white/85">Made for {SITE.recommendedAges}s.</span>
+            {rich(fill(t.signIn.agree, { age: SITE.minimumAge }), {
+              terms: (
+                <a href="/terms" target="_blank" rel="noopener" className="font-semibold underline">
+                  {t.common.terms}
+                </a>
+              ),
+              privacy: (
+                <a href="/privacy" target="_blank" rel="noopener" className="font-semibold underline">
+                  {t.common.privacy}
+                </a>
+              ),
+            })}
+            <span className="mt-1 block text-white/85">{fill(t.signIn.madeFor, { ages: SITE.recommendedAges })}</span>
           </span>
         </label>
       )}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">
         {submitting && <Spinner />}
-        {creating ? "Create my account" : "Sign in"}
+        {creating ? t.signIn.createAccount : t.signIn.signIn}
       </button>
       <div className="flex items-center justify-center gap-4 pt-1">
         {back}
@@ -453,7 +462,7 @@ export default function SignIn({
             disabled={sendingReset}
             className="text-sm font-medium text-white underline underline-offset-2"
           >
-            {sendingReset ? "Sending…" : "Forgot your password?"}
+            {sendingReset ? t.signIn.sending : t.signIn.forgotPassword}
           </button>
         )}
       </div>

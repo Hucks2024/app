@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
+import EnglishOnly from "@/components/EnglishOnly";
 
 export const metadata = { title: "Privacy" };
 
@@ -8,13 +9,14 @@ export const metadata = { title: "Privacy" };
 // plain words. Keep it true: when the app starts keeping something new,
 // it goes in here in the same change.
 
-const UPDATED = "11 October 2026";
+const UPDATED = "16 October 2026";
 
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-3xl font-bold text-white drop-shadow">Privacy</h1>
       <p className="mt-1 text-base text-white/90">Last updated {UPDATED}</p>
+      <EnglishOnly />
 
       <div className="card mt-6 space-y-6 text-base leading-relaxed text-slate-800">
         <Section title="The short version">
@@ -102,8 +104,8 @@ export default function PrivacyPage() {
 
         <Section title="Cookies">
           <p>
-            One cookie, to keep you signed in. Your phone also remembers a couple of small settings, like a tip
-            you&apos;ve closed. No tracking cookies.
+            One cookie to keep you signed in, and one to remember your language if you pick one. Your phone also
+            remembers a couple of small settings, like a tip you&apos;ve closed. No tracking cookies.
           </p>
         </Section>
 

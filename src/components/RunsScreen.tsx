@@ -7,12 +7,15 @@ import { goingCounts, liveMeetup } from "@/lib/meetups";
 import { blockedEitherWay } from "@/lib/blocks";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
+import { getT } from "@/i18n/server";
+import { fill, rich } from "@/i18n/format";
+import type { Messages } from "@/i18n/messages";
 
 // The map of upcoming meetups. Only reachable by members, both "/" and
 // "/activities" gate on requireUser() before rendering this, so there's
 // no "you're not a member yet" branch to handle here.
 export default async function RunsScreen({ user }: { user: CurrentUser }) {
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const now = new Date();
 
   // Nothing here waits on anything else, so it's all asked for at once.
@@ -79,12 +82,12 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     // members something they knew. Posting moved to the floating button,
     // where it's bigger and always within thumb reach.
     <>
-      <h1 className="sr-only">Meetups near you</h1>
+      <h1 className="sr-only">{t.board.heading}</h1>
       <MeetupBoard
         activities={mapActivities}
-        post={{ href: "/activities/new", label: verified ? "Post a meetup" : "How to post a meetup" }}
+        post={{ href: "/activities/new", label: verified ? t.common.postMeetup : t.board.howToPost }}
         canPost={verified}
-        notice={noticeFor(verified, justVerified, toThank)}
+        notice={noticeFor(t, verified, justVerified, toThank)}
       />
     </>
   );
@@ -113,13 +116,13 @@ async function meetupToThank(prisma: PrismaClient, userId: string, now: Date) {
 
 /** The one thing worth saying to this member on the map right now, most
  * important first, or nothing. */
-function noticeFor(verified: boolean, justVerified: boolean, recent: { id: string; title: string } | null) {
+function noticeFor(t: Messages, verified: boolean, justVerified: boolean, recent: { id: string; title: string } | null) {
   if (justVerified) {
     return (
       <MapNotice id="verified">
-        <strong className="text-slate-900">🎉 You can post now</strong>
+        <strong className="text-slate-900">🎉 {t.notice.canPost}</strong>
         <br />
-        Tap <strong>Post</strong> below.
+        {rich(t.notice.tapPost, { post: <strong>{t.common.post}</strong> })}
       </MapNotice>
     );
   }
@@ -129,11 +132,11 @@ function noticeFor(verified: boolean, justVerified: boolean, recent: { id: strin
       <MapNotice
         id={`thumbs-${recent.id}`}
         href={`/activities/${recent.id}#people`}
-        cta="Give thumbs up"
+        cta={t.notice.giveThumbs}
       >
-        <strong className="text-slate-900">How was {recent.title}? 👍</strong>
+        <strong className="text-slate-900">{fill(t.notice.howWas, { title: recent.title })} 👍</strong>
         <br />
-        Thank the people you met.
+        {t.notice.thank}
       </MapNotice>
     );
   }
@@ -141,9 +144,9 @@ function noticeFor(verified: boolean, justVerified: boolean, recent: { id: strin
   if (!verified) {
     return (
       <MapNotice id="welcome">
-        <strong className="text-slate-900">👋 Welcome</strong>
+        <strong className="text-slate-900">👋 {t.notice.welcome}</strong>
         <br />
-        Pick a meetup. Tap <strong>I&apos;m in</strong>.
+        {rich(t.notice.pick, { imIn: <strong>{t.meetup.imIn}</strong> })}
       </MapNotice>
     );
   }

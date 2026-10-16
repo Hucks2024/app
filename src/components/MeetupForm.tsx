@@ -6,6 +6,8 @@ import { CATEGORIES, CATEGORY_GROUPS, categoryFor } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
+import { useT } from "@/i18n/client";
+import { fill, typeName } from "@/i18n/format";
 
 // Only in the browser (Leaflet needs a window), and only once the
 // meeting point step is showing. The same height while it loads, so
@@ -68,6 +70,7 @@ const STEPS = ["What", "Where", "When", "Name"] as const;
  * everything still filled in. */
 export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const editing = Boolean(initial);
+  const t = useT();
   const [state, action, pending] = useActionState<MeetupFormState, FormData>(saveMeetupAction, {
     error: null,
   });
@@ -174,22 +177,22 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   /** A suggested name from what they've picked, until they type their own. */
   function suggestTitle(placeLabel?: string) {
     if (titleTouched) return;
-    const kind = categoryFor(category).label.split(" / ")[0];
+    const kind = typeName(t, category).split(" / ")[0];
     const where = (placeLabel ?? locationText()).split(",")[0].trim();
-    setTitle(where ? `${kind} at ${where}` : kind);
+    setTitle(where ? fill(t.form.titleAt, { kind, place: where }) : kind);
   }
 
   async function next() {
     setStepError(null);
-    if (step === 0 && !category) return setStepError("Pick one.");
+    if (step === 0 && !category) return setStepError(t.form.pickOne);
     if (step === 1) {
       const text = locationText();
-      if (text.length < 3) return setStepError("Type where to meet.");
+      if (text.length < 3) return setStepError(t.errors.typeWhere);
       const before = pinRef.current;
       const found = await lookUp(text);
       const now = pinRef.current;
       if (found.status === "not_found" && !now?.byHand) {
-        return setStepError(`Can't find "${text}". Add the town, or mark it on the map.`);
+        return setStepError(fill(t.form.cantFindMark, { place: text }));
       }
       // The map has just gone to the place found: stay, so the pin can be
       // checked first.
@@ -197,18 +200,18 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       // A marked spot's name is whatever the host has in the box.
       suggestTitle(found.status === "found" && !now?.byHand ? found.label : undefined);
     }
-    if (step === 2 && !when) return setStepError("Pick a day and time.");
+    if (step === 2 && !when) return setStepError(t.errors.pickDayTime);
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const placeStatus =
     place.status === "checking" ? (
-      <span className="text-slate-600">Finding it…</span>
+      <span className="text-slate-600">{t.form.finding}</span>
     ) : place.status === "found" ? (
-      <span className="font-medium text-brand-700">📍 Found: {place.label}</span>
+      <span className="font-medium text-brand-700">📍 {fill(t.form.found, { place: place.label })}</span>
     ) : place.status === "not_found" ? (
-      <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
+      <span className="font-medium text-amber-800">{t.form.cantFind}</span>
     ) : null;
 
   function back() {
@@ -225,7 +228,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         e.preventDefault();
         setEdited(false);
         if (!editing && step < STEPS.length - 1) return next();
-        if (!when) return setStepError("Pick a day and time.");
+        if (!when) return setStepError(t.errors.pickDayTime);
         const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
@@ -255,7 +258,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       {!editing && (
         <div aria-live="polite">
           <p className="text-sm font-semibold text-slate-600">
-            Step {step + 1} of {STEPS.length}
+            {fill(t.form.step, { n: step + 1, total: STEPS.length })}
           </p>
           <div className="mt-2 flex gap-1.5" aria-hidden="true">
             {STEPS.map((s, i) => (
@@ -273,7 +276,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {/* 1. What */}
       <fieldset hidden={!show(0)}>
-        <legend className="mb-3 text-xl font-bold text-slate-900">What are you doing?</legend>
+        <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.what}</legend>
         {(() => {
           const pick = (c: (typeof CATEGORIES)[number]) => (
             <button
@@ -295,7 +298,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               <span className="text-3xl leading-none" aria-hidden="true">
                 {c.emoji}
               </span>
-              <span>{c.label}</span>
+              <span>{typeName(t, c.value)}</span>
             </button>
           );
           if (!allTypes) {
@@ -305,7 +308,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                   {POPULAR.map((v) => CATEGORIES.find((c) => c.value === v)!).map(pick)}
                 </div>
                 <button type="button" onClick={() => setAllTypes(true)} className="btn-secondary mt-4 min-h-12 w-full text-base">
-                  More ideas ▾
+                  {t.form.moreIdeas} ▾
                 </button>
               </>
             );
@@ -313,7 +316,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           // In groups, so two dozen choices read as four short lists.
           return [...CATEGORY_GROUPS, null].map((group) => (
             <div key={group ?? "other"} className="mb-4 last:mb-0">
-              {group && <p className="type-group">{group}</p>}
+              {group && <p className="type-group">{t.typeGroups[group]}</p>}
               <div className="type-grid">{CATEGORIES.filter((c) => c.group === group).map(pick)}</div>
             </div>
           ));
@@ -325,13 +328,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       <fieldset hidden={!show(1)} className="space-y-4">
         {editing ? (
           <>
-            <legend className="mb-1 text-xl font-bold text-slate-900">Meeting point</legend>
+            <legend className="mb-1 text-xl font-bold text-slate-900">{t.form.meetingPoint}</legend>
             <div>
               <label className="label !text-base" htmlFor="location">
-                Meeting place
+                {t.form.meetingPlace}
               </label>
               <p id="location-hint" className="text-sm text-slate-600 mb-2">
-                e.g. Hyde Park Corner, London
+                {t.form.meetingPlaceHint}
               </p>
               <input
                 className="input !text-base min-h-12"
@@ -355,10 +358,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             </div>
             <div>
               <label className="label !text-base" htmlFor="findUs">
-                How to spot you <span className="font-normal text-slate-600">(optional)</span>
+                {t.form.spotYou} <span className="font-normal text-slate-600">{t.common.optional}</span>
               </label>
               <p id="findUs-hint" className="text-sm text-slate-600 mb-2">
-                e.g. Yellow jacket, by the gate
+                {t.form.spotYouHint}
               </p>
               <input
                 className="input !text-base min-h-12"
@@ -373,7 +376,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         ) : (
           step === 1 && (
             <MeetingPointMap
-              step={`Step 2 of ${STEPS.length}`}
+              step={fill(t.form.step, { n: 2, total: STEPS.length })}
               place={placeText}
               onPlace={(text) => {
                 setPlaceText(text);
@@ -392,7 +395,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               }}
               onBack={back}
               onNext={() => void next()}
-              nextLabel={place.status === "checking" ? "Finding it…" : "Next"}
+              nextLabel={place.status === "checking" ? t.form.finding : t.common.next}
               busy={place.status === "checking"}
             />
           )
@@ -401,18 +404,18 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {/* 3. When */}
       <fieldset hidden={!show(2)}>
-        <legend className="mb-3 text-xl font-bold text-slate-900">When?</legend>
+        <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.when}</legend>
         <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
       </fieldset>
 
       {/* 4. Name and extras */}
       <fieldset hidden={!show(3)} className="space-y-4">
         <legend className="mb-1 text-xl font-bold text-slate-900">
-          {editing ? "Name" : "Name it"}
+          {editing ? t.form.name : t.form.nameIt}
         </legend>
         <div>
           <label className="label !text-base" htmlFor="title">
-            Meetup name
+            {t.form.meetupName}
           </label>
           <input
             className="input !text-base min-h-12"
@@ -426,16 +429,16 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             maxLength={120}
           />
           {!editing && (
-            <p className="mt-1 text-sm text-slate-600">Change it if you like.</p>
+            <p className="mt-1 text-sm text-slate-600">{t.form.changeIt}</p>
           )}
         </div>
 
         <div>
           <label className="label !text-base" htmlFor="description">
-            Comment <span className="font-normal text-slate-600">(optional)</span>
+            {t.form.comment} <span className="font-normal text-slate-600">{t.common.optional}</span>
           </label>
           <p id="description-hint" className="text-sm text-slate-600 mb-2">
-            e.g. Bring water. All levels welcome.
+            {t.form.commentHint}
           </p>
           <textarea
             className="input !text-base"
@@ -451,10 +454,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         {route && (
           <div>
             <label className="label !text-base" htmlFor="pace">
-              Pace <span className="font-normal text-slate-600">(optional)</span>
+              {t.form.pace} <span className="font-normal text-slate-600">{t.common.optional}</span>
             </label>
             <p id="pace-hint" className="text-sm text-slate-600 mb-2">
-              e.g. Easy, chatty
+              {t.form.paceHint}
             </p>
             <input
               className="input !text-base min-h-12"
@@ -471,7 +474,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       <div className="flex gap-3">
         {!editing && step > 0 && (
           <button type="button" onClick={back} className="btn-secondary min-h-12 px-5 text-base">
-            ← Back
+            {t.common.back}
           </button>
         )}
         {/* Step 1 moves on when a type is tapped, so it has no Next. */}
@@ -488,15 +491,15 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             {saving && <span className="spinner mr-2" aria-hidden="true" />}
             {editing
               ? saving
-                ? "Saving…"
-                : "Save changes"
+                ? t.meetup.saving
+                : t.form.saveChanges
               : step < STEPS.length - 1
                 ? place.status === "checking"
-                  ? "Finding it…"
-                  : "Next"
+                  ? t.form.finding
+                  : t.common.next
                 : saving
-                  ? "Posting…"
-                  : "Post meetup 🎉"}
+                  ? t.form.posting
+                  : `${t.form.postMeetup} 🎉`}
           </button>
         )}
       </div>

@@ -3,6 +3,8 @@ import { liveMeetup } from "@/lib/meetups";
 import MeetupBoard from "@/components/MeetupBoard";
 import Welcome from "@/components/Welcome";
 import type { MapActivity } from "@/components/ActivitiesMap";
+import { getT } from "@/i18n/server";
+import LanguagePicker from "@/components/LanguagePicker";
 
 // Anonymous visitors get a real map (so there's something to see, and a
 // reason to sign up) but not real precision: jitter each pin by up to
@@ -14,15 +16,15 @@ function jitter(value: number) {
 
 // How it works, in three words each.
 const STEPS = [
-  { emoji: "📍", text: "Find a meetup" },
-  { emoji: "🙌", text: "Tap I'm in" },
-  { emoji: "🤘", text: "Turn up" },
-];
+  { emoji: "📍", text: "find" },
+  { emoji: "🙌", text: "tap" },
+  { emoji: "🤘", text: "turnUp" },
+] as const;
 
 /** The front door: hello and the way in, how it works in three words each,
  * and a blurred look at what's on. */
 export default async function Landing() {
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() }, ...liveMeetup },
     orderBy: { startsAt: "asc" },
@@ -66,7 +68,7 @@ export default async function Landing() {
 
       <section className="mx-auto max-w-3xl px-4 pb-4" aria-labelledby="how-heading">
         <h2 id="how-heading" className="sr-only">
-          How it works
+          {t.landing.how}
         </h2>
         <ol className="card !p-4 grid grid-cols-3 gap-2 text-center">
           {STEPS.map((s) => (
@@ -74,14 +76,14 @@ export default async function Landing() {
               <span className="text-3xl leading-none" aria-hidden="true">
                 {s.emoji}
               </span>
-              <span className="text-base font-semibold leading-tight text-slate-900">{s.text}</span>
+              <span className="text-base font-semibold leading-tight text-slate-900">{t.landing[s.text]}</span>
             </li>
           ))}
         </ol>
         {/* The house rule, said up front: it's part of what this place is,
             and the people it's meant to put off should read it first. */}
         <p className="mt-3 text-center text-sm font-medium text-white">
-          🚩 3 reports = banned for life.
+          🚩 {t.landing.reports}
         </p>
       </section>
 
@@ -90,10 +92,14 @@ export default async function Landing() {
           id="map-heading"
           className="font-wordmark mb-2 text-center text-lg font-bold text-white lowercase"
         >
-          what&apos;s on near you
+          {t.landing.nearYou}
         </h2>
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
       </section>
+
+      <div className="px-4 pb-10">
+        <LanguagePicker onDark />
+      </div>
     </div>
   );
 }

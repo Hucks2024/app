@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
+import EnglishOnly from "@/components/EnglishOnly";
 
 export const metadata = { title: "Terms" };
 
@@ -15,6 +16,7 @@ export default function TermsPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-3xl font-bold text-white drop-shadow">Terms</h1>
       <p className="mt-1 text-base text-white/90">Last updated {UPDATED}</p>
+      <EnglishOnly />
 
       <div className="card mt-6 space-y-6 text-base leading-relaxed text-slate-800">
         <Section title="The short version">

@@ -2,8 +2,11 @@ import { readError } from "@/lib/flash";
 import { redirect } from "next/navigation";
 import { getCurrentUser, safeNext } from "@/lib/auth";
 import Welcome from "@/components/Welcome";
+import { getT } from "@/i18n/server";
 
-export const metadata = { title: "Sign in" };
+export async function generateMetadata() {
+  return { title: (await getT()).signIn.signIn };
+}
 
 // The same welcome as the front page, minus everything under it: someone
 // who tapped "Sign in" has already decided, so it's the buttons and

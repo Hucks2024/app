@@ -25,6 +25,8 @@ import {
   signupTicketOk,
 } from "@/lib/bots";
 import { SITE } from "@/lib/site";
+import { getLocale, getT } from "@/i18n/server";
+import { errorText, fill, plural } from "@/i18n/format";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -32,10 +34,8 @@ import { SITE } from "@/lib/site";
 // anything, and a mistyped address shows up as "create your account"
 // instead of as a mystery second account later.
 
-const emailSchema = z.string().trim().toLowerCase().email("Check the email address.");
-const THROWAWAY = "Use your own email, not a throwaway one.";
-const NOT_NOW = "Something went wrong. Try again.";
-const AGREE = `Tick the box to say you're ${SITE.minimumAge} or over and agree.`;
+// Messages are names of lines in t.errors, shown in the member's language.
+const emailSchema = z.string().trim().toLowerCase().email("checkEmail");
 
 export type EmailLookup =
   | { kind: "existing"; provider: "apple" | "google" | null }
@@ -44,8 +44,9 @@ export type EmailLookup =
 
 /** Step one: is there an account at this address? */
 export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
+  const t = await getT();
   const parsed = emailSchema.safeParse(raw);
-  if (!parsed.success) return { kind: "invalid", error: parsed.error.issues[0].message };
+  if (!parsed.success) return { kind: "invalid", error: errorText(t, parsed.error.issues[0].message) };
 
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({
@@ -53,7 +54,7 @@ export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
     select: { appleSub: true, googleSub: true },
   });
   if (!user) {
-    if (isThrowawayEmail(parsed.data)) return { kind: "invalid", error: THROWAWAY };
+    if (isThrowawayEmail(parsed.data)) return { kind: "invalid", error: t.errors.throwaway };
     return { kind: "new", ticket: issueSignupTicket(parsed.data) };
   }
   // Said up front, so somebody who joined with a button doesn't sit there
@@ -70,50 +71,50 @@ const signupSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Type your first name.")
+    .min(2, "firstName")
     .max(80)
     .refine((v) => !looksLikeAdvert(v), NO_ADS)
     .refine((v) => !looksOffensive(v), NOT_NICE),
   email: emailSchema,
-  password: z.string().min(8, "Password: 8 or more characters."),
+  password: z.string().min(8, "passwordLength"),
 });
 
 const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, "Type your password."),
+  password: z.string().min(1, "typePassword"),
 });
 
 /** Step two, either way round. Errors come back as state rather than a
  * redirect, so a wrong password is a line of red under the box and not a
  * reload that empties the form. */
 export async function emailAuthAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const prisma = await getPrisma();
+  const [prisma, t, lang] = await Promise.all([getPrisma(), getT(), getLocale()]);
 
   if (formData.get("mode") === "signup") {
     // A field people never see, so only a bot filling in every box
     // fills it in. Turned away with nothing that says why.
     if (String(formData.get("website") ?? "").length > 0) {
-      return { error: NOT_NOW };
+      return { error: t.errors.notNow };
     }
     const parsed = signupSchema.safeParse({
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
     });
-    if (!parsed.success) return { error: parsed.error.issues[0].message };
+    if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
     // The tick box: old enough, and agreeing to the Terms (no tolerance
     // for abuse) and the privacy policy. Checked here as well as in the
     // browser, which a script could skip.
-    if (formData.get("agree") !== "on") return { error: AGREE };
+    if (formData.get("agree") !== "on") return { error: fill(t.errors.agree, { age: SITE.minimumAge }) };
     const { name, email, password } = parsed.data;
-    if (isThrowawayEmail(email)) return { error: THROWAWAY };
+    if (isThrowawayEmail(email)) return { error: t.errors.throwaway };
     // Proof the form was filled in by hand (see src/lib/bots.ts).
     if (!signupTicketOk(String(formData.get("ticket") ?? ""), email)) {
-      return { error: NOT_NOW };
+      return { error: t.errors.notNow };
     }
 
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
-      return { error: "That email already has an account. Go back and sign in." };
+      return { error: t.errors.emailTakenSignIn };
     }
 
     const user = await prisma.user.create({
@@ -135,36 +136,31 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     email: formData.get("email"),
     password: formData.get("password"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
   const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return { error: "Wrong password. Try again." };
+  if (!user) return { error: t.errors.wrongPassword };
 
   const locked = minutesLocked(user);
   if (locked > 0) {
-    return {
-      error: `Too many tries. Wait ${locked} minute${locked === 1 ? "" : "s"}.`,
-    };
+    return { error: plural(t.errors.tooManyWait, locked, lang) };
   }
   if (!(await verifyPassword(password, user.passwordHash))) {
     const left = await recordWrongPassword(prisma, user);
     if (left === 0) {
-      return { error: "Too many tries. Wait 15 minutes." };
+      return { error: plural(t.errors.tooManyWait, 15, lang) };
     }
     return {
-      error:
-        left <= 2
-          ? `Wrong password. ${left} ${left === 1 ? "try" : "tries"} left.`
-          : "Wrong password. Try again.",
+      error: left <= 2 ? plural(t.errors.wrongPasswordLeft, left, lang) : t.errors.wrongPassword,
     };
   }
   if (user.failedLogins > 0) await clearWrongPasswords(prisma, user.id);
   if (user.accountStatus === "BANNED") {
-    return { error: "This account is banned for life." };
+    return { error: t.errors.banned };
   }
   if (user.accountStatus !== "ACTIVE") {
-    return { error: "This account is on hold." };
+    return { error: t.errors.onHold };
   }
 
   await createSession(user.id);
@@ -174,11 +170,12 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 /** Forgot your password, step one: email a code to the address. Only
  * possible when email is set up; the screen says so when it isn't. */
 export async function startResetAction(raw: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const [t, lang] = await Promise.all([getT(), getLocale()]);
   if (!canSendEmail()) {
-    return { ok: false, error: "Ask an admin to reset it." };
+    return { ok: false, error: t.signIn.askAdmin };
   }
   const parsed = emailSchema.safeParse(raw);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!parsed.success) return { ok: false, error: errorText(t, parsed.error.issues[0].message) };
 
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { email: parsed.data } });
@@ -186,7 +183,7 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
   // the screen looks the same either way.
   if (!user || user.accountStatus !== "ACTIVE") return { ok: true };
 
-  const sent = await sendResetCode(prisma, user);
+  const sent = await sendResetCode(prisma, user, t, lang);
   if (!sent.ok) {
     // Into the server's logs; the Email steps on /admin say the same thing in
     // plain words.
@@ -196,11 +193,11 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
     // fails every time, so that sends them to someone who can help.
     return {
       ok: false,
-      error: sent.error.startsWith("Wait")
+      error: sent.cooldown
         ? sent.error
         : isTemporaryEmailError(sent.error)
-          ? "Email didn't send. Try again in a minute."
-          : "Email isn't working yet. Ask an admin to reset your password.",
+          ? t.errors.emailDidntSend
+          : t.errors.emailNotWorking,
     };
   }
   return { ok: true };
@@ -208,26 +205,27 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
 
 const resetSchema = z.object({
   email: emailSchema,
-  code: z.string().trim().min(1, "Type the code from the email."),
-  password: z.string().min(8, "Password: 8 or more characters."),
+  code: z.string().trim().min(1, "typeCode"),
+  password: z.string().min(8, "passwordLength"),
 });
 
 /** Forgot your password, step two: the code from the email and a new
  * password, and you're signed in. Every other session ends. */
 export async function finishResetAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const [t, lang] = await Promise.all([getT(), getLocale()]);
   const parsed = resetSchema.safeParse({
     email: formData.get("email"),
     code: formData.get("code"),
     password: formData.get("password"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
 
   const prisma = await getPrisma();
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   if (!user || user.accountStatus !== "ACTIVE") {
-    return { error: "Code expired. Get a new one." };
+    return { error: t.errors.codeExpired };
   }
-  const checked = await checkResetCode(prisma, user.id, parsed.data.code);
+  const checked = await checkResetCode(prisma, user.id, parsed.data.code, t, lang);
   if (!checked.ok) return { error: checked.error };
 
   await prisma.user.update({

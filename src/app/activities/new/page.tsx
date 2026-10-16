@@ -6,8 +6,12 @@ import { getPrisma } from "@/lib/db";
 import { refreshVerified } from "@/lib/trust";
 import LocalTime from "@/components/LocalTime";
 import MeetupForm from "@/components/MeetupForm";
+import { getT } from "@/i18n/server";
+import { rich } from "@/i18n/format";
 
-export const metadata = { title: "Post a meetup" };
+export async function generateMetadata() {
+  return { title: (await getT()).common.postMeetup };
+}
 
 export default async function NewActivityPage({
   searchParams,
@@ -17,7 +21,7 @@ export default async function NewActivityPage({
   const user = await requireUser();
   const { error: rawError, sig } = await searchParams;
   const error = readError(rawError, sig);
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
 
   // Not unlocked yet: say how, and if they're already going to something,
   // say that's the one that'll do it.
@@ -37,28 +41,30 @@ export default async function NewActivityPage({
           <p className="text-4xl" aria-hidden="true">
             🔓
           </p>
-          <h1 className="mt-2 text-xl font-bold">Go to one meetup first</h1>
-          <p className="mt-2 text-base text-slate-700">Any meetup, anywhere.</p>
-          <p className="text-base text-slate-700">Then you can post your own.</p>
+          <h1 className="mt-2 text-xl font-bold">{t.post.firstHeading}</h1>
+          <p className="mt-2 text-base text-slate-700">{t.post.anyMeetup}</p>
+          <p className="text-base text-slate-700">{t.post.thenPost}</p>
           {next ? (
             <p className="mt-4 rounded-xl bg-brand-50 px-4 py-3 text-base text-brand-800">
-              You&apos;re going to{" "}
-              <Link href={`/activities/${next.activity.id}`} className="font-semibold underline">
-                {next.activity.title}
-              </Link>{" "}
-              (<LocalTime iso={next.activity.startsAt.toISOString()} style="short" />). After
-              that, you can post.
+              {rich(t.post.goingTo, {
+                meetup: (
+                  <Link href={`/activities/${next.activity.id}`} className="font-semibold underline">
+                    {next.activity.title}
+                  </Link>
+                ),
+                when: <LocalTime iso={next.activity.startsAt.toISOString()} style="short" />,
+              })}
             </p>
           ) : (
             <ol className="mt-4 space-y-1 text-left text-base text-slate-700 inline-block">
-              <li>1. Pick a meetup</li>
-              <li>2. Tap <strong>I&apos;m in</strong></li>
-              <li>3. Go</li>
+              <li>1. {t.post.pickMeetup}</li>
+              <li>2. {rich(t.post.tapImIn, { button: <strong>{t.meetup.imIn}</strong> })}</li>
+              <li>3. {t.post.go}</li>
             </ol>
           )}
           <div className="mt-6">
             <Link href="/" className="btn-primary">
-              Find a meetup
+              {t.post.findMeetup}
             </Link>
           </div>
         </div>
@@ -71,10 +77,8 @@ export default async function NewActivityPage({
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">Post a meetup</h1>
-      <p className="text-base text-white mb-6">
-        4 quick questions.
-      </p>
+      <h1 className="text-2xl font-bold mb-1 text-white drop-shadow">{t.common.postMeetup}</h1>
+      <p className="text-base text-white mb-6">{t.post.quickQuestions}</p>
 
       {error && (
         <p className="mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">

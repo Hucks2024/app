@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useT } from "@/i18n/client";
 
 // Shrinks the photo before it's sent.
 //
@@ -45,6 +46,7 @@ async function shrink(file: File): Promise<File> {
  * preview of the result, and the save button, which stays off until
  * there's a photo to save. */
 export default function PhotoPicker({ saveLabel }: { saveLabel: string }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -76,7 +78,7 @@ export default function PhotoPicker({ saveLabel }: { saveLabel: string }) {
       <div className="flex justify-center">
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt="Your photo" className="h-40 w-40 rounded-full border-4 border-white object-cover shadow-lg" />
+          <img src={preview} alt={t.photo.yours} className="h-40 w-40 rounded-full border-4 border-white object-cover shadow-lg" />
         ) : (
           <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-dashed border-white/70 text-6xl" aria-hidden="true">
             🙂
@@ -85,7 +87,7 @@ export default function PhotoPicker({ saveLabel }: { saveLabel: string }) {
       </div>
       <label className="pill-btn pill-white cursor-pointer">
         <span aria-hidden="true">📷</span>
-        {working ? "One moment…" : preview ? "Pick a different photo" : "Take or choose a photo"}
+        {working ? t.photo.oneMoment : preview ? t.photo.different : t.photo.take}
         <input
           ref={inputRef}
           type="file"

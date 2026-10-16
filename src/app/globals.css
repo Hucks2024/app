@@ -728,6 +728,13 @@ button[aria-busy="true"] {
 .nav-signin:active {
   transform: scale(0.95);
 }
+/* Room for the name on a small phone, whatever the word for Sign up. */
+@media (max-width: 374px) {
+  .nav-signin {
+    padding: 0 12px;
+    font-size: 15px;
+  }
+}
 
 /* MapNotice: a card floating at the top of the map, under the filters,
    where travel apps put their "tap + to…" tips. */

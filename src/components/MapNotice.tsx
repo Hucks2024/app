@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n/client";
 
 /** A small card floating over the bottom of the map: the one thing worth
  * telling this member right now (welcome, you've unlocked posting, thumbs
@@ -25,6 +26,7 @@ export default function MapNotice({
 }) {
   const key = `notice:${id}`;
   const [show, setShow] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     let dismissed = false;
@@ -60,7 +62,7 @@ export default function MapNotice({
       <button
         type="button"
         onClick={close}
-        aria-label="Close"
+        aria-label={t.common.close}
         className="-mr-2 -mt-2 flex h-11 w-11 flex-none items-center justify-center rounded-full text-2xl text-slate-500 hover:bg-slate-100"
       >
         ×

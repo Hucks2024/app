@@ -19,10 +19,11 @@ export async function readImageFile(file: File | null): Promise<{
   if (!file || file.size === 0) return null;
 
   if (!ALLOWED_TYPES.has(file.type)) {
-    throw new ImageValidationError("Use a JPEG or PNG photo.");
+    // Names of lines in t.errors, shown in the member's language.
+    throw new ImageValidationError("photoType");
   }
   if (file.size > MAX_BYTES) {
-    throw new ImageValidationError("Photo too big. Try a smaller one.");
+    throw new ImageValidationError("photoTooBig");
   }
 
   const arrayBuffer = await file.arrayBuffer();

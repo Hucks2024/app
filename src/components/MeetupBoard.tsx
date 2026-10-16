@@ -6,6 +6,17 @@ import Link from "next/link";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
 import MeetupList, { kmBetween } from "@/components/MeetupList";
 import type { MapActivity } from "@/components/ActivitiesMap";
+import { useT } from "@/i18n/client";
+import { fill } from "@/i18n/format";
+
+function MapLoading() {
+  const t = useT();
+  return (
+    <div className="map-shell w-full rounded-2xl border border-slate-200 bg-slate-100 shadow-sm flex items-center justify-center">
+      <p className="text-base text-slate-600">{t.board.loading} 🗺️</p>
+    </div>
+  );
+}
 
 
 // Leaflet reaches for `window` the moment it's imported, which is fatal on
@@ -18,11 +29,7 @@ import type { MapActivity } from "@/components/ActivitiesMap";
 // inside one, and the pages using the map are server components.
 const ActivitiesMap = dynamic(() => import("@/components/ActivitiesMap"), {
   ssr: false,
-  loading: () => (
-    <div className="map-shell w-full rounded-2xl border border-slate-200 bg-slate-100 shadow-sm flex items-center justify-center">
-      <p className="text-base text-slate-600">Loading the map… 🗺️</p>
-    </div>
-  ),
+  loading: () => <MapLoading />,
 });
 
 type Day = "ANY" | "TODAY" | "WEEK";
@@ -67,6 +74,7 @@ export default function MeetupBoard({
   // The map, or the list laid over it.
   const [view, setView] = useState<"map" | "list">("map");
   const [farClosed, setFarClosed] = useState(false);
+  const t = useT();
 
   const filtered = useMemo(
     () =>
@@ -97,16 +105,16 @@ export default function MeetupBoard({
   const far = nearestKm != null && nearestKm > 50;
   const farCard = (
     <div className="card !p-4 text-base text-slate-700">
-      <p className="font-bold text-slate-900">Nothing near you yet 🌍</p>
+      <p className="font-bold text-slate-900">{t.board.nothingNear} 🌍</p>
       {canPost ? (
         <>
-          <p className="mt-1">Be the first. Post one here.</p>
+          <p className="mt-1">{t.board.beFirst}</p>
           <Link href="/activities/new" className="btn-primary mt-3 min-h-12 w-full text-base">
-            Post the first meetup here
+            {t.board.postFirst}
           </Link>
         </>
       ) : (
-        <p className="mt-1">Go to one meetup anywhere. Then you can post one here.</p>
+        <p className="mt-1">{t.board.goToOne}</p>
       )}
     </div>
   );
@@ -131,14 +139,13 @@ export default function MeetupBoard({
         <section className="list-panel" aria-labelledby="coming-up">
           <div className="mx-auto max-w-3xl px-4 pt-[72px] pb-28">
             <h2 id="coming-up" className="mb-3 text-lg font-bold text-white">
-              {day === "TODAY" ? "On today" : day === "WEEK" ? "On this week" : "Coming up"} (
-              {filtered.length}
-              {filtered.length !== total ? ` of ${total}` : ""})
+              {day === "TODAY" ? t.board.onToday : day === "WEEK" ? t.board.onThisWeek : t.board.comingUp} (
+              {filtered.length !== total ? fill(t.board.nOfTotal, { n: filtered.length, total }) : filtered.length})
             </h2>
             {far && <div className="mb-3">{farCard}</div>}
             {filtered.length === 0 ? (
               <div className="card text-base text-slate-700">
-                Nothing on. Tap <strong>All</strong>.
+                {t.board.nothingOn}
               </div>
             ) : (
               <MeetupList activities={filtered} here={here} />
@@ -149,14 +156,14 @@ export default function MeetupBoard({
 
       <div className="map-overlay-top">
         {/* Three plain buttons: when, not what. The pins already say what. */}
-        <div className="chip-row chip-row-float" role="group" aria-label="Filter meetups">
+        <div className="chip-row chip-row-float" role="group" aria-label={t.board.filter}>
           <button
             type="button"
             onClick={() => setDay("ANY")}
             className={`chip ${day === "ANY" ? "chip-on" : ""}`}
             aria-pressed={day === "ANY"}
           >
-            All ({activities.length})
+            {t.board.all} ({activities.length})
           </button>
           <button
             type="button"
@@ -164,7 +171,7 @@ export default function MeetupBoard({
             className={`chip ${day === "TODAY" ? "chip-on" : ""}`}
             aria-pressed={day === "TODAY"}
           >
-            Today
+            {t.time.today}
           </button>
           <button
             type="button"
@@ -172,7 +179,7 @@ export default function MeetupBoard({
             className={`chip ${day === "WEEK" ? "chip-on" : ""}`}
             aria-pressed={day === "WEEK"}
           >
-            This week
+            {t.board.thisWeek}
           </button>
         </div>
         {view === "map" && (notice || (far && !farClosed)) && (
@@ -184,7 +191,7 @@ export default function MeetupBoard({
                 <button
                   type="button"
                   onClick={() => setFarClosed(true)}
-                  aria-label="Close"
+                  aria-label={t.common.close}
                   className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-2xl text-slate-500 hover:bg-slate-100"
                 >
                   ×
@@ -210,12 +217,12 @@ export default function MeetupBoard({
               <rect x="3" y="16" width="3" height="3" rx="1" />
               <rect x="8" y="16.5" width="13" height="2" rx="1" />
             </svg>
-            List
+            {t.board.list}
           </>
         ) : (
           <>
             <span aria-hidden="true">🗺️</span>
-            Map
+            {t.common.map}
           </>
         )}
       </button>

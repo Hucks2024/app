@@ -5,21 +5,22 @@ import Link from "next/link";
 import LocalTime, { deviceLanguage } from "@/components/LocalTime";
 import { categoryFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
+import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
+import { fill, plural } from "@/i18n/format";
+import type { Messages } from "@/i18n/messages/en";
 
 /** "in 20 min", "in 3 hours", but only while that's news.
  *
  * A countdown is the difference between a listing and something about to
  * happen, so it shows up inside the day and goes quiet beyond it, where
  * "in 6 days" tells you nothing the date didn't. */
-function countdown(iso: string, now: number): string | null {
+function countdown(iso: string, now: number, t: Messages, lang: Locale): string | null {
   const minutes = Math.round((new Date(iso).getTime() - now) / 60000);
-  if (minutes < 0) return "Happening now";
-  if (minutes < 5) return "Starting now";
-  if (minutes < 60) return `In ${minutes} min`;
-  if (minutes < 60 * 24) {
-    const hours = Math.round(minutes / 60);
-    return `In ${hours} hour${hours === 1 ? "" : "s"}`;
-  }
+  if (minutes < 0) return t.list.happeningNow;
+  if (minutes < 5) return t.list.startingNow;
+  if (minutes < 60) return fill(t.list.inMinutes, { n: minutes });
+  if (minutes < 60 * 24) return plural(t.list.inHours, Math.round(minutes / 60), lang);
   return null;
 }
 
@@ -35,16 +36,16 @@ export function kmBetween(a: { lat: number; lng: number }, b: { lat: number; lng
 
 /** "1.2 km away", or "0.8 miles away" where people think in miles (the
  * US and the UK). Only ever runs in the browser, after "Near me". */
-function away(km: number): string {
+function away(km: number, t: Messages): string {
   const miles = /^en-(US|GB)/i.test(deviceLanguage());
   if (miles) {
     const mi = km / 1.609344;
-    if (mi < 0.1) return "Very close";
-    return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mile${mi >= 0.95 && mi < 1.05 ? "" : "s"} away`;
+    if (mi < 0.1) return t.list.veryClose;
+    const n = mi < 10 ? mi.toFixed(1) : String(Math.round(mi));
+    return fill(mi >= 0.95 && mi < 1.05 ? t.list.mileAway : t.list.milesAway, { n });
   }
-  if (km < 1) return `${Math.max(50, Math.round((km * 1000) / 50) * 50)} m away`;
-  if (km < 10) return `${km.toFixed(1)} km away`;
-  return `${Math.round(km)} km away`;
+  if (km < 1) return fill(t.list.metresAway, { n: Math.max(50, Math.round((km * 1000) / 50) * 50) });
+  return fill(t.list.kmAway, { n: km < 10 ? km.toFixed(1) : Math.round(km) });
 }
 
 // The same meetups as the map, as rows, always under it. Research on
@@ -63,6 +64,8 @@ export default function MeetupList({
   // phone's needn't agree), and ticks so "In 5 min" doesn't go stale on a
   // page left open.
   const [now, setNow] = useState<number | null>(null);
+  const t = useT();
+  const lang = useLocale();
   useEffect(() => {
     const tick = () => setNow(Date.now());
     tick();
@@ -74,7 +77,7 @@ export default function MeetupList({
     <ul className="space-y-3">
       {activities.map((a) => {
         const category = categoryFor(a.category);
-        const soon = now == null ? null : countdown(a.startsAt, now);
+        const soon = now == null ? null : countdown(a.startsAt, now, t, lang);
         const going = a.joinedCount;
         return (
           <li key={a.id}>
@@ -92,14 +95,15 @@ export default function MeetupList({
                   <p className="text-sm text-slate-600">
                     📍 {a.location}
                     {here && (
-                      <span className="font-medium text-brand-700"> · {away(kmBetween(here, { lat: a.latitude, lng: a.longitude }))}</span>
+                      <span className="font-medium text-brand-700"> · {away(kmBetween(here, { lat: a.latitude, lng: a.longitude }), t)}</span>
                     )}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {going > 1 ? `${going} going` : going === 1 ? "1 going" : "Be the first"}
+                    {going > 0 ? plural(t.list.going, going, lang) : t.list.beFirst}
                     {a.host && (
                       <>
-                        {" · "}Host {a.host.name} 👍 {a.host.thumbs}
+                        {" · "}
+                        {fill(t.list.host, { name: a.host.name })} 👍 {a.host.thumbs}
                       </>
                     )}
                   </p>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useT } from "@/i18n/client";
 
 // The bottom tab bar on phones, for signed-in members.
 //
@@ -13,7 +14,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   {
     href: "/",
-    label: "Map",
+    label: "map",
     match: (p: string) => p === "/" || p === "/activities",
     icon: (
       <path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4Zm0 0v13m6-10.5v13" />
@@ -21,7 +22,7 @@ const TABS = [
   },
   {
     href: "/activities/new",
-    label: "Post",
+    label: "post",
     match: (p: string) => p === "/activities/new",
     icon: (
       <>
@@ -32,7 +33,7 @@ const TABS = [
   },
   {
     href: "/profile",
-    label: "Me",
+    label: "me",
     match: (p: string) => p.startsWith("/profile"),
     icon: (
       <>
@@ -43,7 +44,7 @@ const TABS = [
   },
   {
     href: "/info",
-    label: "Info",
+    label: "info",
     match: (p: string) => p.startsWith("/info"),
     icon: (
       <>
@@ -53,18 +54,19 @@ const TABS = [
       </>
     ),
   },
-];
+] as const;
 
 export default function BottomBar() {
   const pathname = usePathname() ?? "/";
+  const t = useT();
   return (
     <nav className="bottom-bar sm:hidden" aria-label="Main">
-      {TABS.map((t) => {
-        const active = t.match(pathname);
+      {TABS.map((tab) => {
+        const active = tab.match(pathname);
         return (
           <Link
-            key={t.href}
-            href={t.href}
+            key={tab.href}
+            href={tab.href}
             className={`bottom-tab ${active ? "bottom-tab-on" : ""}`}
             aria-current={active ? "page" : undefined}
           >
@@ -79,9 +81,9 @@ export default function BottomBar() {
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              {t.icon}
+              {tab.icon}
             </svg>
-            <span>{t.label}</span>
+            <span>{t.common[tab.label]}</span>
           </Link>
         );
       })}

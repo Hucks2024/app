@@ -551,3 +551,17 @@ export const MAP_CREDITS =
   '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · ' +
   '<a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> · ' +
   '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>';
+
+const styles = new Map<string, StyleSpecification>();
+
+/** The style with place names in this language where the map has them
+ * (name:zh, name:es, …), falling back as before. */
+export function mapStyleFor(lang: string): StyleSpecification {
+  if (lang === "en") return MAP_STYLE;
+  let style = styles.get(lang);
+  if (!style) {
+    style = JSON.parse(JSON.stringify(MAP_STYLE).split('"name:en"').join(`"name:${lang}"`)) as StyleSpecification;
+    styles.set(lang, style);
+  }
+  return style;
+}

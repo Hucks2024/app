@@ -15,12 +15,14 @@ import {
   requireUser,
   verifyPassword,
 } from "@/lib/auth";
+import { getT } from "@/i18n/server";
+import { errorText } from "@/i18n/format";
 
 const profileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Type your first name.")
+    .min(2, "firstName")
     .max(80)
     .refine((v) => !looksLikeAdvert(v), NO_ADS)
     .refine((v) => !looksOffensive(v), NOT_NICE),
@@ -34,7 +36,7 @@ export async function updateProfileAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(`/profile?${errorQuery(parsed.error.issues[0]?.message ?? "Check your details.")}`);
+    redirect(`/profile?${errorQuery(errorText(await getT(), parsed.error.issues[0]?.message))}`);
   }
 
   const prisma = await getPrisma();
@@ -58,13 +60,14 @@ export async function changePasswordAction(
 
   // Somebody who only ever came in with Apple or Google has never had a
   // password to type, so they set one without being asked for the old.
+  const t = await getT();
   if (hasOwnPassword(user)) {
     if (!(await verifyPassword(current, user.passwordHash))) {
-      return { error: "Current password is wrong.", done: false };
+      return { error: t.errors.currentWrong, done: false };
     }
   }
-  if (next.length < 8) return { error: "New password: 8 or more characters.", done: false };
-  if (next !== confirm) return { error: "The new passwords don't match.", done: false };
+  if (next.length < 8) return { error: t.errors.newPasswordLength, done: false };
+  if (next !== confirm) return { error: t.errors.noMatch, done: false };
 
   const prisma = await getPrisma();
   await prisma.user.update({
@@ -103,7 +106,7 @@ export async function deleteAccountAction() {
     const admins = await prisma.user.count({ where: { role: "ADMIN", accountStatus: "ACTIVE" } });
     if (admins <= 1) {
       redirect(
-        `/profile?${errorQuery("You're the only admin. Make someone else admin first.")}`
+        `/profile?${errorQuery((await getT()).errors.onlyAdmin)}`
       );
     }
   }

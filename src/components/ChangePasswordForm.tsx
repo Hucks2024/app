@@ -2,8 +2,10 @@
 
 import { startTransition, useActionState } from "react";
 import { changePasswordAction, type PasswordState } from "@/app/profile/actions";
+import { useT } from "@/i18n/client";
 
 export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boolean }) {
+  const t = useT();
   const [state, action, pending] = useActionState<PasswordState, FormData>(changePasswordAction, {
     error: null,
     done: false,
@@ -28,13 +30,13 @@ export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boo
       )}
       {state.done && !pending && (
         <p role="status" className="rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          ✓ Password changed.
+          ✓ {t.me.passwordChanged}
         </p>
       )}
       {needsCurrent && (
         <div>
           <label className="label" htmlFor="current-password">
-            Current password
+            {t.me.currentPassword}
           </label>
           <input
             className="input"
@@ -48,7 +50,7 @@ export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boo
       )}
       <div>
         <label className="label" htmlFor="new-password">
-          New password
+          {t.signIn.newPassword}
         </label>
         <input
           className="input"
@@ -62,7 +64,7 @@ export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boo
       </div>
       <div>
         <label className="label" htmlFor="confirm-password">
-          New password again
+          {t.me.newPasswordAgain}
         </label>
         <input
           className="input"
@@ -76,7 +78,7 @@ export default function ChangePasswordForm({ needsCurrent }: { needsCurrent: boo
       </div>
       <button type="submit" disabled={pending} aria-busy={pending} className="btn-primary w-full">
         {pending && <span className="spinner mr-2" aria-hidden="true" />}
-        {pending ? "Changing…" : "Change password"}
+        {pending ? t.me.changing : t.me.changePassword}
       </button>
     </form>
   );

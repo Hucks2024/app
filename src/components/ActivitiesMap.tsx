@@ -13,8 +13,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { callNative } from "@/lib/native";
 import { categoryFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
-import { formatWhen } from "@/components/LocalTime";
-import { MAP_CREDITS, MAP_SOURCE_ID, MAP_STYLE, mapImage } from "@/lib/map-style";
+import { useFormatWhen } from "@/components/LocalTime";
+import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
+import { useLocale, useT } from "@/i18n/client";
+import { fill, plural, typeName } from "@/i18n/format";
+import type { Messages } from "@/i18n/messages/en";
 
 // The app's own logo as the map marker: the same teardrop from
 // src/components/Logo.tsx, in the same brand violet, with the category
@@ -78,14 +81,14 @@ function emojiIcon(emoji: string, going: number, today: boolean) {
 // request before a prompt ever shows if Location Services is off for
 // Safari at the OS level, or if this site was denied before, so that one
 // gets a much more specific, actionable message than the rest.
-function locationErrorMessage(code: number | undefined): string {
+function locationErrorMessage(code: number | undefined, t: Messages): string {
   if (code === 1) {
-    return "Location is blocked. Allow it in your phone's Settings, then try again.";
+    return t.map.blocked;
   }
   if (code === 3) {
-    return "Took too long. Try again.";
+    return t.map.tooLong;
   }
-  return "Couldn't find you. Try again.";
+  return t.map.notFound;
 }
 
 // A real popup dialog, not just a small note tucked next to the button, so
@@ -95,6 +98,7 @@ function locationErrorMessage(code: number | undefined): string {
 // overflow: hidden.
 function LocationErrorModal({ message, onClose }: { message: string; onClose: () => void }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const t = useT();
 
   useEffect(() => {
     closeButtonRef.current?.focus();
@@ -118,11 +122,11 @@ function LocationErrorModal({ message, onClose }: { message: string; onClose: ()
         className="card max-w-sm w-full"
       >
         <p id="location-error-title" className="font-semibold text-slate-900 mb-2">
-          📍 Couldn&apos;t find you
+          📍 {t.map.couldntFind}
         </p>
         <p className="text-sm text-slate-600 mb-4">{message}</p>
         <button ref={closeButtonRef} type="button" onClick={onClose} className="btn-primary w-full">
-          Got it
+          {t.map.gotIt}
         </button>
       </div>
     </div>,
@@ -139,6 +143,15 @@ export function LocateControl({
   full?: boolean;
 }) {
   const leafletMap = useMap();
+  const t = useT();
+  // For the "You are here" label, made inside a listener that's only set
+  // up once.
+  const youAreHere = useRef(t.map.youAreHere);
+  const tRef = useRef(t);
+  useEffect(() => {
+    youAreHere.current = t.map.youAreHere;
+    tRef.current = t;
+  });
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -173,11 +186,11 @@ export function LocateControl({
         fillOpacity: 1,
       })
         .addTo(leafletMap)
-        .bindPopup("You are here");
+        .bindPopup(youAreHere.current);
     }
     function onError(e: L.ErrorEvent) {
       setStatus("error");
-      setErrorMessage(locationErrorMessage(e.code));
+      setErrorMessage(locationErrorMessage(e.code, tRef.current));
     }
     leafletMap.on("locationfound", onFound);
     leafletMap.on("locationerror", onError);
@@ -248,7 +261,7 @@ export function LocateControl({
             <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
             <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
           </svg>
-          <span>{status === "locating" ? "Finding you…" : "Near me"}</span>
+          <span>{status === "locating" ? t.map.finding : t.map.nearMe}</span>
         </button>
       </div>
       {status === "error" && errorMessage && (
@@ -299,6 +312,7 @@ function takeOff(map: L.Map, layer: L.Layer) {
 
 export function Tiles() {
   const map = useMap();
+  const lang = useLocale();
   const [standIn, setStandIn] = useState(false);
   useEffect(() => {
     if (standIn) return;
@@ -310,7 +324,7 @@ export function Tiles() {
     let ready = false;
     try {
       // The credits are the ⓘ button's (Credits, below), not MapLibre's.
-      layer = maplibreGL({ style: MAP_STYLE, attributionControl: false });
+      layer = maplibreGL({ style: mapStyleFor(lang), attributionControl: false });
       layer.addTo(map);
       const gl = layer.getMaplibreMap();
       // The emoji bubbles and the tree and ripple patterns, drawn as they're
@@ -336,7 +350,7 @@ export function Tiles() {
       clearTimeout(timer);
       if (layer) takeOff(map, layer);
     };
-  }, [map, standIn]);
+  }, [map, standIn, lang]);
   return standIn ? <StandInTiles /> : null;
 }
 
@@ -381,6 +395,7 @@ function StandInTiles() {
  * print across the bottom of the map. */
 export function Credits() {
   const map = useMap();
+  const t = useT();
   useEffect(() => {
     const control = map.attributionControl;
     if (!control) return;
@@ -391,7 +406,7 @@ export function Credits() {
     box.classList.add("map-credits");
     box.setAttribute("role", "button");
     box.setAttribute("tabindex", "0");
-    box.setAttribute("aria-label", "Map credits");
+    box.setAttribute("aria-label", t.map.credits);
     box.setAttribute("aria-expanded", "false");
     const toggle = (e: Event) => {
       // A tap on a link inside opens the link; anywhere else, open or close.
@@ -464,6 +479,9 @@ export default function ActivitiesMap({
   // exactly when/where it starts.
   restricted?: boolean;
 }) {
+  const t = useT();
+  const lang = useLocale();
+  const when = useFormatWhen();
   useEffect(() => {
     // react-leaflet mounts the map into a fixed-size container; if that
     // container was `hidden` (e.g. toggled from a List/Map tab) at mount
@@ -537,7 +555,7 @@ export default function ActivitiesMap({
             icon={icons.get(a.id)}
             // Read out by screen readers and shown on hover: the pin is
             // otherwise just a picture.
-            title={restricted ? `${categoryFor(a.category).label} meetup` : a.title}
+            title={restricted ? fill(t.map.typeMeetup, { type: typeName(t, a.category) }) : a.title}
           >
             <Popup>
               {restricted ? (
@@ -551,24 +569,24 @@ export default function ActivitiesMap({
                 // these say exactly what they are.
                 <div className="space-y-1 max-w-[200px]">
                   <p className="font-semibold">
-                    {categoryFor(a.category).emoji} {categoryFor(a.category).label}
+                    {categoryFor(a.category).emoji} {typeName(t, a.category)}
                   </p>
                   <div className="relative">
                     <div aria-hidden="true" className="popup-blur space-y-1">
-                      <p className="font-semibold">A meetup near here</p>
-                      <p className="text-sm text-slate-600">Day and time</p>
-                      <p className="text-sm text-slate-600 underline">Where ↗</p>
-                      <p className="text-sm text-slate-500">Who&apos;s in 🙌</p>
+                      <p className="font-semibold">{t.map.teaserTitle}</p>
+                      <p className="text-sm text-slate-600">{t.map.teaserWhen}</p>
+                      <p className="text-sm text-slate-600 underline">{t.map.teaserWhere} ↗</p>
+                      <p className="text-sm text-slate-500">{t.map.teaserWho} 🙌</p>
                     </div>
                     <Link
                       href="/login"
                       className="absolute inset-0 m-auto flex h-9 w-fit items-center whitespace-nowrap rounded-full bg-slate-900/85 px-3 text-sm font-semibold !text-white shadow"
                     >
-                      🔒 Sign in to see
+                      🔒 {t.map.signInToSee}
                     </Link>
                   </div>
                   <Link href="/login" className="text-brand-600 underline text-sm font-medium block pt-1">
-                    Join free →
+                    {t.map.joinFree} →
                   </Link>
                 </div>
               ) : (
@@ -576,7 +594,7 @@ export default function ActivitiesMap({
                   <p className="font-semibold">
                     {categoryFor(a.category).emoji} {a.title}
                   </p>
-                  <p className="text-sm text-slate-600">{formatWhen(a.startsAt, "short")}</p>
+                  <p className="text-sm text-slate-600">{when(a.startsAt, "short")}</p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${a.latitude},${a.longitude}`}
                     target="_blank"
@@ -587,22 +605,21 @@ export default function ActivitiesMap({
                   </a>
                   <p className="text-sm text-slate-500">
                     {a.distanceKm ? `${a.distanceKm} km · ` : ""}
-                    {a.joinedCount}
-                    {a.maxParticipants ? ` / ${a.maxParticipants}` : ""} in 🙌
+                    {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })} 🙌
                   </p>
                   {a.afterSpot && (
-                    <p className="text-sm text-slate-600">🍻 After: {a.afterSpot}</p>
+                    <p className="text-sm text-slate-600">🍻 {fill(t.map.after, { place: a.afterSpot })}</p>
                   )}
                   {a.host && (
                     <p className="text-sm text-slate-500">
-                      Host {a.host.name} · 👍 {a.host.thumbs}
+                      {fill(t.list.host, { name: a.host.name })} · 👍 {a.host.thumbs}
                     </p>
                   )}
                   <Link
                     href={`/activities/${a.id}`}
                     className="text-brand-600 underline text-sm font-medium"
                   >
-                    Open →
+                    {t.map.open} →
                   </Link>
                 </div>
               )}
@@ -620,7 +637,7 @@ export default function ActivitiesMap({
             href="/login"
             className="pointer-events-auto rounded-full bg-slate-900/85 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur"
           >
-            {activities.length} coming up · sign in to see
+            {plural(t.map.comingUpSignIn, activities.length, lang)}
           </Link>
         </div>
       )}
@@ -632,7 +649,7 @@ export default function ActivitiesMap({
         <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-6">
           <div className="pointer-events-auto max-w-xs rounded-2xl bg-white/95 px-5 py-4 text-center shadow-lg">
             <p className="text-sm text-slate-600">
-              Nothing on yet 🤞
+              {t.map.nothingYet} 🤞
             </p>
             {/* An empty map is the moment a new member most needs telling
                 what to do next, so the one useful action is right here

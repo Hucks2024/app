@@ -21,8 +21,13 @@ import InstallHint from "@/components/InstallHint";
 import { inApp } from "@/lib/in-app";
 import StoreBadges, { storeLinks } from "@/components/StoreBadges";
 import LogoutButton from "@/components/LogoutButton";
+import LanguagePicker from "@/components/LanguagePicker";
+import { getT } from "@/i18n/server";
+import type { Messages } from "@/i18n/messages";
 
-export const metadata = { title: "Profile" };
+export async function generateMetadata() {
+  return { title: (await getT()).common.me };
+}
 
 export default async function ProfilePage({
   searchParams,
@@ -33,7 +38,7 @@ export default async function ProfilePage({
   const error = readError(rawError, sig);
   const user = await requireUser();
 
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const now = new Date();
   const meetup = { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } };
 
@@ -42,7 +47,7 @@ export default async function ProfilePage({
     // Given out the first time someone opens Me, and kept from then on.
     user.memberNumber ?? ensureMemberNumber(prisma, user.id),
     refreshVerified(prisma, user),
-    thumbsFor(prisma, [user.id]).then((t) => t.get(user.id) ?? 0),
+    thumbsFor(prisma, [user.id]).then((all) => all.get(user.id) ?? 0),
     prisma.participation.findMany({
       where: { userId: user.id, status: "JOINED", activity: { startsAt: { gt: now } } },
       orderBy: { activity: { startsAt: "asc" } },
@@ -73,7 +78,7 @@ export default async function ProfilePage({
     <div className="mx-auto max-w-xl px-4 py-10">
       <div className="flex items-center gap-4 mb-6">
         {/* Tap the face to change it: the one photo screen, shared with joining. */}
-        <Link href="/photo" aria-label="Change your photo" className="relative flex-none">
+        <Link href="/photo" aria-label={t.me.changePhoto} className="relative flex-none">
           <Avatar userId={user.id} hasPhoto={!!user.profilePhotoType} version={user.photoUpdatedAt} size={16} />
           <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm shadow" aria-hidden="true">
             📷
@@ -81,7 +86,7 @@ export default async function ProfilePage({
         </Link>
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-white drop-shadow truncate">{user.name}</h1>
-          <p className="text-sm text-white">Member #{formatMemberNumber(memberNumber)}</p>
+          <p className="text-sm text-white">{t.me.member} #{formatMemberNumber(memberNumber)}</p>
         </div>
       </div>
 
@@ -92,27 +97,27 @@ export default async function ProfilePage({
       )}
       {saved && (
         <p className="mb-4 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm px-3 py-2">
-          ✓ Saved.
+          ✓ {t.meetup.saved}
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="card !p-4 text-center">
           <p className="text-3xl font-bold text-slate-900">👍 {thumbs}</p>
-          <p className="text-sm text-slate-500 mt-1">thumbs up</p>
+          <p className="text-sm text-slate-500 mt-1">{t.me.thumbsUp}</p>
         </div>
         <div className="card !p-4 text-center">
           {verified ? (
             <>
               <p className="text-3xl font-bold text-brand-700">✓</p>
-              <p className="text-sm text-slate-500 mt-1">You can post</p>
+              <p className="text-sm text-slate-500 mt-1">{t.me.canPost}</p>
             </>
           ) : (
             <>
               <p className="text-3xl" aria-hidden="true">
                 🌱
               </p>
-              <p className="text-sm text-slate-500 mt-1">Go to 1 meetup to post</p>
+              <p className="text-sm text-slate-500 mt-1">{t.me.goToPost}</p>
             </>
           )}
         </div>
@@ -122,7 +127,7 @@ export default async function ProfilePage({
           site on the home screen. */}
       {app ? null : Object.values(storeLinks()).some(Boolean) ? (
         <div className="card mb-4">
-          <p className="mb-3 font-semibold">Get the app</p>
+          <p className="mb-3 font-semibold">{t.install.getApp}</p>
           <StoreBadges />
         </div>
       ) : (
@@ -130,37 +135,39 @@ export default async function ProfilePage({
       )}
 
       <div className="card mb-4">
-        <p className="font-semibold mb-3">Your meetups</p>
+        <p className="font-semibold mb-3">{t.me.yourMeetups}</p>
         {upcoming.length === 0 && past.length === 0 ? (
           <p className="text-sm text-slate-600">
-            None yet.{" "}
+            {t.me.noneYet}{" "}
             <Link href="/" className="font-medium text-brand-700 underline">
-              Find one →
+              {t.me.findOne} →
             </Link>
           </p>
         ) : (
           <div className="space-y-4">
-            {upcoming.length > 0 && <MeetupLinks label="Coming up" rows={upcoming} />}
-            {past.length > 0 && (
-              <MeetupLinks label="Been to" rows={past} toPeople />
-            )}
+            {upcoming.length > 0 && <MeetupLinks t={t} label={t.board.comingUp} rows={upcoming} />}
+            {past.length > 0 && <MeetupLinks t={t} label={t.me.beenTo} rows={past} toPeople />}
           </div>
         )}
       </div>
 
       <div className="card mb-4">
-        <p className="font-semibold mb-1">Bring a friend 🎒</p>
-        <p className="text-sm text-slate-600 mb-3">Send them this link.</p>
+        <p className="font-semibold mb-1">{t.me.bringFriend} 🎒</p>
+        <p className="text-sm text-slate-600 mb-3">{t.me.sendLink}</p>
         <CopyableField value={SITE.url} shown={SITE.domain} />
+      </div>
+
+      <div className="card !p-4">
+        <LanguagePicker />
       </div>
 
       {(blocks.length > 0 || justBlocked) && (
         <div id="blocked" className="card mt-4 scroll-mt-20">
-          <p className="mb-1 font-semibold">Blocked</p>
-          <p className="mb-3 text-sm text-slate-600">You don&apos;t see each other&apos;s meetups.</p>
+          <p className="mb-1 font-semibold">{t.me.blocked}</p>
+          <p className="mb-3 text-sm text-slate-600">{t.me.blockedNote}</p>
           {justBlocked && (
             <p role="status" className="mb-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-base text-brand-800">
-              Blocked.
+              {t.me.blockedDone}
             </p>
           )}
           <ul className="space-y-3">
@@ -173,7 +180,7 @@ export default async function ProfilePage({
                 <form action={unblockUserAction}>
                   <input type="hidden" name="blockedId" value={blocked.id} />
                   <SubmitButton className="btn-secondary min-h-11 px-4" pending="…">
-                    Unblock
+                    {t.me.unblock}
                   </SubmitButton>
                 </form>
               </li>
@@ -187,7 +194,7 @@ export default async function ProfilePage({
           or an error, so the message is in view. */}
       <details id="settings" className="card mt-4 help-item scroll-mt-20" open={Boolean(saved || error) || undefined}>
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-lg font-semibold text-slate-900">
-          ⚙️ Settings
+          ⚙️ {t.me.settings}
           <span className="help-chevron text-2xl text-brand-700" aria-hidden="true">
             +
           </span>
@@ -196,24 +203,24 @@ export default async function ProfilePage({
           <form action={updateProfileAction} className="space-y-3">
             <div>
               <label className="label" htmlFor="name">
-                Name
+                {t.form.name}
               </label>
               <input className="input" id="name" name="name" defaultValue={user.name} required />
             </div>
-            <SubmitButton className="btn-primary w-full" pending="Saving…">
-              Save
+            <SubmitButton className="btn-primary w-full" pending={t.meetup.saving}>
+              {t.me.save}
             </SubmitButton>
           </form>
 
           <div>
-            <p className="font-semibold mb-3">{hasOwnPassword(user) ? "Change password" : "Set a password"}</p>
+            <p className="font-semibold mb-3">{hasOwnPassword(user) ? t.me.changePassword : t.me.setPassword}</p>
             <ChangePasswordForm needsCurrent={hasOwnPassword(user)} />
           </div>
 
           {/* Stacked, not side by side: a long email address pushed the
               button off the card. */}
           <div>
-            <p className="text-base text-slate-700">Signed in as</p>
+            <p className="text-base text-slate-700">{t.me.signedInAs}</p>
             <p className="mb-3 break-all text-base font-semibold text-slate-900">{user.email}</p>
             <LogoutButton className="btn-secondary min-h-12 w-full" />
           </div>
@@ -222,12 +229,12 @@ export default async function ProfilePage({
               to do. */}
           <details>
             <summary className="cursor-pointer select-none text-sm font-medium text-red-700">
-              Delete my account
+              {t.me.deleteAccount}
             </summary>
-            <p className="text-base text-slate-700 mt-3">Deletes everything. You can&apos;t undo it.</p>
+            <p className="text-base text-slate-700 mt-3">{t.me.deleteWarning}</p>
             <form action={deleteAccountAction} className="mt-3">
-              <SubmitButton className="btn-danger w-full" pending="Deleting…">
-                Yes, delete it
+              <SubmitButton className="btn-danger w-full" pending={t.me.deleting}>
+                {t.me.yesDelete}
               </SubmitButton>
             </form>
           </details>
@@ -236,11 +243,11 @@ export default async function ProfilePage({
 
       <p className="mt-6 text-center text-sm text-white">
         <Link href="/terms" className="underline">
-          Terms
+          {t.common.terms}
         </Link>{" "}
         ·{" "}
         <Link href="/privacy" className="underline">
-          Privacy
+          {t.common.privacy}
         </Link>{" "}
         ·{" "}
         <ContactEmail className="underline" />
@@ -254,10 +261,12 @@ type MeetupRow = {
 };
 
 function MeetupLinks({
+  t,
   label,
   rows,
   toPeople = false,
 }: {
+  t: Messages;
   label: string;
   rows: MeetupRow[];
   // Straight down to the people (and their thumbs up buttons) for ones
@@ -281,7 +290,7 @@ function MeetupLinks({
                 <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>
                 <span className="block text-sm text-slate-500">
                   <LocalTime iso={a.startsAt.toISOString()} style="short" />
-                  {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">Cancelled</span>}
+                  {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">{t.meetup.cancelled}</span>}
                 </span>
               </span>
               <span className="text-slate-400" aria-hidden="true">

@@ -22,6 +22,9 @@ import {
   reportUserAction,
   toggleThumbsUpAction,
 } from "@/app/activities/actions";
+import { getLocale, getT } from "@/i18n/server";
+import { fill, plural, rich, typeName } from "@/i18n/format";
+import type { Messages } from "@/i18n/messages";
 
 const personSelect = {
   id: true,
@@ -64,7 +67,7 @@ export default async function ActivityDetailPage({
   const { id } = await params;
   const { error: rawError, sig, reported, blocked: justBlocked, joined: justJoined, saved } = await searchParams;
   const error = readError(rawError, sig);
-  const prisma = await getPrisma();
+  const [prisma, t, lang] = await Promise.all([getPrisma(), getT(), getLocale()]);
 
   // Blocked either way: their meetups are gone for you, and they're left
   // off the list of who's going on anyone else's. Asked for alongside the
@@ -133,7 +136,7 @@ export default async function ActivityDetailPage({
       text: activity.title,
       dates: `${calStamp(activity.startsAt)}/${calStamp(end)}`,
       location: activity.location,
-      details: `${activity.findUs ? `How to find us: ${activity.findUs}\n\n` : ""}${pageUrl}`,
+      details: `${activity.findUs ? `${fill(t.meetup.findUsLine, { text: activity.findUs })}\n\n` : ""}${pageUrl}`,
     });
   // Google Calendar on Android can't open a calendar file, so Android
   // phones go straight to it; everything else gets the file, which opens
@@ -156,39 +159,45 @@ export default async function ActivityDetailPage({
           {error}
         </p>
       )}
-      {justJoined && <JoinedBurst label="You're in! 🙌" />}
+      {justJoined && <JoinedBurst label={`${t.meetup.youreIn} 🙌`} />}
       {justJoined && going && (
         // Right when they've said yes is when people act on a nudge: a
         // calendar entry is what reminds them on the day, and a face is
         // how the group knows who to look out for.
         <div className="card mb-4 !p-4">
-          <p className="text-base font-bold text-slate-900">Don&apos;t miss it</p>
+          <p className="text-base font-bold text-slate-900">{t.meetup.dontMiss}</p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <a {...addToCalendar} className="btn-primary min-h-12 flex-1 text-base">
-              📆 Add to calendar
+              📆 {t.meetup.addToCalendar}
             </a>
           </div>
         </div>
       )}
       {saved && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          ✓ Saved.
+          ✓ {t.meetup.saved}
         </p>
       )}
       {reported && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Thanks. A moderator will look.
+          {t.meetup.reported}
         </p>
       )}
       {justBlocked && (
         <p role="status" className="mb-4 rounded-xl bg-brand-50 border border-brand-200 text-brand-800 text-base px-4 py-3">
-          Blocked. You won&apos;t see each other&apos;s meetups. Undo it on <Link href="/profile#blocked" className="underline">Me</Link>.
+          {rich(t.meetup.blocked, {
+            me: (
+              <Link href="/profile#blocked" className="underline">
+                {t.common.me}
+              </Link>
+            ),
+          })}
         </p>
       )}
 
       <div className="card">
         <span className="badge-slate mb-2 inline-flex !text-sm">
-          {category.emoji} {category.label}
+          {category.emoji} {typeName(t, activity.category)}
         </span>
         <h1 className="text-2xl font-bold leading-tight">{activity.title}</h1>
 
@@ -196,7 +205,7 @@ export default async function ActivityDetailPage({
             this order: when, where, and how to spot the group. */}
         <dl className="mt-4 space-y-3 text-base">
           <div className="flex gap-3">
-            <dt className="w-7 flex-none text-xl" aria-label="When">
+            <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whenLabel}>
               🗓️
             </dt>
             <dd className="font-semibold text-slate-900">
@@ -204,40 +213,40 @@ export default async function ActivityDetailPage({
             </dd>
           </div>
           <div className="flex gap-3">
-            <dt className="w-7 flex-none text-xl" aria-label="Where">
+            <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whereLabel}>
               📍
             </dt>
             <dd className="text-slate-800">{activity.location}</dd>
           </div>
           {activity.findUs && (
             <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label="How to find the group">
+              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.findGroupLabel}>
                 👀
               </dt>
               <dd className="text-slate-800">
-                <span className="font-semibold">How to find us: </span>
+                <span className="font-semibold">{t.meetup.findUs} </span>
                 {activity.findUs}
               </dd>
             </div>
           )}
           {activity.afterSpot && (
             <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label="Afterwards">
+              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.afterwardsLabel}>
                 🍻
               </dt>
               <dd className="text-slate-800">
-                <span className="font-semibold">Afterwards: </span>
+                <span className="font-semibold">{t.meetup.afterwards} </span>
                 {activity.afterSpot}
               </dd>
             </div>
           )}
           {(activity.distanceKm || activity.pace) && (
             <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label="Distance and pace">
+              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.distancePaceLabel}>
                 📏
               </dt>
               <dd className="text-slate-800">
-                {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? `${activity.pace} pace` : null]
+                {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? fill(t.meetup.pace, { pace: activity.pace }) : null]
                   .filter(Boolean)
                   .join(" · ")}
               </dd>
@@ -251,11 +260,11 @@ export default async function ActivityDetailPage({
           <div className="tool-grid mt-5 grid grid-cols-3 gap-2">
             <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
               <span aria-hidden="true">🧭</span>
-              Directions
+              {t.meetup.directions}
             </a>
             <a {...addToCalendar} className="tool-btn">
               <span aria-hidden="true">📆</span>
-              Add to calendar
+              {t.meetup.addToCalendar}
             </a>
             <ShareButton url={pageUrl} title={activity.title} />
           </div>
@@ -271,34 +280,34 @@ export default async function ActivityDetailPage({
             rel="noopener noreferrer"
             className="mt-3 inline-flex min-h-11 items-center gap-1 text-base font-medium text-orange-700 underline"
           >
-            🧡 Route on Strava
+            🧡 {t.meetup.strava}
           </a>
         )}
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
-          <span className="text-slate-600">Host</span>
+          <span className="text-slate-600">{t.meetup.host}</span>
           <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} version={activity.host.photoUpdatedAt} size={8} />
           <span className="font-semibold">{activity.host.name}</span>
-          <TrustMarks person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
+          <TrustMarks t={t} person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
         </div>
 
         {canManage && (
           <div className="mt-4 flex flex-wrap items-start gap-3">
             <Link href={`/activities/${activity.id}/edit`} className="btn-secondary min-h-11">
-              ✏️ Change details
+              ✏️ {t.meetup.change}
             </Link>
             {/* Two taps: calling a meetup off can't be undone. */}
             <details>
               <summary className="btn-secondary min-h-11 cursor-pointer list-none !text-red-700">
-                Cancel meetup
+                {t.meetup.cancel}
               </summary>
               <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
                 <input type="hidden" name="activityId" value={activity.id} />
                 <p className="text-base text-slate-700 mb-3">
-                  Everyone going will see it&apos;s cancelled. You can&apos;t undo this.
+                  {t.meetup.cancelWarning}
                 </p>
-                <SubmitButton className="btn-danger w-full min-h-11" pending="Cancelling…">
-                  Yes, cancel it
+                <SubmitButton className="btn-danger w-full min-h-11" pending={t.meetup.cancelling}>
+                  {t.meetup.yesCancel}
                 </SubmitButton>
               </form>
             </details>
@@ -311,48 +320,50 @@ export default async function ActivityDetailPage({
           far down you've scrolled. On a bigger screen it sits in the page. */}
       <div className="action-bar">
         {cancelled ? (
-          <p className="action-bar-note text-red-700">❌ Cancelled</p>
+          <p className="action-bar-note text-red-700">❌ {t.meetup.cancelled}</p>
         ) : happened ? (
           wasThere ? (
             <a href="#people" className="btn-primary w-full min-h-12 text-base">
-              👍 Give thumbs up
+              👍 {t.notice.giveThumbs}
             </a>
           ) : (
-            <p className="action-bar-note">This meetup is over.</p>
+            <p className="action-bar-note">{t.meetup.over}</p>
           )
         ) : isHost ? (
-          <p className="action-bar-note">You&apos;re the host. {joined.length - 1 > 0 ? `${joined.length - 1} going.` : "Share it!"}</p>
+          <p className="action-bar-note">
+            {t.meetup.youreHost} {joined.length - 1 > 0 ? `${plural(t.list.going, joined.length - 1, lang)}.` : t.meetup.shareIt}
+          </p>
         ) : activity.host.accountStatus !== "ACTIVE" ? (
-          <p className="action-bar-note">This host has been removed.</p>
+          <p className="action-bar-note">{t.meetup.hostRemoved}</p>
         ) : !myParticipation ? (
           <form action={joinActivityAction} className="w-full">
             <input type="hidden" name="activityId" value={activity.id} />
-            <SubmitButton className="btn-primary w-full min-h-12 text-lg" pending="Saving…">
-              {full ? "Full: join waitlist" : "I'm in 🙌"}
+            <SubmitButton className="btn-primary w-full min-h-12 text-lg" pending={t.meetup.saving}>
+              {full ? t.meetup.joinWaitlist : `${t.meetup.imIn} 🙌`}
             </SubmitButton>
             <p className="mt-1 text-center text-sm text-slate-600">
               {user.profilePhotoType
-                ? `Free · ${joined.length > 0 ? `${joined.length} going` : "Be the first"}`
-                : "Free · You'll add a photo first"}
+                ? `${t.meetup.free} · ${joined.length > 0 ? plural(t.list.going, joined.length, lang) : t.list.beFirst}`
+                : `${t.meetup.free} · ${t.meetup.photoFirst}`}
             </p>
           </form>
         ) : going ? (
           <div className="flex w-full items-center gap-3">
-            <p className="flex-1 text-base font-semibold text-brand-800">✓ You&apos;re going</p>
+            <p className="flex-1 text-base font-semibold text-brand-800">✓ {t.meetup.youreGoing}</p>
             <form action={leaveActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
-              <SubmitButton className="btn-secondary min-h-11" pending="Saving…">
-                I can&apos;t go now
+              <SubmitButton className="btn-secondary min-h-11" pending={t.meetup.saving}>
+                {t.meetup.cantGo}
               </SubmitButton>
             </form>
           </div>
         ) : (
           <div className="flex w-full items-center gap-3">
-            <p className="flex-1 text-base font-semibold text-amber-800">You&apos;re on the waitlist</p>
+            <p className="flex-1 text-base font-semibold text-amber-800">{t.meetup.onWaitlist}</p>
             <form action={leaveActivityAction}>
               <input type="hidden" name="activityId" value={activity.id} />
-              <SubmitButton className="btn-secondary min-h-11" pending="Saving…">
-                Leave waitlist
+              <SubmitButton className="btn-secondary min-h-11" pending={t.meetup.saving}>
+                {t.meetup.leaveWaitlist}
               </SubmitButton>
             </form>
           </div>
@@ -361,13 +372,17 @@ export default async function ActivityDetailPage({
 
       <div id="people" className="card mt-6 scroll-mt-20">
         <h2 className="text-lg font-bold">
-          {happened ? "Who came" : "Who's going"} ({unblocked(joined).length}
-          {activity.maxParticipants && !happened ? ` of ${activity.maxParticipants}` : ""})
+          {happened ? t.meetup.whoCame : t.meetup.whosGoing} (
+          {activity.maxParticipants && !happened
+            ? fill(t.board.nOfTotal, { n: unblocked(joined).length, total: activity.maxParticipants })
+            : unblocked(joined).length}
+          )
         </h2>
         <ul className="mt-3 space-y-4">
           {unblocked(joined).map((p) => (
             <ParticipantRow
               key={p.id}
+              t={t}
               person={p.user}
               thumbs={thumbs.get(p.userId) ?? 0}
               activityId={activity.id}
@@ -381,12 +396,13 @@ export default async function ActivityDetailPage({
         {unblocked(waitlist).length > 0 && !happened && (
           <>
             <h3 className="font-semibold mt-6 mb-3 text-base text-slate-700">
-              Waitlist ({unblocked(waitlist).length})
+              {t.meetup.waitlist} ({unblocked(waitlist).length})
             </h3>
             <ul className="space-y-4">
               {unblocked(waitlist).map((p) => (
                 <ParticipantRow
                   key={p.id}
+                  t={t}
                   person={p.user}
                   thumbs={thumbs.get(p.userId) ?? 0}
                   activityId={activity.id}
@@ -404,18 +420,19 @@ export default async function ActivityDetailPage({
           meeting people you don't know yet, and reporting the meetup. */}
       <details className="card mt-6">
         <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-slate-900">
-          🛟 Stay safe{!isHost && " · 🚩 Report"}
+          🛟 {t.meetup.staySafe}
+          {!isHost && ` · 🚩 ${t.meetup.report}`}
         </summary>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-base text-slate-700">
-          <li>Stay in public.</li>
-          <li>Tell a friend where you are.</li>
-          <li>Feels wrong? Leave.</li>
-          <li>Someone rude? Tap <strong>🚩 Report or block</strong> under their name.</li>
+          <li>{t.meetup.safe1}</li>
+          <li>{t.meetup.safe2}</li>
+          <li>{t.meetup.safe3}</li>
+          <li>{rich(t.meetup.safe4, { report: <strong>🚩 {t.meetup.reportOrBlock}</strong> })}</li>
         </ul>
         {!isHost && (
           <>
-            <p className="mt-4 text-base font-semibold text-slate-900">🚩 Report this meetup</p>
-            <ReportForm personId={activity.hostId} activityId={activity.id} fieldId="meetup" />
+            <p className="mt-4 text-base font-semibold text-slate-900">🚩 {t.meetup.reportMeetup}</p>
+            <ReportForm t={t} personId={activity.hostId} activityId={activity.id} fieldId="meetup" />
           </>
         )}
       </details>
@@ -424,19 +441,19 @@ export default async function ActivityDetailPage({
 }
 
 /** The ✓ (been to a meetup) or "new", and the 👍 count. */
-function TrustMarks({ person, thumbs }: { person: Person; thumbs: number }) {
+function TrustMarks({ t, person, thumbs }: { t: Messages; person: Person; thumbs: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
       {isVerifiedMember(person) ? (
-        <span className="badge-green" title="Has been to a meetup before">
-          ✓ Been before
+        <span className="badge-green" title={t.meetup.beenBeforeTitle}>
+          ✓ {t.meetup.beenBefore}
         </span>
       ) : (
-        <span className="badge-amber" title="Hasn't been to a meetup yet">
-          New
+        <span className="badge-amber" title={t.meetup.newTitle}>
+          {t.meetup.new}
         </span>
       )}
-      <span className="font-semibold text-slate-700" title={`${thumbs} thumbs up`}>
+      <span className="font-semibold text-slate-700" title={fill(t.meetup.thumbsTitle, { n: thumbs })}>
         👍 {thumbs}
       </span>
     </span>
@@ -444,6 +461,7 @@ function TrustMarks({ person, thumbs }: { person: Person; thumbs: number }) {
 }
 
 function ParticipantRow({
+  t,
   person,
   thumbs,
   activityId,
@@ -451,6 +469,7 @@ function ParticipantRow({
   canThumb,
   thumbed,
 }: {
+  t: Messages;
   person: Person;
   thumbs: number;
   activityId: string;
@@ -466,9 +485,9 @@ function ParticipantRow({
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">
               {person.name}
-              {person.id === viewer && <span className="text-slate-500 font-normal"> (you)</span>}
+              {person.id === viewer && <span className="text-slate-500 font-normal"> ({t.meetup.you})</span>}
             </p>
-            <TrustMarks person={person} thumbs={thumbs} />
+            <TrustMarks t={t} person={person} thumbs={thumbs} />
           </div>
         </div>
         {canThumb && (
@@ -478,9 +497,9 @@ function ParticipantRow({
             <SubmitButton
               className={`thumb-btn ${thumbed ? "thumb-btn-on" : ""}`}
               pending="👍"
-              title={thumbed ? "Take your thumbs up back" : `Give ${person.name} a thumbs up`}
+              title={thumbed ? t.meetup.takeBack : fill(t.meetup.giveTo, { name: person.name })}
             >
-              {thumbed ? "👍 Given" : "👍 Thumbs up"}
+              {thumbed ? `👍 ${t.meetup.given}` : `👍 ${t.meetup.thumbsUp}`}
             </SubmitButton>
           </form>
         )}
@@ -488,18 +507,15 @@ function ParticipantRow({
       {person.id !== viewer && (
         <details className="mt-1 pl-[3.25rem]">
           <summary className="inline-flex min-h-11 cursor-pointer list-none items-center text-sm font-medium text-slate-600 underline hover:text-red-700">
-            🚩 Report or block
+            🚩 {t.meetup.reportOrBlock}
           </summary>
-          <ReportForm personId={person.id} activityId={activityId} fieldId={person.id} />
+          <ReportForm t={t} personId={person.id} activityId={activityId} fieldId={person.id} />
           <form action={blockUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-sm text-slate-700">
-              Block {person.name}? You won&apos;t see each other&apos;s meetups, and they&apos;re
-              taken off yours.
-            </p>
+            <p className="text-sm text-slate-700">{fill(t.meetup.blockQuestion, { name: person.name })}</p>
             <input type="hidden" name="blockedId" value={person.id} />
             <input type="hidden" name="activityId" value={activityId} />
-            <SubmitButton className="btn-secondary min-h-11" pending="Blocking…">
-              🚫 Block {person.name}
+            <SubmitButton className="btn-secondary min-h-11" pending={t.meetup.blocking}>
+              🚫 {fill(t.meetup.block, { name: person.name })}
             </SubmitButton>
           </form>
         </details>
@@ -510,20 +526,20 @@ function ParticipantRow({
 
 /** "What happened?", sent to the moderators. About a person, or about a
  * meetup, which is a report about its host. */
-function ReportForm({ personId, activityId, fieldId }: { personId: string; activityId: string; fieldId: string }) {
+function ReportForm({ t, personId, activityId, fieldId }: { t: Messages; personId: string; activityId: string; fieldId: string }) {
   return (
     <form action={reportUserAction} className="mt-2 flex max-w-sm flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3">
       <p className="text-sm text-slate-700">
-        Only moderators see this. 3 reports = banned for life.
+        {t.meetup.reportNote}
       </p>
       <input type="hidden" name="reportedUserId" value={personId} />
       <input type="hidden" name="activityId" value={activityId} />
       <label htmlFor={`reason-${fieldId}`} className="text-sm font-semibold text-slate-800">
-        What happened?
+        {t.meetup.whatHappened}
       </label>
       <textarea id={`reason-${fieldId}`} name="reason" className="input !text-base" rows={3} required minLength={5} />
-      <SubmitButton className="btn-danger min-h-11" pending="Sending…">
-        Send report
+      <SubmitButton className="btn-danger min-h-11" pending={t.signIn.sending}>
+        {t.meetup.sendReport}
       </SubmitButton>
     </form>
   );

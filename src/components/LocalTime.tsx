@@ -1,6 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useLocale, useT } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
 
 // Meetup times in the time zone, and the clock, of whoever is looking.
 //
@@ -11,26 +13,39 @@ import { useSyncExternalStore } from "react";
 // every one in your head. useSyncExternalStore is what makes the switch
 // without a hydration mismatch: the first render in the browser matches
 // the server's, then the real one follows.
+//
+// Days and months are in the app's language ("Saturday 17 October",
+// "10月17日星期六"); the clock follows the device.
 
-export type TimePrefs = { zone?: string; locale: "en-GB" | "en-US"; hour12: boolean };
+export type TimePrefs = { zone?: string; locale: string; hour12: boolean };
 
-const SERVER_PREFS: TimePrefs = { zone: "Europe/London", locale: "en-GB", hour12: false };
-let clientCache: TimePrefs | null = null;
+/** How each of our languages writes a date. English goes by the device:
+ * US or British. */
+const DATE_TAG: Record<Locale, string> = { en: "en-GB", zh: "zh-CN", hi: "hi-IN", es: "es-ES", fr: "fr-FR" };
 
-/** This device's own: its zone, US or British English wording, and
- * whether its locale reads a 12-hour clock. */
-export function clientPrefs(): TimePrefs {
-  if (clientCache) return clientCache;
-  if (typeof navigator === "undefined") return SERVER_PREFS;
-  const lang = deviceLanguage();
+export function serverPrefs(lang: Locale = "en"): TimePrefs {
+  return { zone: "Europe/London", locale: DATE_TAG[lang], hour12: false };
+}
+
+const clientCache = new Map<Locale, TimePrefs>();
+
+/** This device's own: its zone, whether its locale reads a 12-hour clock,
+ * and, in English, US or British wording. */
+export function clientPrefs(lang: Locale = "en"): TimePrefs {
+  const cached = clientCache.get(lang);
+  if (cached) return cached;
+  if (typeof navigator === "undefined") return serverPrefs(lang);
+  const device = deviceLanguage();
   let hour12 = false;
   try {
-    hour12 = new Intl.DateTimeFormat(lang, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
+    hour12 = new Intl.DateTimeFormat(device, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
   } catch {
     // A 24-hour clock is the safe guess.
   }
-  clientCache = { zone: undefined, locale: /^en-US/i.test(lang) ? "en-US" : "en-GB", hour12 };
-  return clientCache;
+  const locale = lang === "en" ? (/^en-US/i.test(device) ? "en-US" : "en-GB") : DATE_TAG[lang];
+  const prefs = { zone: undefined, locale, hour12 };
+  clientCache.set(lang, prefs);
+  return prefs;
 }
 
 /** The device's language as a tag Intl accepts. Some systems report
@@ -45,10 +60,14 @@ export function deviceLanguage(): string {
   }
 }
 
-// Built from the pieces Intl gives back rather than its finished string,
-// because the punctuation in that string changes between ICU versions
-// ("Fri 9 Oct" on the server, "Fri, 9 Oct" in Chrome), and the first
-// render in the browser has to match the server's letter for letter.
+const english = (prefs: TimePrefs) => prefs.locale.startsWith("en");
+
+// In English, built from the pieces Intl gives back rather than its
+// finished string, because the punctuation in that string changes between
+// ICU versions ("Fri 9 Oct" on the server, "Fri, 9 Oct" in Chrome), and
+// the first render in the browser has to match the server's letter for
+// letter. The other languages take Intl's own wording, which is the only
+// way to get their word order right.
 function parts(d: Date, prefs: TimePrefs, options: Intl.DateTimeFormatOptions) {
   const out: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {};
   for (const part of new Intl.DateTimeFormat(prefs.locale, { timeZone: prefs.zone, ...options }).formatToParts(d)) {
@@ -59,6 +78,14 @@ function parts(d: Date, prefs: TimePrefs, options: Intl.DateTimeFormatOptions) {
 
 /** "07:00" or "7:00 AM", as this reader would write it. */
 export function clockTime(d: Date, prefs: TimePrefs = clientPrefs()): string {
+  if (!english(prefs)) {
+    return new Intl.DateTimeFormat(prefs.locale, {
+      timeZone: prefs.zone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: prefs.hour12,
+    }).format(d);
+  }
   const p = parts(d, prefs, {
     hour: prefs.hour12 ? "numeric" : "2-digit",
     minute: "2-digit",
@@ -74,25 +101,35 @@ function dayKey(d: Date, zone: string | undefined) {
 }
 
 type Style = "long" | "short";
+export type DayWords = { today: string; tomorrow: string };
 
-export function formatWhen(iso: string, style: Style, prefs: TimePrefs = clientPrefs()): string {
+export function formatWhen(
+  iso: string,
+  style: Style,
+  prefs: TimePrefs = clientPrefs(),
+  words: DayWords = { today: "Today", tomorrow: "Tomorrow" }
+): string {
   const d = new Date(iso);
   const time = clockTime(d, prefs);
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  if (dayKey(d, prefs.zone) === dayKey(now, prefs.zone)) return `Today · ${time}`;
-  if (dayKey(d, prefs.zone) === dayKey(tomorrow, prefs.zone)) return `Tomorrow · ${time}`;
+  if (dayKey(d, prefs.zone) === dayKey(now, prefs.zone)) return `${words.today} · ${time}`;
+  if (dayKey(d, prefs.zone) === dayKey(tomorrow, prefs.zone)) return `${words.tomorrow} · ${time}`;
 
   const sameYear =
     new Intl.DateTimeFormat("en", { timeZone: prefs.zone, year: "numeric" }).format(d) ===
     new Intl.DateTimeFormat("en", { timeZone: prefs.zone, year: "numeric" }).format(now);
-  const p = parts(d, prefs, {
+  const withYear = !sameYear && style !== "short";
+  const options: Intl.DateTimeFormatOptions = {
     weekday: style === "short" ? "short" : "long",
     day: "numeric",
     month: style === "short" ? "short" : "long",
-    year: "numeric",
-  });
-  const withYear = !sameYear && style !== "short";
+    ...(withYear || english(prefs) ? { year: "numeric" } : {}),
+  };
+  if (!english(prefs)) {
+    return `${new Intl.DateTimeFormat(prefs.locale, { timeZone: prefs.zone, ...options }).format(d)} · ${time}`;
+  }
+  const p = parts(d, prefs, options);
   // "Friday 9 October" in Britain and most places, "Friday, October 9" in the US.
   const day =
     prefs.locale === "en-US"
@@ -103,20 +140,35 @@ export function formatWhen(iso: string, style: Style, prefs: TimePrefs = clientP
 
 const subscribe = () => () => {};
 
+/** This device's habits in the app's language: the server's guess on the
+ * first render, the device's own after. */
+export function useTimePrefs(): TimePrefs {
+  const lang = useLocale();
+  return useSyncExternalStore(subscribe, () => clientPrefs(lang), () => serverPrefs(lang));
+}
+
+/** formatWhen for this reader, in the app's language. */
+export function useFormatWhen(): (iso: string, style: Style) => string {
+  const prefs = useTimePrefs();
+  const lang = useLocale();
+  const t = useT();
+  return (iso, style) => {
+    try {
+      return formatWhen(iso, style, prefs, t.time);
+    } catch {
+      // Some odd device setting: the way the server does it instead.
+      return formatWhen(iso, style, serverPrefs(lang), t.time);
+    }
+  };
+}
+
 export default function LocalTime({ iso, style = "long" }: { iso: string; style?: Style }) {
-  const prefs = useSyncExternalStore(subscribe, clientPrefs, () => SERVER_PREFS);
+  const when = useFormatWhen();
   // suppressHydrationWarning only as a backstop: if some browser still
   // words a date differently, that's not worth re-rendering the page over.
-  let text: string;
-  try {
-    text = formatWhen(iso, style, prefs);
-  } catch {
-    // Some odd device setting: show it the way the server does instead.
-    text = formatWhen(iso, style, SERVER_PREFS);
-  }
   return (
     <time dateTime={iso} suppressHydrationWarning>
-      {text}
+      {when(iso, style)}
     </time>
   );
 }

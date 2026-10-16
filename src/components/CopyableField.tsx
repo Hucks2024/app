@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/i18n/client";
 
 // `shown` is a shorter way to write the value on screen, when the whole
 // thing would break across lines on a phone.
 export default function CopyableField({ value, shown }: { value: string; shown?: string }) {
   const [copied, setCopied] = useState(false);
+  const t = useT();
 
   async function copy() {
     try {
@@ -27,7 +29,7 @@ export default function CopyableField({ value, shown }: { value: string; shown?:
     >
       <span className="break-all">{shown ?? value}</span>
       <span className="shrink-0 text-sm font-sans font-medium text-brand-600">
-        {copied ? "Copied ✓" : "Copy"}
+        {copied ? `${t.common.copied} ✓` : t.common.copy}
       </span>
     </button>
   );

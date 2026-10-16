@@ -1,4 +1,5 @@
 import { inApp } from "@/lib/in-app";
+import { getT } from "@/i18n/server";
 
 // The app in the App Store and Google Play. Each button shows once its
 // link is set (GitHub secrets APP_STORE_URL, GOOGLE_PLAY_URL), and only if it
@@ -24,18 +25,19 @@ export default async function StoreBadges({ className = "" }: { className?: stri
   const { apple, google } = storeLinks();
   // Not in the app itself, which is what they'd download.
   if ((!apple && !google) || (await inApp())) return null;
+  const t = await getT();
   return (
     <div className={`flex flex-wrap items-center justify-center gap-3 ${className}`}>
       {apple && (
         <a href={apple}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/badges/app-store.svg" alt="Download on the App Store" width={135} height={40} className="h-12 w-auto" />
+          <img src="/badges/app-store.svg" alt={t.welcome.appStore} width={135} height={40} className="h-12 w-auto" />
         </a>
       )}
       {google && (
         <a href={google}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/badges/google-play.svg" alt="Get it on Google Play" width={135} height={40} className="h-12 w-auto" />
+          <img src="/badges/google-play.svg" alt={t.welcome.googlePlay} width={135} height={40} className="h-12 w-auto" />
         </a>
       )}
     </div>

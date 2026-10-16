@@ -219,20 +219,20 @@ export type SignInResult = { ok: true; user: User } | { ok: false; error: string
 export async function signInWithIdentity(provider: Provider, id: Identity): Promise<SignInResult> {
   const prisma = await getPrisma();
   const where = provider === "apple" ? { appleSub: id.sub } : { googleSub: id.sub };
-  const label = provider === "apple" ? "Apple" : "Google";
-
   let user = await prisma.user.findUnique({ where });
 
+  // Errors are names of lines in t.errors, shown in the member's language
+  // by finishSignIn.
   if (!user) {
     if (!id.email || !id.emailVerified) {
-      return { ok: false, error: `${label} didn't share a confirmed email address, so we can't make an account from it.` };
+      return { ok: false, error: provider === "apple" ? "noEmailApple" : "noEmailGoogle" };
     }
     const email = id.email.trim().toLowerCase();
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return {
         ok: false,
-        error: "That email already has an account. Use Continue with email.",
+        error: "emailTakenUseEmail",
       };
     }
     user = await prisma.user.create({
@@ -250,10 +250,10 @@ export async function signInWithIdentity(provider: Provider, id: Identity): Prom
   }
 
   if (user.accountStatus === "BANNED") {
-    return { ok: false, error: "This account is banned for life." };
+    return { ok: false, error: "banned" };
   }
   if (user.accountStatus !== "ACTIVE") {
-    return { ok: false, error: "This account is on hold." };
+    return { ok: false, error: "onHold" };
   }
   return { ok: true, user };
 }

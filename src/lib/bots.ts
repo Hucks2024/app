@@ -67,7 +67,9 @@ const LINK = /https?:\/\/|www\.|[a-z0-9-]+\.(com|net|org|io|co|uk|me|app|xyz|inf
 const EMAIL = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i;
 const PHONE = /\+?\d(?:[\s().-]*\d){9,}/;
 
-export const NO_ADS = "No links, emails or phone numbers.";
+// The names of the messages in t.errors (src/i18n/messages), shown in the
+// member's language.
+export const NO_ADS = "noAds";
 
 export function looksLikeAdvert(text: string): boolean {
   return LINK.test(text) || EMAIL.test(text) || PHONE.test(text);
@@ -120,7 +122,7 @@ function plainWords(text: string): string {
     .trim();
 }
 
-export const NOT_NICE = "Keep it friendly: no swearing, slurs or adult stuff.";
+export const NOT_NICE = "notNice";
 
 export function looksOffensive(text: string): boolean {
   const plain = plainWords(text);

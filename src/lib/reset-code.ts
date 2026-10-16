@@ -2,6 +2,9 @@ import { randomInt } from "crypto";
 import type { PrismaClient } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { SITE } from "@/lib/site";
+import type { Locale } from "@/i18n/config";
+import { fill, plural } from "@/i18n/format";
+import type { Messages } from "@/i18n/messages";
 
 const CODE_TTL_MINUTES = 15;
 const MAX_ATTEMPTS = 5;
@@ -19,17 +22,21 @@ function sixDigits(): string {
 // sends. Kept in the EmailVerification table, which held sign-up codes
 // once too.
 
-/** Issues a fresh code and emails it. Replaces any code already out. */
+/** Issues a fresh code and emails it, in the language they asked in.
+ * Replaces any code already out. A cooldown error says so, as it's the
+ * one worth showing as it is. */
 export async function sendResetCode(
   prisma: PrismaClient,
-  user: { id: string; email: string; name: string }
-): Promise<{ ok: true } | { ok: false; error: string }> {
+  user: { id: string; email: string; name: string },
+  t: Messages,
+  lang: Locale
+): Promise<{ ok: true } | { ok: false; error: string; cooldown?: true }> {
   const existing = await prisma.emailVerification.findUnique({ where: { userId: user.id } });
   if (existing) {
     const secondsSince = (Date.now() - existing.sentAt.getTime()) / 1000;
     if (secondsSince < RESEND_COOLDOWN_SECONDS) {
       const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSince);
-      return { ok: false, error: `Wait ${wait} second${wait === 1 ? "" : "s"}, then try again.` };
+      return { ok: false, error: plural(t.reset.wait, wait, lang), cooldown: true };
     }
   }
 
@@ -38,17 +45,17 @@ export async function sendResetCode(
 
   const result = await sendEmail({
     to: user.email,
-    subject: `${code} is your ${SITE.name} code`,
+    subject: fill(t.reset.subject, { code, site: SITE.name }),
     text: [
-      `Hi ${user.name},`,
+      fill(t.reset.hi, { name: user.name }),
       ``,
-      `Your code to reset your password:`,
+      t.reset.yourCode,
       ``,
       `    ${code}`,
       ``,
-      `It works for ${CODE_TTL_MINUTES} minutes.`,
+      fill(t.reset.worksFor, { n: CODE_TTL_MINUTES }),
       ``,
-      `Didn't ask for this? Ignore it.`,
+      t.reset.ignore,
     ].join("\n"),
   });
 
@@ -72,23 +79,25 @@ export type CheckResult = { ok: true } | { ok: false; error: string };
 export async function checkResetCode(
   prisma: PrismaClient,
   userId: string,
-  typed: string
+  typed: string,
+  t: Messages,
+  lang: Locale
 ): Promise<CheckResult> {
   const code = typed.replace(/\D/g, "");
   if (code.length !== 6) {
-    return { ok: false, error: "Type the code from the email." };
+    return { ok: false, error: t.errors.typeCode };
   }
 
   const record = await prisma.emailVerification.findUnique({ where: { userId } });
   if (!record) {
-    return { ok: false, error: "Code expired. Get a new one." };
+    return { ok: false, error: t.errors.codeExpired };
   }
   if (record.expiresAt < new Date()) {
     await prisma.emailVerification.delete({ where: { userId } });
-    return { ok: false, error: "Code expired. Get a new one." };
+    return { ok: false, error: t.errors.codeExpired };
   }
   if (record.attempts >= MAX_ATTEMPTS) {
-    return { ok: false, error: "Too many tries. Get a new code." };
+    return { ok: false, error: t.errors.codeTooMany };
   }
 
   if (record.code !== code) {
@@ -97,9 +106,7 @@ export async function checkResetCode(
     const left = MAX_ATTEMPTS - attempts;
     return {
       ok: false,
-      error: left > 0
-        ? `Wrong code. ${left} ${left === 1 ? "try" : "tries"} left.`
-        : "Too many tries. Get a new code.",
+      error: left > 0 ? plural(t.errors.wrongCode, left, lang) : t.errors.codeTooMany,
     };
   }
 

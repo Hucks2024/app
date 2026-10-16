@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/i18n/client";
+import { rich } from "@/i18n/format";
 
 const DISMISSED_KEY = "installHintDismissed";
 
@@ -33,6 +35,7 @@ function offerFor(): Offer {
 export default function InstallHint() {
   const [offer, setOffer] = useState<Offer>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(null);
+  const t = useT();
 
   useEffect(() => {
     try {
@@ -75,23 +78,29 @@ export default function InstallHint() {
       <div className="flex-1">
         {offer === "iphone" ? (
           <p className="text-base text-slate-700">
-            Get the app: tap <span aria-hidden>⬆️</span> <strong>Share</strong>, then{" "}
-            <strong>Add to Home Screen</strong>.
+            {rich(t.install.iphone, {
+              share: (
+                <>
+                  <span aria-hidden>⬆️</span> <strong>{t.install.share}</strong>
+                </>
+              ),
+              add: <strong>{t.install.addIphone}</strong>,
+            })}
           </p>
         ) : installPrompt ? (
           <button type="button" onClick={install} className="btn-primary min-h-12 w-full text-base">
-            Get the app
+            {t.install.getApp}
           </button>
         ) : (
           <p className="text-base text-slate-700">
-            Get the app: tap <strong>⋮</strong>, then <strong>Add to Home screen</strong>.
+            {rich(t.install.android, { menu: <strong>⋮</strong>, add: <strong>{t.install.addAndroid}</strong> })}
           </p>
         )}
       </div>
       <button
         type="button"
         onClick={dismiss}
-        aria-label="Close"
+        aria-label={t.common.close}
         className="-m-1 flex h-11 w-11 flex-none items-center justify-center rounded-full text-2xl leading-none text-slate-500 hover:bg-slate-100"
       >
         ×

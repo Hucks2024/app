@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { BRAND } from "@/components/Logo";
 import { Credits, LocateControl, Tiles } from "@/components/ActivitiesMap";
+import { useT } from "@/i18n/client";
 
 // Where the map opens with nothing found or marked yet: London, like the
 // main map.
@@ -35,6 +36,7 @@ export default function PinPicker({
   focus: number;
   onMark: (lat: number, lng: number) => void;
 }) {
+  const t = useT();
   // Near me zooms in closer than a found place does.
   const [located, setLocated] = useState(0);
   // About 10cm: more than any phone or map can tell apart.
@@ -65,7 +67,7 @@ export default function PinPicker({
       </div>
       {spot ? (
         <>
-          <p className="mt-2 text-sm text-slate-600">Tap the map or drag the pin to move it.</p>
+          <p className="mt-2 text-sm text-slate-600">{t.form.tapOrDrag}</p>
           <p className="mt-1 text-sm text-slate-600">
             <span className="tabular-nums">
               {spot.lat.toFixed(5)}, {spot.lng.toFixed(5)}
@@ -77,12 +79,12 @@ export default function PinPicker({
               rel="noopener noreferrer"
               className="font-medium text-brand-700 underline"
             >
-              Check on Google Maps ↗
+              {t.form.checkGoogle} ↗
             </a>
           </p>
         </>
       ) : (
-        <p className="mt-2 text-sm text-slate-600">Or tap the map to mark the spot. Zoom in to get it exact.</p>
+        <p className="mt-2 text-sm text-slate-600">{t.form.orTapMark}</p>
       )}
     </div>
   );

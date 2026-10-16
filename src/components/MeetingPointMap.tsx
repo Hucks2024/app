@@ -9,6 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { BRAND } from "@/components/Logo";
 import { Credits, LocateControl, Tiles } from "@/components/ActivitiesMap";
 import { FlyTo, LONDON } from "@/components/PinPicker";
+import { useT } from "@/i18n/client";
 
 type Spot = { lat: number; lng: number };
 
@@ -72,6 +73,7 @@ export default function MeetingPointMap({
   nextLabel: string;
   busy: boolean;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   // Near me zooms in closer than a found place does.
   const [located, setLocated] = useState(0);
@@ -112,13 +114,13 @@ export default function MeetingPointMap({
       <div className="map-overlay-top">
         <div className="point-panel">
           <label htmlFor="location" className="block text-sm font-semibold text-slate-600">
-            {step} · Meeting point
+            {step} · {t.form.meetingPoint}
           </label>
           <input
             id="location"
             className="input mt-1 !text-base min-h-12"
             value={place}
-            placeholder="Search, e.g. Hyde Park Corner"
+            placeholder={t.form.searchHint}
             maxLength={200}
             autoComplete="off"
             enterKeyHint="search"
@@ -133,7 +135,7 @@ export default function MeetingPointMap({
             }}
           />
           <p id="location-check" className="mt-1 min-h-6 truncate text-base" aria-live="polite">
-            {status ?? (!spot && <span className="text-slate-600">Or tap the map to drop the pin.</span>)}
+            {status ?? (!spot && <span className="text-slate-600">{t.form.orTapDrop}</span>)}
           </p>
           {error && (
             <p role="alert" className="mt-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-base text-red-700">
@@ -146,13 +148,13 @@ export default function MeetingPointMap({
       {open && spot && (
         <div className="point-sheet card !p-4" role="dialog" aria-labelledby="point-comment-label">
           <label id="point-comment-label" htmlFor="point-comment" className="label !text-base">
-            Comment <span className="font-normal text-slate-600">(optional)</span>
+            {t.form.comment} <span className="font-normal text-slate-600">{t.common.optional}</span>
           </label>
           <input
             id="point-comment"
             className="input !text-base min-h-12"
             value={comment}
-            placeholder="e.g. By the gate, yellow jacket"
+            placeholder={t.form.spotYouHint}
             maxLength={200}
             autoFocus
             onChange={(e) => onComment(e.target.value)}
@@ -174,18 +176,18 @@ export default function MeetingPointMap({
               rel="noopener noreferrer"
               className="font-medium text-brand-700 underline"
             >
-              Check on Google Maps ↗
+              {t.form.checkGoogle} ↗
             </a>
           </p>
           <button type="button" onClick={() => setOpen(false)} className="btn-primary mt-3 min-h-12 w-full text-base">
-            Done
+            {t.common.done}
           </button>
         </div>
       )}
 
       <div className="point-actions">
         <button type="button" onClick={onBack} className="point-back">
-          ← Back
+          {t.common.back}
         </button>
         <button type="button" onClick={onNext} aria-busy={busy} className="btn-primary min-h-12 flex-1 text-lg">
           {busy && <span className="spinner mr-2" aria-hidden="true" />}
@@ -214,15 +216,16 @@ function Point({
   onOpen: () => void;
   onClose: () => void;
 }) {
+  const t = useT();
   useMapEvents({ click: (e) => (open ? onClose() : onMark(e.latlng.lat, e.latlng.lng)) });
-  const icon = useMemo(() => pointIcon(comment.trim() || "+ Add a comment"), [comment]);
+  const icon = useMemo(() => pointIcon(comment.trim() || `+ ${t.form.addComment}`), [comment, t]);
   if (!spot) return null;
   return (
     <Marker
       position={[spot.lat, spot.lng]}
       icon={icon}
       draggable
-      title="Meeting point"
+      title={t.form.meetingPoint}
       eventHandlers={{
         click: onOpen,
         dragend: (e) => {

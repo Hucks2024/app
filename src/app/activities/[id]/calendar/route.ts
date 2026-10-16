@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { SITE } from "@/lib/site";
+import { getT } from "@/i18n/server";
+import { fill } from "@/i18n/format";
 
 // "Add to calendar": the meetup as a calendar file, which iPhones, Macs,
 // Outlook and most Android phones open straight into their calendar app.
@@ -22,13 +24,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.redirect(`${SITE.url}/login`);
 
   const { id } = await params;
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const a = await prisma.runActivity.findUnique({ where: { id } });
-  if (!a || a.cancelledAt) return new NextResponse("This meetup isn't on any more.", { status: 404 });
+  if (!a || a.cancelledAt) return new NextResponse(t.meetup.notOn, { status: 404 });
 
   const end = new Date(a.startsAt.getTime() + 2 * 60 * 60 * 1000);
   const url = `${SITE.url}/activities/${a.id}`;
-  const details = [a.findUs ? `How to find us: ${a.findUs}` : null, a.description, url]
+  const details = [a.findUs ? fill(t.meetup.findUsLine, { text: a.findUs }) : null, a.description, url]
     .filter(Boolean)
     .join("\n\n");
 

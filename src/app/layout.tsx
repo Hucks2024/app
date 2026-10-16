@@ -6,6 +6,8 @@ import Nav from "@/components/Nav";
 import BottomBar from "@/components/BottomBar";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
+import { getLocale, getT } from "@/i18n/server";
+import { I18nProvider } from "@/i18n/client";
 
 // The stand-in for Segoe UI on devices that don't have it (see
 // .font-wordmark in globals.css). Downloaded at build time and served from
@@ -60,20 +62,23 @@ export async function generateViewport(): Promise<Viewport> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
+  const [locale, t] = await Promise.all([getLocale(), getT()]);
   return (
     // One theme, so nothing has to be decided before paint: no
     // pre-hydration script, no flash, no per-device difference in what the
     // app looks like.
-    <html lang="en" className={openSans.variable}>
+    <html lang={locale} className={openSans.variable}>
       <body className={`min-h-screen flex flex-col ${user ? "has-bottom-bar" : ""}`}>
-        <a href="#main" className="skip-link">
-          Skip to the page
-        </a>
-        <Nav />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        {user && <BottomBar />}
+        <I18nProvider locale={locale} messages={t}>
+          <a href="#main" className="skip-link">
+            {t.common.skipToPage}
+          </a>
+          <Nav />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          {user && <BottomBar />}
+        </I18nProvider>
       </body>
     </html>
   );

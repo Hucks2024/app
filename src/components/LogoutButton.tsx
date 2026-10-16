@@ -1,10 +1,12 @@
 import { logoutAction } from "@/app/(auth)/actions";
+import { getT } from "@/i18n/server";
 
-export default function LogoutButton({ className = "nav-link" }: { className?: string }) {
+export default async function LogoutButton({ className = "nav-link" }: { className?: string }) {
+  const t = await getT();
   return (
     <form action={logoutAction}>
       <button type="submit" className={className}>
-        Sign out
+        {t.common.signOut}
       </button>
     </form>
   );

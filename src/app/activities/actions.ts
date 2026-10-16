@@ -13,6 +13,8 @@ import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES, categoryFor } from "@/lib/categories";
 import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import { block } from "@/lib/blocks";
+import { getT } from "@/i18n/server";
+import { errorText, fill } from "@/i18n/format";
 
 // Every box anyone can type in, checked for adverts (see src/lib/bots.ts).
 const text = (max: number) =>
@@ -24,15 +26,15 @@ const text = (max: number) =>
     .refine((v) => !looksOffensive(v), NOT_NICE);
 
 const createSchema = z.object({
-  title: text(120).pipe(z.string().min(3, "Give it a name.")),
+  title: text(120).pipe(z.string().min(3, "giveName")),
   category: z
     .string()
-    .refine((v) => CATEGORY_VALUES.includes(v), "Pick a type.")
+    .refine((v) => CATEGORY_VALUES.includes(v), "pickType")
     .default("SOCIAL"),
   findUs: text(200).optional(),
   description: text(2000).optional(),
-  location: text(200).pipe(z.string().min(3, "Type where to meet.")),
-  startsAt: z.string().min(1, "Pick a day and time."),
+  location: text(200).pipe(z.string().min(3, "typeWhere")),
+  startsAt: z.string().min(1, "pickDayTime"),
   pace: text(40).optional(),
 });
 
@@ -51,9 +53,6 @@ function readMeetupForm(formData: FormData) {
   };
 }
 
-const NOT_FOUND = (place: string) =>
-  `Can't find "${place}". Add the town, like "Hyde Park, London".`;
-const LOOKUP_DOWN = "Map search is down. Try again in a minute.";
 
 /** Posts a new meetup, or saves changes to one (when activityId is set).
  *
@@ -66,7 +65,7 @@ export async function saveMeetupAction(
   formData: FormData
 ): Promise<MeetupFormState> {
   const user = await requireUser();
-  const prisma = await getPrisma();
+  const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const editingId = String(formData.get("activityId") ?? "");
 
   const existing = editingId
@@ -74,8 +73,8 @@ export async function saveMeetupAction(
     : null;
   if (editingId) {
     if (!existing || (existing.hostId !== user.id && user.role !== "ADMIN")) redirect("/");
-    if (existing.cancelledAt) return { error: "This meetup is cancelled." };
-    if (existing.startsAt <= new Date()) return { error: "This meetup has started." };
+    if (existing.cancelledAt) return { error: t.errors.meetupCancelled };
+    if (existing.startsAt <= new Date()) return { error: t.errors.meetupStarted };
   } else if (!(await refreshVerified(prisma, user)).verified) {
     // Posting is for verified members: somebody who's been to a meetup
     // themselves. The page explains how to get there; this is the lock.
@@ -86,7 +85,7 @@ export async function saveMeetupAction(
   }
 
   const parsed = createSchema.safeParse(readMeetupForm(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Something's not right." };
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0]?.message) };
 
   // The picker gives a wall-clock time with no zone ("2026-10-04T07:00"),
   // which the server would read as UTC: an hour out all summer in London.
@@ -94,9 +93,9 @@ export async function saveMeetupAction(
   // its own zone, and that's the one we keep when it's there.
   const fromBrowser = String(formData.get("startsAtUtc") ?? "");
   const startsAt = new Date(fromBrowser || parsed.data.startsAt);
-  if (Number.isNaN(startsAt.getTime())) return { error: "Check the day and time." };
+  if (Number.isNaN(startsAt.getTime())) return { error: t.errors.checkDayTime };
   if (startsAt.getTime() < Date.now() - 5 * 60 * 1000) {
-    return { error: "That time has gone. Pick a later one." };
+    return { error: t.when.gone };
   }
 
   // Where the pin goes. The form found it from the host's own browser
@@ -120,8 +119,8 @@ export async function saveMeetupAction(
     longitude = fromForm.lng;
   } else if (!existing || existing.location !== parsed.data.location || latitude == null) {
     const place = await geocodeLocation(parsed.data.location);
-    if (place.status === "not_found") return { error: NOT_FOUND(parsed.data.location) };
-    if (place.status === "unavailable") return { error: LOOKUP_DOWN };
+    if (place.status === "not_found") return { error: fill(t.errors.placeNotFound, { place: parsed.data.location }) };
+    if (place.status === "unavailable") return { error: t.errors.lookupDown };
     latitude = place.latitude;
     longitude = place.longitude;
   }
@@ -251,12 +250,13 @@ export async function reportUserAction(formData: FormData) {
   const activityId = String(formData.get("activityId") ?? "");
   const reason = String(formData.get("reason") ?? "").trim();
   const back = (query: string) => redirect(`/activities/${activityId}?${query}`);
+  const t = await getT();
 
   if (reportedUserId === user.id) {
-    back(errorQuery("You can't report yourself."));
+    back(errorQuery(t.errors.reportSelf));
   }
   if (reason.length < 5) {
-    back(errorQuery("Say what happened."));
+    back(errorQuery(t.errors.sayWhat));
   }
 
   const prisma = await getPrisma();
@@ -281,7 +281,7 @@ export async function blockUserAction(formData: FormData) {
   const user = await requireUser();
   const blockedId = String(formData.get("blockedId"));
   const activityId = String(formData.get("activityId") ?? "");
-  if (blockedId === user.id) redirect(`/activities/${activityId}?${errorQuery("You can't block yourself.")}`);
+  if (blockedId === user.id) redirect(`/activities/${activityId}?${errorQuery((await getT()).errors.blockSelf)}`);
 
   const prisma = await getPrisma();
   const [blocked, activity] = await Promise.all([

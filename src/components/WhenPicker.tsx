@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { clientPrefs, clockTime, type TimePrefs } from "@/components/LocalTime";
+import { useEffect, useMemo, useState } from "react";
+import { clockTime, useTimePrefs, type DayWords, type TimePrefs } from "@/components/LocalTime";
+import { useT } from "@/i18n/client";
+import { fill } from "@/i18n/format";
 
 // "When?" for posting a meetup: a row of days to tap, then a time.
 //
@@ -33,23 +35,21 @@ function timeLabel(minutes: number, prefs: TimePrefs): string {
   return clockTime(d, { ...prefs, zone: undefined });
 }
 
-const SERVER_PREFS: TimePrefs = { locale: "en-GB", hour12: false };
-const subscribe = () => () => {};
-
 const TIMES = Array.from({ length: 96 }, (_, i) => i * 15);
 
-export function describeWhen(day: string, minutes: number, prefs: TimePrefs = clientPrefs()): string {
+/** "Tomorrow at 10:00", in the app's language ("at" is "{day} at {time}"). */
+function describeWhen(day: string, minutes: number, prefs: TimePrefs, words: DayWords & { at: string }): string {
   const [y, mo, d] = day.split("-").map(Number);
   const date = new Date(y, mo - 1, d, Math.floor(minutes / 60), minutes % 60);
   const today = startOfDay(new Date());
   const diff = Math.round((startOfDay(date).getTime() - today.getTime()) / 86400000);
   const dayWords =
     diff === 0
-      ? "Today"
+      ? words.today
       : diff === 1
-        ? "Tomorrow"
+        ? words.tomorrow
         : date.toLocaleDateString(prefs.locale, { weekday: "long", day: "numeric", month: "long" });
-  return `${dayWords} at ${timeLabel(minutes, prefs)}`;
+  return fill(words.at, { day: dayWords, time: timeLabel(minutes, prefs) });
 }
 
 export default function WhenPicker({
@@ -63,7 +63,8 @@ export default function WhenPicker({
   // Everything here depends on this device's clock, zone and habits,
   // which the server can't know, so it's worked out once the page is
   // running (the first render matches the server's).
-  const prefs = useSyncExternalStore(subscribe, clientPrefs, () => SERVER_PREFS);
+  const prefs = useTimePrefs();
+  const t = useT();
   const [now, setNow] = useState<Date | null>(null);
   const [day, setDay] = useState<string>("");
   const [minutes, setMinutes] = useState<number>(10 * 60);
@@ -87,11 +88,11 @@ export default function WhenPicker({
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
       return {
         key: dayKey(d),
-        top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString(prefs.locale, { weekday: "short" }),
+        top: i === 0 ? t.time.today : i === 1 ? t.time.tomorrow : d.toLocaleDateString(prefs.locale, { weekday: "short" }),
         bottom: d.toLocaleDateString(prefs.locale, { day: "numeric", month: "short" }),
       };
     });
-  }, [now, prefs]);
+  }, [now, prefs, t]);
 
   const when = useMemo(() => {
     if (!day) return null;
@@ -123,7 +124,7 @@ export default function WhenPicker({
       <input type="hidden" name="startsAtUtc" value={when ? when.toISOString() : ""} />
 
       <fieldset>
-        <legend className="label !text-base">Which day?</legend>
+        <legend className="label !text-base">{t.when.whichDay}</legend>
         <div className="day-row" role="group">
           {days.map((d) => (
             <button
@@ -146,14 +147,14 @@ export default function WhenPicker({
             className={`day-btn ${otherDate ? "day-btn-on" : ""}`}
             aria-pressed={otherDate}
           >
-            <span className="block font-bold">Another</span>
-            <span className="block text-sm">date</span>
+            <span className="block font-bold">{t.when.another}</span>
+            <span className="block text-sm">{t.when.date}</span>
           </button>
         </div>
         {otherDate && (
           <div className="mt-3">
             <label htmlFor="other-date" className="label">
-              Pick the date
+              {t.when.pickDate}
             </label>
             <input
               id="other-date"
@@ -169,7 +170,7 @@ export default function WhenPicker({
 
       <div>
         <label htmlFor="start-time" className="label !text-base">
-          What time?
+          {t.when.whatTime}
         </label>
         <select
           id="start-time"
@@ -177,9 +178,9 @@ export default function WhenPicker({
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
         >
-          {TIMES.map((t) => (
-            <option key={t} value={t}>
-              {timeLabel(t, prefs)}
+          {TIMES.map((m) => (
+            <option key={m} value={m}>
+              {timeLabel(m, prefs)}
             </option>
           ))}
         </select>
@@ -192,7 +193,7 @@ export default function WhenPicker({
           }`}
           aria-live="polite"
         >
-          {inPast ? "That time has gone. Pick a later one." : `🗓️ ${describeWhen(day, minutes, prefs)}`}
+          {inPast ? t.when.gone : `🗓️ ${describeWhen(day, minutes, prefs, { ...t.time, at: t.when.at })}`}
         </p>
       )}
     </div>
