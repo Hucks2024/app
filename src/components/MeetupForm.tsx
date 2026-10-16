@@ -1,10 +1,19 @@
 "use client";
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { CATEGORIES, CATEGORY_GROUPS, categoryFor } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
+
+// The map only loads once there's a place to show, and only in the
+// browser (Leaflet needs a window). The same height while it loads, so
+// nothing below jumps.
+const PinPicker = dynamic(() => import("@/components/PinPicker"), {
+  ssr: false,
+  loading: () => <div className="h-60 rounded-xl border border-slate-200 bg-slate-100" />,
+});
 
 // The few most people want, shown first so the first question is one
 // glance, not a list of two dozen. Everything else is under "More ideas".
@@ -15,6 +24,8 @@ export type MeetupInitial = {
   title: string;
   category: string;
   location: string;
+  latitude: number | null;
+  longitude: number | null;
   findUs: string | null;
   startsAt: string;
   afterSpot: string | null;
@@ -30,6 +41,9 @@ type PlaceCheck =
   | { status: "checking"; for: string }
   | { status: "found"; for: string; label: string; latitude: number; longitude: number }
   | { status: "not_found" | "unavailable"; for: string };
+
+/** Where the pin goes, and the place text it was found for. */
+type Pin = { lat: number; lng: number; for: string };
 
 const STEPS = ["What", "Where", "When", "Name"] as const;
 
@@ -56,6 +70,19 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // The everyday ones first; the rest behind "More ideas".
   const [allTypes, setAllTypes] = useState(!!initial?.category && !POPULAR.includes(initial.category));
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
+  // Found from the place name, then moved by the host to the exact spot.
+  // Kept in a ref too, for the send, which runs straight after a look-up
+  // that may have just set it.
+  const startPin =
+    initial?.latitude != null && initial.longitude != null
+      ? { lat: initial.latitude, lng: initial.longitude, for: initial.location }
+      : null;
+  const [pin, setPinState] = useState<Pin | null>(startPin);
+  const pinRef = useRef<Pin | null>(startPin);
+  const setPin = (p: Pin) => {
+    pinRef.current = p;
+    setPinState(p);
+  };
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
   const [titleTouched, setTitleTouched] = useState(editing);
@@ -88,6 +115,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       const next: PlaceCheck =
         found.status === "found" ? { ...found, for: text } : { status: found.status, for: text };
       setPlace(next);
+      if (found.status === "found") setPin({ lat: found.latitude, lng: found.longitude, for: text });
       if (lookingUp.current?.text === text) lookingUp.current = null;
       return next;
     });
@@ -109,10 +137,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     if (step === 1) {
       const text = locationText();
       if (text.length < 3) return setStepError("Type where to meet.");
+      // Found just now, by this tap: stay, so the pin can be checked first.
+      const seen = place.status === "found" && place.for === text;
       const found = await lookUp(text);
       if (found.status === "not_found") {
         return setStepError(`Can't find "${text}". Add the town, like "Hyde Park, London".`);
       }
+      if (found.status === "found" && !seen) return;
       suggestTitle(found.status === "found" ? found.label : undefined);
     }
     if (step === 2 && !when) return setStepError("Pick a day and time.");
@@ -139,7 +170,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
         const data = new FormData(formRef.current!);
-        if (found?.status === "found") {
+        // The pin as the host left it, if it's for this place.
+        const at = pinRef.current?.for === text ? pinRef.current : null;
+        if (at) {
+          data.set("latitude", String(at.lat));
+          data.set("longitude", String(at.lng));
+          data.set("placeFor", text);
+        } else if (found?.status === "found") {
           data.set("latitude", String(found.latitude));
           data.set("longitude", String(found.longitude));
           data.set("placeFor", found.for);
@@ -251,6 +288,11 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               <span className="font-medium text-amber-800">Can&apos;t find it. Add the town.</span>
             )}
           </p>
+          {show(1) && pin && place.status !== "checking" && place.status !== "not_found" && (
+            <div className="mt-2">
+              <PinPicker key={pin.for} start={pin} onMove={(lat, lng) => setPin({ lat, lng, for: pin.for })} />
+            </div>
+          )}
         </div>
         <div>
           <label className="label !text-base" htmlFor="findUs">

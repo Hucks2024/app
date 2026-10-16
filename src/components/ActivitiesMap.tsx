@@ -78,7 +78,7 @@ function emojiIcon(emoji: string, going: number, today: boolean) {
 // request before a prompt ever shows if Location Services is off for
 // Safari at the OS level, or if this site was denied before, so that one
 // gets a much more specific, actionable message than the rest.
-function locationErrorMessage(code: number | undefined): string {
+export function locationErrorMessage(code: number | undefined): string {
   if (code === 1) {
     return "Location is blocked. Allow it in your phone's Settings, then try again.";
   }
@@ -297,7 +297,7 @@ function takeOff(map: L.Map, layer: L.Layer) {
   }
 }
 
-function Tiles() {
+export function Tiles() {
   const map = useMap();
   const [standIn, setStandIn] = useState(false);
   useEffect(() => {
@@ -379,7 +379,7 @@ function StandInTiles() {
 /** The credits OpenStreetMap's licence asks for, folded into a small ⓘ
  * in the corner that opens them with a tap, rather than a line of small
  * print across the bottom of the map. */
-function Credits() {
+export function Credits() {
   const map = useMap();
   useEffect(() => {
     const control = map.attributionControl;
