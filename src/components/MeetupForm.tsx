@@ -23,7 +23,7 @@ const MeetingPointMap = dynamic(() => import("@/components/MeetingPointMap"), {
 
 // The few most people want, shown first so the first question is one
 // glance, not a list of two dozen. Everything else is under "More ideas".
-const POPULAR = ["WALK", "RUN", "COFFEE", "DRINKS", "FOOD", "PAINT", "GYM", "SOCIAL"];
+const POPULAR = ["WALK", "RUN", "CYCLE", "COFFEE", "DRINKS", "FOOD", "PAINT", "GYM", "SOCIAL"];
 
 export type MeetupInitial = {
   id: string;
@@ -304,7 +304,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           if (!allTypes) {
             return (
               <>
-                <div className="type-grid">
+                <div className="type-grid type-grid-fill">
                   {POPULAR.map((v) => CATEGORIES.find((c) => c.value === v)!).map(pick)}
                 </div>
                 <button type="button" onClick={() => setAllTypes(true)} className="btn-secondary mt-4 min-h-12 w-full text-base">

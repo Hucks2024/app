@@ -160,7 +160,7 @@ const es: Messages = {
   types: {
     RUN: "Correr",
     WALK: "Caminar / senderismo",
-    CYCLE: "Bici",
+    CYCLE: "Ciclismo",
     SWIM: "Nadar",
     GYM: "Gimnasio / clase",
     YOGA: "Yoga",

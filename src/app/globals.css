@@ -1025,6 +1025,13 @@ button[aria-busy="true"] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* Two to a row on a phone: an odd one out at the end ("Something else")
+   takes the whole row rather than leaving a gap beside it. */
+@media (max-width: 519px) {
+  .type-grid-fill > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
 .type-btn {
   display: flex;
   flex-direction: column;

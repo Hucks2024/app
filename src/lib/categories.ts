@@ -14,7 +14,7 @@ export const CATEGORY_GROUPS = ["Move", "Create", "Hang out", "Travel"] as const
 export const CATEGORIES = [
   { value: "RUN", label: "Run", emoji: "🏃", group: "Move", route: true },
   { value: "WALK", label: "Walk / hike", emoji: "🥾", group: "Move", route: true },
-  { value: "CYCLE", label: "Cycle", emoji: "🚲", group: "Move", route: true },
+  { value: "CYCLE", label: "Cycling", emoji: "🚲", group: "Move", route: true },
   { value: "SWIM", label: "Swim", emoji: "🏊", group: "Move", route: true },
   { value: "GYM", label: "Gym / class", emoji: "🏋️", group: "Move", route: false },
   { value: "YOGA", label: "Yoga", emoji: "🧘", group: "Move", route: false },

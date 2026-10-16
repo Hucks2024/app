@@ -160,7 +160,7 @@ const en = {
   types: {
     RUN: "Run",
     WALK: "Walk / hike",
-    CYCLE: "Cycle",
+    CYCLE: "Cycling",
     SWIM: "Swim",
     GYM: "Gym / class",
     YOGA: "Yoga",
