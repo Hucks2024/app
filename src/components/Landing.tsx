@@ -5,6 +5,7 @@ import Welcome from "@/components/Welcome";
 import type { MapActivity } from "@/components/ActivitiesMap";
 import { getT } from "@/i18n/server";
 import LanguagePicker from "@/components/LanguagePicker";
+import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 
 // Anonymous visitors get a real map (so there's something to see, and a
 // reason to sign up) but not real precision: jitter each pin by up to
@@ -97,9 +98,11 @@ export default async function Landing() {
         <MeetupBoard activities={previewActivities} restricted stage="preview" />
       </section>
 
-      <div className="px-4 pb-10">
-        <LanguagePicker onDark />
-      </div>
+      {CAN_PICK_LANGUAGE && (
+        <div className="px-4 pb-10">
+          <LanguagePicker onDark />
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LANGUAGE_NAMES, LOCALES } from "@/i18n/config";
+import { LANGUAGE_NAMES, LIVE_LOCALES } from "@/i18n/config";
 import { setLanguageAction } from "@/i18n/actions";
 import { useLocale, useT } from "@/i18n/client";
 
@@ -32,7 +32,7 @@ export default function LanguagePicker({ onDark = false }: { onDark?: boolean })
           });
         }}
       >
-        {LOCALES.map((code) => (
+        {LIVE_LOCALES.map((code) => (
           <option key={code} value={code} lang={code}>
             {LANGUAGE_NAMES[code]}
           </option>

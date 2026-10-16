@@ -1,5 +1,7 @@
 "use client";
 
+import { isLocale } from "@/i18n/config";
+
 // The last resort, for when even the page frame (the nav, the layout)
 // couldn't be drawn. It replaces the whole document, so none of the app's
 // styles are here: everything it needs is inline. Nor is the app's
@@ -15,7 +17,8 @@ type Lang = keyof typeof WORDS;
 
 function language(): Lang {
   if (typeof document === "undefined") return "en";
-  const isLang = (code: string | undefined): code is Lang => !!code && code in WORDS;
+  // Only the languages switched on (src/i18n/config.ts).
+  const isLang = (code: string | undefined): code is Lang => !!code && code in WORDS && isLocale(code);
   const chosen = document.cookie.match(/(?:^|; )lang=(\w+)/)?.[1];
   if (isLang(chosen)) return chosen;
   const device = navigator.language?.slice(0, 2).toLowerCase();

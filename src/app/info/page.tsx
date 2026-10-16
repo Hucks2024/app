@@ -7,6 +7,7 @@ import { inApp } from "@/lib/in-app";
 import { getT } from "@/i18n/server";
 import { fill, rich } from "@/i18n/format";
 import LanguagePicker from "@/components/LanguagePicker";
+import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 
 export async function generateMetadata() {
   return { title: (await getT()).common.info };
@@ -120,9 +121,11 @@ export default async function InfoPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="text-3xl font-bold text-white drop-shadow">{t.common.info}</h1>
-      <div className="mt-4 flex justify-start">
-        <LanguagePicker onDark />
-      </div>
+      {CAN_PICK_LANGUAGE && (
+        <div className="mt-4 flex justify-start">
+          <LanguagePicker onDark />
+        </div>
+      )}
 
       {/* A little nerve for the first time: walking up to strangers is
           the hard bit, and the reason most people never go. */}

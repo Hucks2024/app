@@ -10,6 +10,13 @@ export const LOCALES = ["en", "zh", "hi", "es", "fr"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
+/** The ones switched on: English only while the app finds its feet in
+ * one city. The others stay written and kept in step (a missing line is
+ * still a build error), ready to add here once a native speaker has
+ * checked them. With just the one, there's no picker either. */
+export const LIVE_LOCALES: readonly Locale[] = ["en"];
+export const CAN_PICK_LANGUAGE = LIVE_LOCALES.length > 1;
+
 /** Each in its own words, for the picker. */
 export const LANGUAGE_NAMES: Record<Locale, string> = {
   en: "English",
@@ -21,8 +28,9 @@ export const LANGUAGE_NAMES: Record<Locale, string> = {
 
 export const LANG_COOKIE = "lang";
 
+/** One of ours that's switched on. */
 export function isLocale(value: unknown): value is Locale {
-  return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
+  return typeof value === "string" && (LIVE_LOCALES as readonly string[]).includes(value);
 }
 
 /** Ours that best fits a browser's Accept-Language header

@@ -22,6 +22,7 @@ import { inApp } from "@/lib/in-app";
 import StoreBadges, { storeLinks } from "@/components/StoreBadges";
 import LogoutButton from "@/components/LogoutButton";
 import LanguagePicker from "@/components/LanguagePicker";
+import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 
@@ -163,9 +164,11 @@ export default async function ProfilePage({
         <CopyableField value={SITE.url} shown={SITE.domain} />
       </div>
 
-      <div className="card !p-4">
-        <LanguagePicker />
-      </div>
+      {CAN_PICK_LANGUAGE && (
+        <div className="card !p-4">
+          <LanguagePicker />
+        </div>
+      )}
 
       {(blocks.length > 0 || justBlocked) && (
         <div id="blocked" className="card mt-4 scroll-mt-20">
