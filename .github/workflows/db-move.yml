@@ -1,0 +1,66 @@
+name: Move the database (one-off)
+
+# Moves the live database to a new place, in steps run by hand. See
+# .github/db-move/move.mjs for what each does; only counts, table names and
+# the region are printed, and the backup artifact is encrypted.
+#   1. backup   while the secrets still point at the old database
+#   2. (in Turso: the new database; its address and a token go into the
+#       TURSO_DATABASE_URL and TURSO_AUTH_TOKEN secrets)
+#   3. restore  with the backup run's number, then redeploy the app
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "Which step"
+        required: true
+        default: where
+        type: choice
+        options: [where, backup, restore]
+      backup_run:
+        description: "For restore: the backup run's number (from its address)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: db-move
+  cancel-in-progress: false
+
+jobs:
+  move:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .github/db-move
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm init -y >/dev/null && npm i --no-audit --no-fund @libsql/client@0.18.0
+      - name: Get the backup
+        if: inputs.step == 'restore'
+        uses: actions/download-artifact@v4
+        with:
+          name: db-backup
+          run-id: ${{ inputs.backup_run }}
+          github-token: ${{ github.token }}
+          path: .github/db-move
+      - name: Run the step
+        env:
+          STEP: ${{ inputs.step }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          BACKUP_KEY_SOURCE: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: node move.mjs "$STEP"
+      - name: Keep the backup for a week
+        if: inputs.step == 'backup'
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: .github/db-move/backup.enc
+          retention-days: 7
+          if-no-files-found: error
