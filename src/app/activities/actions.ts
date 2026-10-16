@@ -29,37 +29,12 @@ const createSchema = z.object({
     .string()
     .refine((v) => CATEGORY_VALUES.includes(v), "Pick a type.")
     .default("SOCIAL"),
-  afterSpot: text(200).optional(),
   findUs: text(200).optional(),
   description: text(2000).optional(),
   location: text(200).pipe(z.string().min(3, "Type where to meet.")),
   startsAt: z.string().min(1, "Pick a day and time."),
-  distanceKm: z.coerce.number().positive().max(500).optional(),
   pace: text(40).optional(),
-  maxParticipants: z.coerce.number().int().positive().max(500).optional(),
-  stravaUrl: z
-    .string()
-    .trim()
-    .url("That doesn't look like a valid URL")
-    .max(300)
-    // A Strava link and nothing else: anything else is an advert, and a
-    // javascript: link would run on every member's phone.
-    .refine(isStravaLink, "Only Strava links.")
-    .optional(),
 });
-
-function isStravaLink(v: string): boolean {
-  try {
-    const url = new URL(v);
-    const host = url.hostname.toLowerCase();
-    return (
-      url.protocol === "https:" &&
-      (host === "strava.com" || host.endsWith(".strava.com") || host === "strava.app.link")
-    );
-  } catch {
-    return false;
-  }
-}
 
 export type MeetupFormState = { error: string | null };
 
@@ -68,15 +43,11 @@ function readMeetupForm(formData: FormData) {
   return {
     title: formData.get("title"),
     category: formData.get("category") || "SOCIAL",
-    afterSpot: formData.get("afterSpot") || undefined,
     findUs: formData.get("findUs") || undefined,
     description: formData.get("description") || undefined,
     location: formData.get("location"),
     startsAt: formData.get("startsAt"),
-    distanceKm: formData.get("distanceKm") || undefined,
     pace: formData.get("pace") || undefined,
-    maxParticipants: formData.get("maxParticipants") || undefined,
-    stravaUrl: formData.get("stravaUrl") || undefined,
   };
 }
 
@@ -155,28 +126,29 @@ export async function saveMeetupAction(
     longitude = place.longitude;
   }
 
-  // Only a run, a ride and the like keep a distance, pace and route.
+  // Only a run, a ride and the like keep a pace, distance and route. The
+  // form asks for the pace alone now: a distance, a Strava route, a place
+  // to go after and a cap are kept as an older meetup had them, and new
+  // ones have none.
   const route = categoryFor(parsed.data.category).route;
   const fields = {
     title: parsed.data.title,
     category: parsed.data.category,
-    afterSpot: parsed.data.afterSpot ?? null,
+    afterSpot: existing?.afterSpot ?? null,
     findUs: parsed.data.findUs ?? null,
     description: parsed.data.description ?? null,
     location: parsed.data.location,
     latitude,
     longitude,
     startsAt,
-    distanceKm: route ? (parsed.data.distanceKm ?? null) : null,
+    distanceKm: route ? (existing?.distanceKm ?? null) : null,
     pace: route ? (parsed.data.pace ?? null) : null,
-    maxParticipants: parsed.data.maxParticipants ?? null,
-    stravaUrl: route ? (parsed.data.stravaUrl ?? null) : null,
+    maxParticipants: existing?.maxParticipants ?? null,
+    stravaUrl: route ? (existing?.stravaUrl ?? null) : null,
   };
 
   if (existing) {
     await prisma.runActivity.update({ where: { id: existing.id }, data: fields });
-    // A bigger cap may have room for whoever was waiting.
-    await promoteWaitlist(prisma, existing.id);
     redirect(`/activities/${existing.id}?saved=1`);
   }
 

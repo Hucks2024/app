@@ -32,12 +32,8 @@ export type MeetupInitial = {
   longitude: number | null;
   findUs: string | null;
   startsAt: string;
-  afterSpot: string | null;
-  distanceKm: number | null;
   pace: string | null;
-  maxParticipants: number | null;
   description: string | null;
-  stravaUrl: string | null;
 };
 
 type PlaceCheck =
@@ -436,10 +432,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
         <details
           className="rounded-xl border border-slate-200 px-4 py-2"
-          open={Boolean(
-            initial &&
-              (initial.afterSpot || initial.distanceKm || initial.pace || initial.maxParticipants || initial.description || initial.stravaUrl)
-          )}
+          open={Boolean(initial && (initial.description || (route && initial.pace)))}
         >
           <summary className="flex min-h-11 cursor-pointer select-none items-center text-base font-semibold text-brand-700">
             More (optional)
@@ -447,8 +440,11 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           <div className="space-y-4 py-3">
             <div>
               <label className="label !text-base" htmlFor="description">
-                Notes
+                Comment
               </label>
+              <p id="description-hint" className="text-sm text-slate-600 mb-2">
+                e.g. Bring water. All levels welcome.
+              </p>
               <textarea
                 className="input !text-base"
                 id="description"
@@ -456,89 +452,27 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 rows={3}
                 maxLength={2000}
                 defaultValue={initial?.description ?? ""}
+                aria-describedby="description-hint"
               />
             </div>
-            <div>
-              <label className="label !text-base" htmlFor="afterSpot">
-                After, we&apos;ll go to
-              </label>
-              <input
-                className="input !text-base min-h-12"
-                id="afterSpot"
-                name="afterSpot"
-                defaultValue={initial?.afterSpot ?? ""}
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <label className="label !text-base" htmlFor="maxParticipants">
-                Max people
-              </label>
-              <input
-                className="input !text-base min-h-12"
-                id="maxParticipants"
-                name="maxParticipants"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="500"
-                defaultValue={initial?.maxParticipants ?? ""}
-                aria-describedby="max-hint"
-              />
-              <p id="max-hint" className="mt-1 text-sm text-slate-600">
-                Empty = no limit
-              </p>
-            </div>
+            {/* Only for a walk, run, ride and the like. */}
             {route && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label !text-base" htmlFor="distanceKm">
-                      Distance (km)
-                    </label>
-                    <input
-                      className="input !text-base min-h-12"
-                      id="distanceKm"
-                      name="distanceKm"
-                      type="number"
-                      inputMode="decimal"
-                      step="0.1"
-                      min="0"
-                      max="500"
-                      defaultValue={initial?.distanceKm ?? ""}
-                    />
-                  </div>
-                  <div>
-                    <label className="label !text-base" htmlFor="pace">
-                      Pace
-                    </label>
-                    <input
-                      className="input !text-base min-h-12"
-                      id="pace"
-                      name="pace"
-                      defaultValue={initial?.pace ?? ""}
-                      maxLength={40}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="label !text-base" htmlFor="stravaUrl">
-                    Strava route link
-                  </label>
-                  <input
-                    className="input !text-base min-h-12"
-                    id="stravaUrl"
-                    name="stravaUrl"
-                    type="url"
-                    inputMode="url"
-                    defaultValue={initial?.stravaUrl ?? ""}
-                    aria-describedby="strava-hint"
-                  />
-                  <p id="strava-hint" className="mt-1 text-sm text-amber-800">
-                    Set the route to Public.
-                  </p>
-                </div>
-              </>
+              <div>
+                <label className="label !text-base" htmlFor="pace">
+                  Pace
+                </label>
+                <p id="pace-hint" className="text-sm text-slate-600 mb-2">
+                  e.g. Easy, chatty
+                </p>
+                <input
+                  className="input !text-base min-h-12"
+                  id="pace"
+                  name="pace"
+                  defaultValue={initial?.pace ?? ""}
+                  maxLength={40}
+                  aria-describedby="pace-hint"
+                />
+              </div>
             )}
           </div>
         </details>

@@ -28,12 +28,8 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
           longitude: a.longitude,
           findUs: a.findUs,
           startsAt: a.startsAt.toISOString(),
-          afterSpot: a.afterSpot,
-          distanceKm: a.distanceKm,
           pace: a.pace,
-          maxParticipants: a.maxParticipants,
           description: a.description,
-          stravaUrl: a.stravaUrl,
         }}
       />
     </div>
