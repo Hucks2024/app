@@ -89,6 +89,16 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
     placeRef.current = text;
     setPlaceTextState(text);
   };
+  // Whether the name in the box is the one the map gave the pin rather
+  // than the host's own: that one follows the pin when it moves, theirs
+  // is never touched.
+  const nameFromPin = useRef(false);
+  const typePlace = (text: string) => {
+    nameFromPin.current = false;
+    setPlaceText(text);
+  };
+  // Counts the pin's moves, so only the latest spot's name lands.
+  const naming = useRef(0);
   const [findUs, setFindUs] = useState(initial?.findUs ?? "");
   // Found from the place name, or marked on the map. Kept in a ref too,
   // for Next and the send, which run straight after a look-up that may
@@ -159,15 +169,23 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   }
 
   /** A pin put on the map by hand. With no name for the place typed yet,
-   * the name of the spot goes in the box to start from. */
+   * the name of the spot goes in the box to start from, and changes with
+   * the pin each time it's moved, until the host writes their own. */
   function markByHand(lat: number, lng: number) {
     setPin({ lat, lng, for: locationText(), byHand: true });
     setStepError(null);
     setEdited(true);
-    if (locationText()) return;
+    const ask = ++naming.current;
+    if (locationText() && !nameFromPin.current) return;
     void placeName(lat, lng).then((name) => {
-      if (!name || placeRef.current.trim()) return;
+      // An answer for a spot the pin has since left, or a name the host
+      // has typed in the meantime: leave the box alone.
+      if (!name || ask !== naming.current) return;
+      if (locationText() && !nameFromPin.current) return;
+      nameFromPin.current = true;
       setPlaceText(name);
+      // A "found" line would be about the old name.
+      setPlace({ status: "idle" });
       // The name came from the pin, so looking it up never moves the pin.
       const now = pinRef.current;
       if (now?.byHand && now.lat === lat && now.lng === lng) setPin({ ...now, for: name });
@@ -340,7 +358,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 className="input !text-base min-h-12"
                 id="location"
                 value={placeText}
-                onChange={(e) => setPlaceText(e.target.value)}
+                onChange={(e) => typePlace(e.target.value)}
                 maxLength={200}
                 autoComplete="off"
                 aria-describedby="location-hint location-check"
@@ -379,7 +397,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               step={fill(t.form.step, { n: 2, total: STEPS.length })}
               place={placeText}
               onPlace={(text) => {
-                setPlaceText(text);
+                typePlace(text);
                 setEdited(true);
               }}
               onFind={(text) => void lookUp(text)}
