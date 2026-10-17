@@ -3,6 +3,7 @@ import { cache } from "react";
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql as PrismaLibSqlWeb } from "@prisma/adapter-libsql/web";
 import { onCloudflare } from "@/lib/runtime";
+import { pooled } from "@/lib/db-pool";
 
 // The live site uses Turso over HTTPS (TURSO_DATABASE_URL); a computer
 // running the app locally uses a SQLite file (DATABASE_URL, file:./dev.db).
@@ -23,7 +24,7 @@ async function createPrismaClient(): Promise<PrismaClient> {
   const log: ("warn" | "error")[] = process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"];
   const tursoUrl = process.env.TURSO_DATABASE_URL;
   if (tursoUrl) {
-    const adapter = new PrismaLibSqlWeb({ url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN });
+    const adapter = pooled(() => new PrismaLibSqlWeb({ url: tursoUrl, authToken: process.env.TURSO_AUTH_TOKEN }), 6);
     return new PrismaClient({ adapter, log });
   }
   const { PrismaLibSql: PrismaLibSqlNode } = await import("@prisma/adapter-libsql");
