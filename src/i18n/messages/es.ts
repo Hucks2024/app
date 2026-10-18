@@ -34,7 +34,6 @@ const es: Messages = {
     find: "Encuentra un plan",
     tap: "Toca «Voy»",
     turnUp: "Preséntate",
-    reports: "3 denuncias = expulsión para siempre.",
     nearYou: "qué hay cerca de ti",
   },
   welcome: {

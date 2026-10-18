@@ -35,7 +35,6 @@ const fr: Messages = {
     find: "Trouve une sortie",
     tap: "Appuie sur Je viens",
     turnUp: "Viens",
-    reports: "3 signalements = banni à vie.",
     nearYou: "ce qui se passe près de toi",
   },
   welcome: {

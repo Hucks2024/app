@@ -82,11 +82,6 @@ export default async function Landing() {
             </li>
           ))}
         </ol>
-        {/* The house rule, said up front: it's part of what this place is,
-            and the people it's meant to put off should read it first. */}
-        <p className="mt-3 text-center text-sm font-medium text-white">
-          🚩 {t.landing.reports}
-        </p>
       </section>
 
       <section className="mx-auto max-w-3xl px-4 pt-4 pb-10" aria-labelledby="map-heading">

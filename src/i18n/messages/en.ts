@@ -34,7 +34,6 @@ const en = {
     find: "Find a meetup",
     tap: "Tap I'm in",
     turnUp: "Turn up",
-    reports: "3 reports = banned for life.",
     nearYou: "what's on near you",
   },
   welcome: {

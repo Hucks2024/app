@@ -33,7 +33,6 @@ const zh: Messages = {
     find: "找一个活动",
     tap: "点「我参加」",
     turnUp: "按时到场",
-    reports: "被举报 3 次 = 永久封号。",
     nearYou: "看看附近有什么活动",
   },
   welcome: {
