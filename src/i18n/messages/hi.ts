@@ -384,6 +384,9 @@ const hi: Messages = {
     saveChanges: "बदलाव सेव करें",
     posting: "पोस्ट हो रहा है…",
     postMeetup: "मीटअप पोस्ट करें",
+    emoji: "मैप के लिए इमोजी",
+    ownEmoji: "या अपना लिखें:",
+    oneEmoji: "सिर्फ़ एक इमोजी।",
   },
   post: {
     firstHeading: "पहले एक मीटअप में जाएँ",

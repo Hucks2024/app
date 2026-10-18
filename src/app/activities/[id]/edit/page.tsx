@@ -33,6 +33,7 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
           startsAt: a.startsAt.toISOString(),
           pace: a.pace,
           description: a.description,
+          emoji: a.emoji,
         }}
       />
     </div>

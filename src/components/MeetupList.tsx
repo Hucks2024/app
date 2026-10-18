@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import LocalTime, { deviceLanguage } from "@/components/LocalTime";
-import { categoryFor } from "@/lib/categories";
+import { emojiFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
 import { useLocale, useT } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
@@ -76,7 +76,6 @@ export default function MeetupList({
   return (
     <ul className="space-y-3">
       {activities.map((a) => {
-        const category = categoryFor(a.category);
         const soon = now == null ? null : countdown(a.startsAt, now, t, lang);
         const going = a.joinedCount;
         return (
@@ -84,7 +83,7 @@ export default function MeetupList({
             <Link href={`/activities/${a.id}`} className="block">
               <div className="card !p-4 flex items-start gap-3 meetup-row">
                 <span className="step-badge" aria-hidden="true">
-                  {category.emoji}
+                  {emojiFor(a)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold text-slate-900">{a.title}</p>

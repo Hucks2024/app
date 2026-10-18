@@ -384,6 +384,9 @@ const fr: Messages = {
     saveChanges: "Enregistrer",
     posting: "Publication…",
     postMeetup: "Publier la sortie",
+    emoji: "Emoji pour la carte",
+    ownEmoji: "Ou tape le tien :",
+    oneEmoji: "Un seul emoji.",
   },
   post: {
     firstHeading: "Va d'abord à une sortie",

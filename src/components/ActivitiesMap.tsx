@@ -11,7 +11,7 @@ import Link from "next/link";
 import "leaflet/dist/leaflet.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { callNative } from "@/lib/native";
-import { categoryFor } from "@/lib/categories";
+import { emojiFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 import { useFormatWhen } from "@/components/LocalTime";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
@@ -54,7 +54,7 @@ function emojiIcon(emoji: string, going: number, today: boolean) {
   const count = going > 0 ? `<span class="map-pin-count">${going}</span>` : "";
   const html =
     `<div class="map-pin${today ? " map-pin-today" : ""}">` +
-    `${svg}<span class="map-pin-emoji">${emoji}</span>` +
+    `${svg}<span class="map-pin-emoji">${emoji.replace(/[&<>"']/g, "")}</span>` +
     `${count}</div>`;
 
   return L.divIcon({
@@ -449,6 +449,8 @@ export type MapActivity = {
   distanceKm: number | null;
   pace: string | null;
   category: string;
+  // The host's own, for "Something else" (see emojiFor).
+  emoji: string | null;
   afterSpot: string | null;
   joinedCount: number;
   maxParticipants: number | null;
@@ -497,7 +499,7 @@ export default function ActivitiesMap({
       // On today, it shines (see .map-pin-today). The logged-out map has
       // no times, so nothing there does.
       const today = isToday(new Date(a.startsAt));
-      map.set(a.id, emojiIcon(categoryFor(a.category).emoji, a.joinedCount, today));
+      map.set(a.id, emojiIcon(emojiFor(a), a.joinedCount, today));
     }
     return map;
   }, [activities]);
@@ -569,7 +571,7 @@ export default function ActivitiesMap({
                 // these say exactly what they are.
                 <div className="space-y-1 max-w-[200px]">
                   <p className="font-semibold">
-                    {categoryFor(a.category).emoji} {typeName(t, a.category)}
+                    {emojiFor(a)} {typeName(t, a.category)}
                   </p>
                   <div className="relative">
                     <div aria-hidden="true" className="popup-blur space-y-1">
@@ -592,7 +594,7 @@ export default function ActivitiesMap({
               ) : (
                 <div className="space-y-1">
                   <p className="font-semibold">
-                    {categoryFor(a.category).emoji} {a.title}
+                    {emojiFor(a)} {a.title}
                   </p>
                   <p className="text-sm text-slate-600">{when(a.startsAt, "short")}</p>
                   <a

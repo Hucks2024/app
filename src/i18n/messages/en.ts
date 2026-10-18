@@ -378,6 +378,9 @@ const en = {
     saveChanges: "Save changes",
     posting: "Posting…",
     postMeetup: "Post meetup",
+    emoji: "Emoji for the map",
+    ownEmoji: "Or type your own:",
+    oneEmoji: "Just one emoji.",
   },
   post: {
     firstHeading: "Go to one meetup first",

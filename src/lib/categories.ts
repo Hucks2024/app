@@ -56,3 +56,27 @@ const FALLBACK = CATEGORIES.find((c) => c.value === "SOCIAL")!;
 export function categoryFor(value: string | null | undefined) {
   return CATEGORIES.find((c) => c.value === value) ?? FALLBACK;
 }
+
+/** What a meetup's pin and badge show: for "Something else", the emoji
+ * its host picked, if they picked one; otherwise its type's. */
+export function emojiFor(meetup: { category: string; emoji?: string | null }): string {
+  return (meetup.category === "SOCIAL" && meetup.emoji) || categoryFor(meetup.category).emoji;
+}
+
+/** Offered for "Something else", before typing one's own. */
+export const EMOJI_IDEAS = ["🎉", "🧘", "🎳", "🎤", "🎮", "🏓", "🎾", "⛳", "🛼", "🎬", "🍕", "🌳", "🐶", "🎭", "🎯", "🧩"];
+
+// Rude on a public map: never a pin.
+const RUDE = /[\u{1F595}\u{1F346}\u{1F351}\u{1F4A6}\u{1F51E}\u{1F52B}]/u;
+
+/** Exactly one emoji, as typed or picked (a flag, a skin tone and the
+ * like count as one), or null for anything else: letters, two emoji,
+ * nothing at all. */
+export function oneEmoji(text: unknown): string | null {
+  if (typeof text !== "string") return null;
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.length > 32 || RUDE.test(trimmed)) return null;
+  const pieces = [...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(trimmed)];
+  if (pieces.length !== 1) return null;
+  return /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(trimmed) && !/[\p{L}\p{N}]/u.test(trimmed) ? trimmed : null;
+}

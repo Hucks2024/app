@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
-import { CATEGORY_VALUES, categoryFor } from "@/lib/categories";
+import { CATEGORY_VALUES, categoryFor, oneEmoji } from "@/lib/categories";
 import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import { block } from "@/lib/blocks";
 import { getT } from "@/i18n/server";
@@ -36,6 +36,8 @@ const createSchema = z.object({
   location: text(200).pipe(z.string().min(3, "typeWhere")),
   startsAt: z.string().min(1, "pickDayTime"),
   pace: text(40).optional(),
+  // One emoji, or none: anything else is quietly dropped (see oneEmoji).
+  emoji: z.unknown().transform(oneEmoji),
 });
 
 export type MeetupFormState = { error: string | null };
@@ -50,6 +52,7 @@ function readMeetupForm(formData: FormData) {
     location: formData.get("location"),
     startsAt: formData.get("startsAt"),
     pace: formData.get("pace") || undefined,
+    emoji: formData.get("emoji"),
   };
 }
 
@@ -142,6 +145,8 @@ export async function saveMeetupAction(
     startsAt,
     distanceKm: route ? (existing?.distanceKm ?? null) : null,
     pace: route ? (parsed.data.pace ?? null) : null,
+    // Only "Something else" has its own; every other type has one already.
+    emoji: parsed.data.category === "SOCIAL" ? parsed.data.emoji : null,
     maxParticipants: existing?.maxParticipants ?? null,
     stravaUrl: route ? (existing?.stravaUrl ?? null) : null,
   };

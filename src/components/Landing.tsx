@@ -29,7 +29,7 @@ export default async function Landing() {
   const activities = await prisma.runActivity.findMany({
     where: { startsAt: { gte: new Date() }, ...liveMeetup },
     orderBy: { startsAt: "asc" },
-    select: { latitude: true, longitude: true, category: true },
+    select: { latitude: true, longitude: true, category: true, emoji: true },
   });
 
   // Only what a public pin needs to exist: a rough position and a
@@ -54,6 +54,7 @@ export default async function Landing() {
       distanceKm: null,
       pace: null,
       category: a.category,
+      emoji: a.emoji,
       afterSpot: null,
       // Who's going is members-only. The logged-out map shows that
       // meetups exist, never who or how many are at them.

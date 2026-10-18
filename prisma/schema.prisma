@@ -211,6 +211,10 @@ model RunActivity {
   // labels and map-pin emoji.
   category String @default("RUN")
 
+  // The host's own emoji for a "Something else" meetup (🧘, 🎳): its pin
+  // and badge. Null for every other type, which go by their type's emoji.
+  emoji String?
+
   // How to spot the group when you get there: "yellow jacket, by the
   // gate". The commonest way a first meetup goes wrong is turning up at
   // the right place and not knowing who you're looking for.

@@ -3,7 +3,7 @@ import { hasOwnPassword, requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { ensureMemberNumber, formatMemberNumber } from "@/lib/member";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
-import { categoryFor } from "@/lib/categories";
+import { emojiFor } from "@/lib/categories";
 import ContactEmail from "@/components/ContactEmail";
 import { SITE } from "@/lib/site";
 import { readError } from "@/lib/flash";
@@ -41,7 +41,7 @@ export default async function ProfilePage({
 
   const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const now = new Date();
-  const meetup = { select: { id: true, title: true, startsAt: true, category: true, cancelledAt: true } };
+  const meetup = { select: { id: true, title: true, startsAt: true, category: true, emoji: true, cancelledAt: true } };
 
   // None of these wait on each other, so they're all asked for at once.
   const [memberNumber, { verified }, thumbs, upcoming, past, blocks, app] = await Promise.all([
@@ -266,7 +266,7 @@ export default async function ProfilePage({
 }
 
 type MeetupRow = {
-  activity: { id: string; title: string; startsAt: Date; category: string; cancelledAt: Date | null };
+  activity: { id: string; title: string; startsAt: Date; category: string; emoji: string | null; cancelledAt: Date | null };
 };
 
 function MeetupLinks({
@@ -293,7 +293,7 @@ function MeetupLinks({
               className="flex items-center gap-3 py-2 hover:bg-slate-50 -mx-2 px-2 rounded-lg"
             >
               <span className="text-xl" aria-hidden="true">
-                {categoryFor(a.category).emoji}
+                {emojiFor(a)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>

@@ -1032,6 +1032,28 @@ button[aria-busy="true"] {
     grid-column: 1 / -1;
   }
 }
+/* "Something else": a few emoji to pick from for the pin. */
+.emoji-row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+}
+.emoji-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font-size: 24px;
+  line-height: 1;
+}
+.emoji-btn-on {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 2px #7c3aed;
+}
 .type-btn {
   display: flex;
   flex-direction: column;

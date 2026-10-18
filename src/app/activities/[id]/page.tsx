@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { categoryFor } from "@/lib/categories";
+import { emojiFor } from "@/lib/categories";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import { isVerifiedMember, thumbsFor } from "@/lib/trust";
@@ -113,7 +113,6 @@ export default async function ActivityDetailPage({
       : new Set<string>(),
   ]);
 
-  const category = categoryFor(activity.category);
   const hasPin = activity.latitude != null && activity.longitude != null;
   // Just the spot on Google Maps, not a route to it: a route starts from
   // wherever you are now, which is rarely where you'll set off from.
@@ -155,7 +154,7 @@ export default async function ActivityDetailPage({
 
       <div className="card">
         <span className="badge-slate mb-2 inline-flex !text-sm">
-          {category.emoji} {typeName(t, activity.category)}
+          {emojiFor(activity)} {typeName(t, activity.category)}
         </span>
         <h1 className="text-2xl font-bold leading-tight">{activity.title}</h1>
 

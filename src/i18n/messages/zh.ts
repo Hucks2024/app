@@ -376,6 +376,9 @@ const zh: Messages = {
     saveChanges: "保存修改",
     posting: "发布中…",
     postMeetup: "发布活动",
+    emoji: "地图上的表情",
+    ownEmoji: "或者自己输入：",
+    oneEmoji: "只能一个表情。",
   },
   post: {
     firstHeading: "先去参加一个活动",

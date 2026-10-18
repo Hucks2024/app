@@ -383,6 +383,9 @@ const es: Messages = {
     saveChanges: "Guardar cambios",
     posting: "Publicando…",
     postMeetup: "Publicar plan",
+    emoji: "Emoji para el mapa",
+    ownEmoji: "O escribe el tuyo:",
+    oneEmoji: "Solo un emoji.",
   },
   post: {
     firstHeading: "Primero ve a un plan",

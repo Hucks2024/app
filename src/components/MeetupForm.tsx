@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { CATEGORIES, CATEGORY_GROUPS, categoryFor } from "@/lib/categories";
+import { CATEGORIES, CATEGORY_GROUPS, EMOJI_IDEAS, categoryFor, oneEmoji } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
@@ -36,6 +36,7 @@ export type MeetupInitial = {
   startsAt: string;
   pace: string | null;
   description: string | null;
+  emoji: string | null;
 };
 
 type PlaceCheck =
@@ -124,6 +125,12 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const [focus, setFocus] = useState(0);
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
+  // "Something else" has its own emoji, picked from a few or typed: the
+  // pin on the map. Typed ones live in their own box until they're one emoji.
+  const [emoji, setEmoji] = useState(initial?.emoji ?? EMOJI_IDEAS[0]);
+  const [ownEmoji, setOwnEmoji] = useState(
+    initial?.emoji && !EMOJI_IDEAS.includes(initial.emoji) ? initial.emoji : ""
+  );
   const [titleTouched, setTitleTouched] = useState(editing);
   // An error is about the form as it was sent. Once they start fixing it,
   // it's out of date.
@@ -201,7 +208,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
   /** A suggested name from what they've picked, until they type their own. */
   function suggestTitle(placeLabel?: string) {
-    if (titleTouched) return;
+    // "Something else at the park" says nothing: that one's theirs to name.
+    if (titleTouched || category === "SOCIAL") return;
     const kind = typeName(t, category).split(" / ")[0];
     const where = placeWord(placeLabel ?? locationText());
     setTitle(where ? fill(t.form.titleAt, { kind, place: where }) : kind);
@@ -453,10 +461,58 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             }}
             maxLength={120}
           />
-          {!editing && (
+          {!editing && category !== "SOCIAL" && (
             <p className="mt-1 text-sm text-slate-600">{t.form.changeIt}</p>
           )}
         </div>
+
+        <input type="hidden" name="emoji" value={category === "SOCIAL" ? emoji : ""} />
+        {category === "SOCIAL" && (
+          <fieldset>
+            <legend className="label !text-base">
+              {t.form.emoji}{" "}
+              <span className="text-2xl align-middle" aria-hidden="true">
+                {emoji}
+              </span>
+            </legend>
+            <div className="emoji-row" role="group">
+              {EMOJI_IDEAS.map((idea) => (
+                <button
+                  key={idea}
+                  type="button"
+                  className={`emoji-btn ${emoji === idea ? "emoji-btn-on" : ""}`}
+                  aria-pressed={emoji === idea}
+                  onClick={() => {
+                    setEmoji(idea);
+                    setOwnEmoji("");
+                    setEdited(true);
+                  }}
+                >
+                  {idea}
+                </button>
+              ))}
+            </div>
+            <label htmlFor="own-emoji" className="mt-3 flex items-center gap-3 text-base text-slate-700">
+              {t.form.ownEmoji}
+              <input
+                id="own-emoji"
+                className="input !w-20 min-h-12 text-center !text-2xl"
+                value={ownEmoji}
+                maxLength={16}
+                autoComplete="off"
+                onChange={(e) => {
+                  setOwnEmoji(e.target.value);
+                  const one = oneEmoji(e.target.value);
+                  if (one) setEmoji(one);
+                  setEdited(true);
+                }}
+              />
+            </label>
+            {ownEmoji.trim() && !oneEmoji(ownEmoji) && (
+              <p className="mt-1 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
+            )}
+          </fieldset>
+        )}
 
         <div>
           <label className="label !text-base" htmlFor="description">
