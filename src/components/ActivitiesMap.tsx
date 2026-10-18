@@ -33,8 +33,8 @@ import type { Messages } from "@/i18n/messages/en";
 // of them at once is just noise.
 // Big enough to spot at a glance and hit with a thumb; must match .map-pin
 // in globals.css.
-const PIN_W = 58;
-const PIN_H = 83;
+const PIN_W = 39;
+const PIN_H = 55;
 
 function emojiIcon(emoji: string, going: number) {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this

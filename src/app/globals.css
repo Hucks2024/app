@@ -84,11 +84,11 @@ body {
 .map-pin {
   position: relative;
   /* PIN_W and PIN_H in ActivitiesMap.tsx. */
-  width: 58px;
-  height: 83px;
+  width: 39px;
+  height: 55px;
   /* drop-shadow, not box-shadow: it follows the teardrop outline instead
      of casting a rectangle behind it. */
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
   cursor: pointer;
   transform-origin: 50% 100%; /* grow from the tip, which is the bit pinned
                                  to the actual location */
@@ -105,28 +105,28 @@ body {
   left: 50%;
   top: 35.5%;
   transform: translate(-50%, -50%);
-  font-size: 26px;
+  font-size: 17px;
   line-height: 1;
   pointer-events: none;
 }
 /* How many are going, centred just under the emoji, on the narrowing
-   part of the drop (the white disc ends 49px down and the drop is still
-   about 40px wide there). */
+   part of the drop (the white disc ends 33px down and the drop is still
+   about 27px wide there). */
 .map-pin-count {
   position: absolute;
-  top: 43px;
+  top: 29px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 26px;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 13px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
   background: #0f172a;
   color: #fff;
   border: 2px solid #fff;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 14px;
   text-align: center;
   pointer-events: none;
 }
