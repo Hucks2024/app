@@ -97,8 +97,6 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  /* So today's gold edge isn't clipped at the sides. */
-  overflow: visible;
 }
 .map-pin-emoji {
   position: absolute;
@@ -135,33 +133,6 @@ body {
 
 .map-pin:hover {
   transform: scale(1.12);
-}
-
-/* On today: a gold edge, and a gold ring pulsing out across the ground
-   under the tip, like a quest marker in a game. The pin itself stays
-   still; only the ring moves. */
-.map-pin-today::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  width: 44px;
-  height: 16px;
-  margin-left: -22px;
-  border: 3px solid #fbbf24;
-  border-radius: 50%;
-  z-index: -1;
-  animation: quest-ring 1.6s ease-out infinite;
-}
-@keyframes quest-ring {
-  from {
-    transform: scale(0.4);
-    opacity: 1;
-  }
-  to {
-    transform: scale(1.5);
-    opacity: 0;
-  }
 }
 
 /* Leaflet map wrapper (ActivitiesMap). iOS Safari's address bar
@@ -667,7 +638,6 @@ button[aria-busy="true"] {
    moving things gets the app without any of it. */
 @media (prefers-reduced-motion: reduce) {
   .map-pin,
-  .map-pin-today::before,
   .locate-btn svg,
   .soon-badge,
   .chip-on,
