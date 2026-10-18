@@ -9,7 +9,7 @@ export const metadata = { title: "Privacy" };
 // plain words. Keep it true: when the app starts keeping something new,
 // it goes in here in the same change.
 
-const UPDATED = "16 October 2026";
+const UPDATED = "18 October 2026";
 
 export default function PrivacyPage() {
   return (
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
               <strong>Turso</strong> stores the database: accounts, photos and meetups.
             </li>
             <li>
-              <strong>Resend</strong> sends password reset emails, so it gets your email address.
+              <strong>Resend</strong> sends the codes we email (to confirm your address when you join, and to reset a password), so it gets your email address.
             </li>
             <li>
               <strong>OpenFreeMap</strong> draws the map (OpenStreetMap&apos;s own servers stand in if it&apos;s down).

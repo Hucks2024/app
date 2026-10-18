@@ -1,11 +1,13 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { SITE } from "@/lib/site";
 import {
+  confirmEmailAction,
   emailAuthAction,
   finishResetAction,
   lookupEmailAction,
+  resendJoinCodeAction,
   startResetAction,
   type AuthState,
 } from "@/app/(auth)/actions";
@@ -17,9 +19,10 @@ import { fill, rich } from "@/i18n/format";
 // Apple and Google appear once their keys are set (see src/lib/oauth.ts).
 // Email always works, and opens up in place rather than on another page:
 // the address first, then whatever that address needs, a password if we
-// know you, a name and a new password if we don't.
+// know you, a name and a new password if we don't. Joining ends with the
+// code we email, which proves the address is yours.
 
-type Step = "start" | "email" | "password" | "create" | "reset" | "no-reset";
+type Step = "start" | "email" | "password" | "create" | "confirm" | "reset" | "no-reset";
 
 function AppleMark() {
   return (
@@ -99,6 +102,18 @@ export default function SignIn({
   const [resetError, setResetError] = useState<string | null>(null);
   const [sendingReset, startSendingReset] = useTransition();
   const emailRef = useRef<HTMLInputElement>(null);
+  // Kept from the form for the code screen, which sends it along with the
+  // code (see confirmEmailAction for why).
+  const [password, setPassword] = useState("");
+  // A fresh code screen each time one's sent, with no errors left over
+  // from the last.
+  const [confirmKey, setConfirmKey] = useState(0);
+  useEffect(() => {
+    if (state.confirm) {
+      setStep("confirm");
+      setConfirmKey((k) => k + 1);
+    }
+  }, [state]);
 
   // The error from a provider bounce (?error=…) belongs to the first
   // screen; once you've moved on it's old news.
@@ -109,7 +124,7 @@ export default function SignIn({
         ? lookupError
         : step === "reset"
           ? resetState.error
-          : step === "no-reset"
+          : step === "no-reset" || step === "confirm"
             ? null
             : resetError ?? state.error;
 
@@ -298,6 +313,19 @@ export default function SignIn({
     );
   }
 
+  if (step === "confirm") {
+    return (
+      <ConfirmCode
+        key={confirmKey}
+        email={email}
+        password={password}
+        next={next}
+        firstError={state.error}
+        back={back}
+      />
+    );
+  }
+
   if (step === "email") {
     return (
       <form onSubmit={lookUp} className="space-y-3">
@@ -330,7 +358,13 @@ export default function SignIn({
 
   const creating = step === "create";
   return (
-    <form onSubmit={submitWith(formAction)} className="space-y-3">
+    <form
+      onSubmit={(e) => {
+        setPassword(String(new FormData(e.currentTarget).get("password") ?? ""));
+        submitWith(formAction)(e);
+      }}
+      className="space-y-3"
+    >
       <input type="hidden" name="mode" value={creating ? "signup" : "login"} />
       <input type="hidden" name="email" value={email} />
       <input type="hidden" name="next" value={next} />
@@ -465,6 +499,91 @@ export default function SignIn({
             {sendingReset ? t.signIn.sending : t.signIn.forgotPassword}
           </button>
         )}
+      </div>
+    </form>
+  );
+}
+
+/** Joining, last step: the code we emailed. Also where somebody lands
+ * who joined, never typed it, and signs in later. */
+function ConfirmCode({
+  email,
+  password,
+  next,
+  firstError,
+  back,
+}: {
+  email: string;
+  password: string;
+  next: string;
+  // Why the email might not have gone, from the step before.
+  firstError: string | null;
+  back: React.ReactNode;
+}) {
+  const t = useT();
+  const [state, action, confirming] = useActionState<AuthState, FormData>(confirmEmailAction, {
+    error: firstError,
+  });
+  // What "Send a new code" said, until the next try at the code.
+  const [resent, setResent] = useState<AuthState | null>(null);
+  const [resending, startResending] = useTransition();
+  const error = resent ? resent.error : state.error;
+
+  return (
+    <form
+      onSubmit={(e) => {
+        setResent(null);
+        submitWith(action)(e);
+      }}
+      className="space-y-3"
+    >
+      <input type="hidden" name="email" value={email} />
+      <input type="hidden" name="password" value={password} />
+      <input type="hidden" name="next" value={next} />
+      <p className="text-center text-white">
+        <span className="block text-lg font-bold">{t.signIn.checkEmail} 📬</span>
+        <span className="text-sm text-white">
+          {rich(t.signIn.sentCode, { email: <strong className="text-white">{email}</strong> })}
+        </span>
+      </p>
+      {error && (
+        <p role="alert" className="rounded-2xl bg-white/95 px-4 py-2.5 text-sm font-medium text-red-700 shadow">
+          {error}
+        </p>
+      )}
+      {resent && !resent.error && (
+        <p role="status" className="rounded-2xl bg-white/15 px-4 py-2.5 text-center text-sm font-medium text-white">
+          ✓ {t.signIn.newCodeSent}
+        </p>
+      )}
+      <label htmlFor="confirm-code" className="field-label">
+        {t.signIn.code}
+      </label>
+      <input
+        id="confirm-code"
+        name="code"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="[0-9 ]*"
+        maxLength={7}
+        required
+        autoFocus
+        className="pill-input text-center tracking-[0.3em]"
+      />
+      <button type="submit" disabled={confirming} className="pill-btn pill-black">
+        {confirming && <Spinner />}
+        {t.signIn.continue}
+      </button>
+      <div className="flex items-center justify-center gap-4 pt-1">
+        {back}
+        <button
+          type="button"
+          disabled={resending}
+          onClick={() => startResending(async () => setResent(await resendJoinCodeAction(email, password)))}
+          className="text-sm font-medium text-white underline underline-offset-2"
+        >
+          {resending ? t.signIn.sending : t.signIn.newCode}
+        </button>
       </div>
     </form>
   );

@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import type { PrismaClient, User } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
 import {
@@ -13,7 +14,7 @@ import {
 } from "@/lib/auth";
 import { ensureMemberNumber } from "@/lib/member";
 import { canSendEmail, isTemporaryEmailError } from "@/lib/email";
-import { checkResetCode, sendResetCode } from "@/lib/reset-code";
+import { checkCode, sendCode } from "@/lib/email-code";
 import { clearWrongPasswords, minutesLocked, recordWrongPassword } from "@/lib/lockout";
 import {
   NOT_NICE,
@@ -27,6 +28,8 @@ import {
 import { SITE } from "@/lib/site";
 import { getLocale, getT } from "@/i18n/server";
 import { errorText, fill, plural } from "@/i18n/format";
+import type { Locale } from "@/i18n/config";
+import type { Messages } from "@/i18n/messages";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -65,7 +68,9 @@ export async function lookupEmailAction(raw: string): Promise<EmailLookup> {
   };
 }
 
-export type AuthState = { error: string | null };
+// confirm: a code has gone to the address, and the screen moves on to
+// typing it in.
+export type AuthState = { error: string | null; confirm?: true };
 
 const signupSchema = z.object({
   name: z
@@ -117,16 +122,21 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
       return { error: t.errors.emailTakenSignIn };
     }
 
+    // Proof the address is theirs: a code goes to it, and there's no way
+    // in until it's typed. An account nobody confirms can't be used, and
+    // whoever owns the address can take it back with "Forgot your
+    // password?". Only a copy of the app with no email set up lets people
+    // straight in.
+    const confirm = canSendEmail();
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash: await hashPassword(password),
-        // No code to confirm the address: the app emails nobody except to
-        // reset a password, so joining is straight in.
-        emailVerifiedAt: new Date(),
+        emailVerifiedAt: confirm ? null : new Date(),
       },
     });
+    if (confirm) return sendJoinCode(prisma, user, t, lang);
     await ensureMemberNumber(prisma, user.id);
     await createSession(user.id);
     redirect(safeNext(formData.get("next")));
@@ -162,9 +172,99 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
   if (user.accountStatus !== "ACTIVE") {
     return { error: t.errors.onHold };
   }
+  // Joined but never typed the code: a new one, and the same screen.
+  if (!user.emailVerifiedAt && canSendEmail()) return sendJoinCode(prisma, user, t, lang);
 
   await createSession(user.id);
   redirect(safeNext(formData.get("next")));
+}
+
+/** Emails the code that proves the address is theirs, and moves the
+ * screen on to typing it in. If the email didn't go, the screen says so,
+ * and "Send a new code" tries again. */
+async function sendJoinCode(
+  prisma: PrismaClient,
+  user: { id: string; email: string; name: string },
+  t: Messages,
+  lang: Locale
+): Promise<AuthState> {
+  const sent = await sendCode(prisma, user, "join", t, lang);
+  // A cooldown means a code went out a moment ago, and still works.
+  if (sent.ok || sent.cooldown) return { error: null, confirm: true };
+  console.error("Join code email failed:", sent.error);
+  return { error: t.errors.emailDidntSend, confirm: true };
+}
+
+const confirmSchema = z.object({
+  email: emailSchema,
+  code: z.string().trim().min(1, "typeCode"),
+  password: z.string().min(1, "typePassword"),
+});
+
+/** The code from the email: the address is theirs, and they're in.
+ *
+ * The password they chose comes too (the screen sends it along), so a code
+ * can only finish an account for whoever made it. Otherwise somebody
+ * could join with your address, and when you typed the code you'd be
+ * confirming their account, password and all. */
+export async function confirmEmailAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const [prisma, t, lang] = await Promise.all([getPrisma(), getT(), getLocale()]);
+  const parsed = confirmSchema.safeParse({
+    email: formData.get("email"),
+    code: formData.get("code"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message), confirm: true };
+
+  const user = await passwordChecked(prisma, parsed.data.email, parsed.data.password, t, lang);
+  if ("error" in user) return { error: user.error, confirm: true };
+
+  if (!user.emailVerifiedAt) {
+    const checked = await checkCode(prisma, user.id, parsed.data.code, t, lang);
+    if (!checked.ok) return { error: checked.error, confirm: true };
+    await prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: new Date() } });
+    await ensureMemberNumber(prisma, user.id);
+  }
+  await createSession(user.id);
+  redirect(safeNext(formData.get("next")));
+}
+
+/** "Send a new code", on the screen for typing it in. */
+export async function resendJoinCodeAction(email: string, password: string): Promise<AuthState> {
+  const [prisma, t, lang] = await Promise.all([getPrisma(), getT(), getLocale()]);
+  const parsedEmail = emailSchema.safeParse(email);
+  if (!parsedEmail.success) return { error: t.errors.checkEmail, confirm: true };
+  const user = await passwordChecked(prisma, parsedEmail.data, password, t, lang);
+  if ("error" in user) return { error: user.error, confirm: true };
+  if (user.emailVerifiedAt) return { error: null, confirm: true };
+
+  const sent = await sendCode(prisma, user, "join", t, lang);
+  if (sent.ok) return { error: null, confirm: true };
+  if (!sent.cooldown) console.error("Join code email failed:", sent.error);
+  return { error: sent.cooldown ? sent.error : t.errors.emailDidntSend, confirm: true };
+}
+
+/** The account at this address, if this is its password and it isn't
+ * locked, banned or on hold. Wrong passwords count towards the lock as
+ * they do on the sign in screen. */
+async function passwordChecked(
+  prisma: PrismaClient,
+  email: string,
+  password: string,
+  t: Messages,
+  lang: Locale
+): Promise<User | { error: string }> {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { error: t.errors.codeExpired };
+  const locked = minutesLocked(user);
+  if (locked > 0) return { error: plural(t.errors.tooManyWait, locked, lang) };
+  if (!(await verifyPassword(password, user.passwordHash))) {
+    await recordWrongPassword(prisma, user);
+    return { error: t.errors.wrongPassword };
+  }
+  if (user.accountStatus === "BANNED") return { error: t.errors.banned };
+  if (user.accountStatus !== "ACTIVE") return { error: t.errors.onHold };
+  return user;
 }
 
 /** Forgot your password, step one: email a code to the address. Only
@@ -183,7 +283,7 @@ export async function startResetAction(raw: string): Promise<{ ok: true } | { ok
   // the screen looks the same either way.
   if (!user || user.accountStatus !== "ACTIVE") return { ok: true };
 
-  const sent = await sendResetCode(prisma, user, t, lang);
+  const sent = await sendCode(prisma, user, "reset", t, lang);
   if (!sent.ok) {
     // Into the server's logs; the Email steps on /admin say the same thing in
     // plain words.
@@ -225,7 +325,7 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
   if (!user || user.accountStatus !== "ACTIVE") {
     return { error: t.errors.codeExpired };
   }
-  const checked = await checkResetCode(prisma, user.id, parsed.data.code, t, lang);
+  const checked = await checkCode(prisma, user.id, parsed.data.code, t, lang);
   if (!checked.ok) return { error: checked.error };
 
   await prisma.user.update({
@@ -235,8 +335,12 @@ export async function finishResetAction(_prev: AuthState, formData: FormData): P
       passwordChangedAt: passwordChangeStamp(),
       failedLogins: 0,
       lockedUntil: null,
+      // The code went to the address, so it's theirs: this is also how
+      // somebody takes back an address another person joined with.
+      ...(user.emailVerifiedAt ? {} : { emailVerifiedAt: new Date() }),
     },
   });
+  if (!user.emailVerifiedAt) await ensureMemberNumber(prisma, user.id);
   await createSession(user.id);
   // Home sorts out anything still owed (the code just confirmed the
   // address, so it won't be that).

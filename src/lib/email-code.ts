@@ -18,16 +18,18 @@ function sixDigits(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-// The code for resetting a forgotten password: the only email the app
-// sends. Kept in the EmailVerification table, which held sign-up codes
-// once too.
+// The codes the app emails, the only email it sends: one to finish
+// joining, which proves the address is yours, and one to reset a
+// forgotten password. One at a time per member, in the EmailVerification
+// table, whichever it's for: either proves the inbox.
 
 /** Issues a fresh code and emails it, in the language they asked in.
  * Replaces any code already out. A cooldown error says so, as it's the
  * one worth showing as it is. */
-export async function sendResetCode(
+export async function sendCode(
   prisma: PrismaClient,
   user: { id: string; email: string; name: string },
+  purpose: "join" | "reset",
   t: Messages,
   lang: Locale
 ): Promise<{ ok: true } | { ok: false; error: string; cooldown?: true }> {
@@ -49,7 +51,7 @@ export async function sendResetCode(
     text: [
       fill(t.reset.hi, { name: user.name }),
       ``,
-      t.reset.yourCode,
+      purpose === "join" ? t.reset.joinCode : t.reset.yourCode,
       ``,
       `    ${code}`,
       ``,
@@ -76,7 +78,7 @@ export async function sendResetCode(
 export type CheckResult = { ok: true } | { ok: false; error: string };
 
 /** Checks a typed code; a right one is used up. */
-export async function checkResetCode(
+export async function checkCode(
   prisma: PrismaClient,
   userId: string,
   typed: string,

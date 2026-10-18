@@ -160,6 +160,8 @@ export default async function AdminPage() {
                   </td>
                   <td className="py-2 pr-4">
                     <StatusBadge status={u.accountStatus} />
+                    {/* Joined, never typed the code: can't sign in yet. */}
+                    {!u.emailVerifiedAt && <span className="badge-amber ml-1">Email not confirmed</span>}
                     {(flags.get(u.id) ?? 0) > 0 && (
                       <span className="ml-1 text-xs text-red-700" title="Counted red flags">
                         🚩{flags.get(u.id)}

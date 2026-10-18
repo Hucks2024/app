@@ -8,9 +8,10 @@ import { SITE } from "@/lib/site";
 // real use it's always Resend's own address.
 const RESEND_ENDPOINT = process.env.RESEND_API_URL ?? "https://api.resend.com/emails";
 
-/** Whether the app can send email at all. It only ever sends one kind:
- * the code for resetting a forgotten password. Without it, "Forgot your
- * password?" says to ask an admin instead. RESEND_API_KEY is the switch. */
+/** Whether the app can send email at all. It only ever sends codes: one
+ * to finish joining and one to reset a forgotten password (see
+ * src/lib/email-code.ts). Without it, joining is straight in and "Forgot
+ * your password?" says to ask an admin. RESEND_API_KEY is the switch. */
 export function canSendEmail(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
