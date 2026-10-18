@@ -215,12 +215,6 @@ const hi: Messages = {
     HOSTEL: "जैसे कॉमन रूम में मिलें। गेम्स और बातें।",
     SOCIAL: "जैसे सबका स्वागत है।",
   },
-  typeGroups: {
-    Move: "चलें-फिरें",
-    Create: "कुछ बनाएँ",
-    "Hang out": "साथ समय बिताएँ",
-    Travel: "यात्रा",
-  },
   meetup: {
     findUs: "हमें कैसे ढूँढें:",
     findUsLine: "हमें कैसे ढूँढें: {text}",
@@ -354,7 +348,6 @@ const hi: Messages = {
   form: {
     step: "{total} में से चरण {n}",
     what: "आप क्या कर रहे हैं?",
-    moreIdeas: "और आइडिया",
     pickOne: "एक चुनें।",
     meetingPoint: "मिलने की जगह",
     meetingPlace: "मिलने की जगह",
@@ -382,7 +375,7 @@ const hi: Messages = {
     posting: "पोस्ट हो रहा है…",
     postMeetup: "मीटअप पोस्ट करें",
     emoji: "मैप के लिए इमोजी",
-    whatIsIt: "यह क्या है?",
+    orYourOwn: "या अपना लिखें",
     whatIsItHint: "जैसे योग",
     emojiShort: "इमोजी",
     oneEmoji: "सिर्फ़ एक इमोजी।",

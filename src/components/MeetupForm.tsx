@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { CATEGORIES, CATEGORY_GROUPS, categoryFor, oneEmoji } from "@/lib/categories";
+import { categoryFor, oneEmoji } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
@@ -21,9 +21,9 @@ const MeetingPointMap = dynamic(() => import("@/components/MeetingPointMap"), {
   loading: () => <div className="map-screen z-[1300] bg-slate-100" />,
 });
 
-// The few most people want, shown first so the first question is one
-// glance, not a list of two dozen. Everything else is under "More ideas".
-const POPULAR = ["WALK", "RUN", "CYCLE", "COFFEE", "DRINKS", "FOOD", "PAINT", "GYM", "SOCIAL"];
+// The few most people want, as buttons, so the first question is one
+// glance. Anything else is typed in: its own name, and an emoji for its pin.
+const POPULAR = ["WALK", "RUN", "CYCLE", "COFFEE", "DRINKS", "FOOD", "PAINT", "GYM"];
 
 export type MeetupInitial = {
   id: string;
@@ -55,11 +55,8 @@ function kmApart(a: { lat: number; lng: number }, b: { lat: number; lng: number 
   return Math.hypot(x, b.lat - a.lat) * 111.32;
 }
 
-type Step = "what" | "kind" | "where" | "when" | "name";
+type Step = "what" | "where" | "when" | "name";
 const STEPS: Step[] = ["what", "where", "when", "name"];
-// "Something else" asks what it is straight after: its name, and the
-// emoji its pin will have.
-const SOMETHING_ELSE_STEPS: Step[] = ["what", "kind", "where", "when", "name"];
 
 /** The part of a place's name that says where it is, for a suggested
  * meetup name: "1a, High Street, Clapham" is "High Street", not "1a". */
@@ -90,7 +87,6 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const [stepError, setStepError] = useState<string | null>(null);
   const [category, setCategory] = useState(initial?.category ?? "");
   // The everyday ones first; the rest behind "More ideas".
-  const [allTypes, setAllTypes] = useState(!!initial?.category && !POPULAR.includes(initial.category));
   const [place, setPlace] = useState<PlaceCheck>({ status: "idle" });
   // The place's name and the comment live here rather than in their boxes:
   // posting, the boxes sit on the full-screen map, outside the form, and
@@ -145,7 +141,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // Distance, pace and a Strava route only mean something for a run, a
   // ride and the like; a painting meetup isn't asked for them.
   const route = categoryFor(category).route;
-  const steps = category === "SOCIAL" ? SOMETHING_ELSE_STEPS : STEPS;
+  const steps = STEPS;
   const at = steps[step];
   const show = (s: Step) => editing || at === s;
 
@@ -221,10 +217,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
   async function next() {
     setStepError(null);
-    if (at === "what" && !category) return setStepError(t.form.pickOne);
-    if (at === "kind") {
-      if (title.trim().length < 3) return setStepError(t.errors.giveName);
-      if (ownEmoji.trim() && !emoji) return setStepError(t.form.oneEmoji);
+    if (at === "what") {
+      if (!category) return setStepError(t.form.pickOne);
+      // Their own, typed: it needs a name; the emoji can wait (🎉).
+      if (category === "SOCIAL") {
+        if (title.trim().length < 3) return setStepError(t.errors.giveName);
+        if (ownEmoji.trim() && !emoji) return setStepError(t.form.oneEmoji);
+      }
     }
     if (at === "where") {
       const text = locationText();
@@ -314,11 +313,17 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         </p>
       ) : null}
 
-      {/* 1. What */}
+      {/* 1. What: a button for the usual ones, which goes straight on, or
+          their own typed in with an emoji for its pin. Editing, just the
+          emoji, as the name is with the rest below. */}
       <fieldset hidden={!show("what")}>
         <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.what}</legend>
-        {(() => {
-          const pick = (c: (typeof CATEGORIES)[number]) => (
+        <div className="type-grid type-grid-fill">
+          {/* In POPULAR's order; editing an older meetup of another type,
+              its own is there too. */}
+          {[...POPULAR, ...(editing && category !== "SOCIAL" && !POPULAR.includes(category) ? [category] : [])]
+            .map((value) => categoryFor(value))
+            .map((c) => (
             <button
               key={c.value}
               type="button"
@@ -326,8 +331,12 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
                 setCategory(c.value);
                 setStepError(null);
                 setEdited(true);
-                // On the first step, picking one is the answer: straight on.
+                // On the first step, picking one is the answer: straight on,
+                // leaving behind anything half typed below.
                 if (!editing) {
+                  setTitle("");
+                  setTitleTouched(false);
+                  setOwnEmoji("");
                   setStep(1);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }
@@ -340,73 +349,52 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               </span>
               <span>{typeName(t, c.value)}</span>
             </button>
-          );
-          if (!allTypes) {
-            return (
-              <>
-                <div className="type-grid type-grid-fill">
-                  {POPULAR.map((v) => CATEGORIES.find((c) => c.value === v)!).map(pick)}
-                </div>
-                <button type="button" onClick={() => setAllTypes(true)} className="btn-secondary mt-4 min-h-12 w-full text-base">
-                  {t.form.moreIdeas} ▾
-                </button>
-              </>
-            );
-          }
-          // In groups, so two dozen choices read as four short lists.
-          return [...CATEGORY_GROUPS, null].map((group) => (
-            <div key={group ?? "other"} className="mb-4 last:mb-0">
-              {group && <p className="type-group">{t.typeGroups[group]}</p>}
-              <div className="type-grid">{CATEGORIES.filter((c) => c.group === group).map(pick)}</div>
-            </div>
-          ));
-        })()}
-      </fieldset>
-
-      {/* 2. "Something else" only: what it is, and its emoji for the map.
-          Editing, the name is with the rest below, so just the emoji. */}
-      <input type="hidden" name="emoji" value={category === "SOCIAL" ? (emoji ?? "") : ""} />
-      {category === "SOCIAL" && (
-        <fieldset hidden={!show("kind")}>
-          <legend className={editing ? "label !text-base" : "mb-3 text-xl font-bold text-slate-900"}>
-            {editing ? t.form.emoji : t.form.whatIsIt}
-          </legend>
-          <div className="flex gap-3">
-            <input
-              id="own-emoji"
-              className="input !w-20 min-h-14 flex-none text-center !text-3xl placeholder:!text-sm"
-              value={ownEmoji}
-              placeholder={t.form.emojiShort}
-              aria-label={t.form.emoji}
-              maxLength={16}
-              autoComplete="off"
-              onChange={(e) => {
-                setOwnEmoji(e.target.value);
-                setEdited(true);
-                setStepError(null);
-              }}
-            />
-            {!editing && (
+          ))}
+        </div>
+        {(!editing || category === "SOCIAL") && (
+          <div className="mt-5">
+            <p className="label !text-base">{editing ? t.form.emoji : t.form.orYourOwn}</p>
+            <div className="flex gap-3">
               <input
-                className="input min-h-14 flex-1 !text-lg"
-                id="kind"
-                value={title}
-                placeholder={t.form.whatIsItHint}
-                aria-label={t.form.name}
+                id="own-emoji"
+                className="input !w-20 min-h-14 flex-none text-center !text-3xl placeholder:!text-sm"
+                value={ownEmoji}
+                placeholder={t.form.emojiShort}
+                aria-label={t.form.emoji}
+                maxLength={16}
+                autoComplete="off"
                 onChange={(e) => {
-                  setTitle(e.target.value);
-                  setTitleTouched(true);
+                  setOwnEmoji(e.target.value);
+                  if (!editing) setCategory("SOCIAL");
+                  setEdited(true);
                   setStepError(null);
                 }}
-                maxLength={120}
               />
+              {!editing && (
+                <input
+                  className="input min-h-14 flex-1 !text-lg"
+                  id="kind"
+                  value={category === "SOCIAL" ? title : ""}
+                  placeholder={t.form.whatIsItHint}
+                  aria-label={t.form.name}
+                  enterKeyHint="next"
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setTitleTouched(true);
+                    setCategory("SOCIAL");
+                    setStepError(null);
+                  }}
+                  maxLength={120}
+                />
+              )}
+            </div>
+            {ownEmoji.trim() && !emoji && (
+              <p className="mt-2 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
             )}
           </div>
-          {ownEmoji.trim() && !emoji && (
-            <p className="mt-2 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
-          )}
-        </fieldset>
-      )}
+        )}
+      </fieldset>
+      <input type="hidden" name="emoji" value={category === "SOCIAL" ? (emoji ?? "") : ""} />
 
       {/* 3. Meeting point. Posting, it's the whole screen, a map like the
           main one (MeetingPointMap); editing, a map in the page. */}
@@ -552,8 +540,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             {t.common.back}
           </button>
         )}
-        {/* Step 1 moves on when a type is tapped, so it has no Next. */}
-        {(editing || step > 0) && (
+        {/* Step 1 moves on when a type is tapped; Next only for one typed. */}
+        {(editing || step > 0 || category === "SOCIAL") && (
           <button
             type="submit"
             // Not greyed out while the place is being found: leaving the box

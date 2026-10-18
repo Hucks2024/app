@@ -213,12 +213,6 @@ const zh: Messages = {
     HOSTEL: "比如：在公共休息室见。玩游戏、聊天。",
     SOCIAL: "比如：欢迎所有人，随意就好。",
   },
-  typeGroups: {
-    Move: "运动",
-    Create: "创作",
-    "Hang out": "聚聚",
-    Travel: "旅行",
-  },
   meetup: {
     findUs: "怎么找到我们：",
     findUsLine: "怎么找到我们：{text}",
@@ -346,7 +340,6 @@ const zh: Messages = {
   form: {
     step: "第 {n} 步，共 {total} 步",
     what: "你想做什么？",
-    moreIdeas: "更多选择",
     pickOne: "选一个。",
     meetingPoint: "集合地点",
     meetingPlace: "集合地点",
@@ -374,7 +367,7 @@ const zh: Messages = {
     posting: "发布中…",
     postMeetup: "发布活动",
     emoji: "地图上的表情",
-    whatIsIt: "是什么活动？",
+    orYourOwn: "或者自己输入",
     whatIsItHint: "比如：瑜伽",
     emojiShort: "表情",
     oneEmoji: "只能一个表情。",

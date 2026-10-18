@@ -215,12 +215,6 @@ const fr: Messages = {
     HOSTEL: "ex. Rendez-vous dans la salle commune. Jeux et discussions.",
     SOCIAL: "ex. Tout le monde est bienvenu. Viens comme tu es.",
   },
-  typeGroups: {
-    Move: "Bouger",
-    Create: "Créer",
-    "Hang out": "Se retrouver",
-    Travel: "Voyager",
-  },
   meetup: {
     findUs: "Pour nous trouver :",
     findUsLine: "Pour nous trouver : {text}",
@@ -354,7 +348,6 @@ const fr: Messages = {
   form: {
     step: "Étape {n} sur {total}",
     what: "Tu fais quoi ?",
-    moreIdeas: "Plus d'idées",
     pickOne: "Choisis-en un.",
     meetingPoint: "Point de rendez-vous",
     meetingPlace: "Lieu de rendez-vous",
@@ -382,7 +375,7 @@ const fr: Messages = {
     posting: "Publication…",
     postMeetup: "Publier la sortie",
     emoji: "Emoji pour la carte",
-    whatIsIt: "C'est quoi ?",
+    orYourOwn: "Ou tape le tien",
     whatIsItHint: "ex. Yoga",
     emojiShort: "Emoji",
     oneEmoji: "Un seul emoji.",

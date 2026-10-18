@@ -215,12 +215,6 @@ const en = {
     HOSTEL: "e.g. Meet in the common room. Games and chat.",
     SOCIAL: "e.g. Everyone welcome. Come as you are.",
   },
-  typeGroups: {
-    Move: "Move",
-    Create: "Create",
-    "Hang out": "Hang out",
-    Travel: "Travel",
-  },
   meetup: {
     findUs: "How to find us:",
     findUsLine: "How to find us: {text}",
@@ -348,7 +342,6 @@ const en = {
   form: {
     step: "Step {n} of {total}",
     what: "What are you doing?",
-    moreIdeas: "More ideas",
     pickOne: "Pick one.",
     meetingPoint: "Meeting point",
     meetingPlace: "Meeting place",
@@ -376,7 +369,7 @@ const en = {
     posting: "Posting…",
     postMeetup: "Post meetup",
     emoji: "Emoji for the map",
-    whatIsIt: "What is it?",
+    orYourOwn: "Or type your own",
     whatIsItHint: "e.g. Yoga",
     emojiShort: "Emoji",
     oneEmoji: "Just one emoji.",
