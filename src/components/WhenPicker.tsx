@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { clockTime, useTimePrefs, type DayWords, type TimePrefs } from "@/components/LocalTime";
+import { clockTime, useTimePrefs, type TimePrefs } from "@/components/LocalTime";
 import { useT } from "@/i18n/client";
-import { fill } from "@/i18n/format";
 
 // "When?" for posting a meetup: a row of days to tap, then a time.
 //
@@ -36,21 +35,6 @@ function timeLabel(minutes: number, prefs: TimePrefs): string {
 }
 
 const TIMES = Array.from({ length: 96 }, (_, i) => i * 15);
-
-/** "Tomorrow at 10:00", in the app's language ("at" is "{day} at {time}"). */
-function describeWhen(day: string, minutes: number, prefs: TimePrefs, words: DayWords & { at: string }): string {
-  const [y, mo, d] = day.split("-").map(Number);
-  const date = new Date(y, mo - 1, d, Math.floor(minutes / 60), minutes % 60);
-  const today = startOfDay(new Date());
-  const diff = Math.round((startOfDay(date).getTime() - today.getTime()) / 86400000);
-  const dayWords =
-    diff === 0
-      ? words.today
-      : diff === 1
-        ? words.tomorrow
-        : date.toLocaleDateString(prefs.locale, { weekday: "long", day: "numeric", month: "long" });
-  return fill(words.at, { day: dayWords, time: timeLabel(minutes, prefs) });
-}
 
 export default function WhenPicker({
   initialIso,
@@ -124,7 +108,7 @@ export default function WhenPicker({
       <input type="hidden" name="startsAtUtc" value={when ? when.toISOString() : ""} />
 
       <fieldset>
-        <legend className="label !text-base">{t.when.whichDay}</legend>
+        <legend className="sr-only">{t.when.whichDay}</legend>
         <div className="day-row" role="group">
           {days.map((d) => (
             <button
@@ -169,7 +153,7 @@ export default function WhenPicker({
       </fieldset>
 
       <div>
-        <label htmlFor="start-time" className="label !text-base">
+        <label htmlFor="start-time" className="sr-only">
           {t.when.whatTime}
         </label>
         <select
@@ -186,14 +170,9 @@ export default function WhenPicker({
         </select>
       </div>
 
-      {when && (
-        <p
-          className={`rounded-xl px-4 py-3 text-base font-semibold ${
-            inPast ? "bg-amber-50 text-amber-800" : "bg-brand-50 text-brand-800"
-          }`}
-          aria-live="polite"
-        >
-          {inPast ? t.when.gone : `🗓️ ${describeWhen(day, minutes, prefs, { ...t.time, at: t.when.at })}`}
+      {inPast && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-base font-semibold text-amber-800" aria-live="polite">
+          {t.when.gone}
         </p>
       )}
     </div>

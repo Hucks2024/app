@@ -41,7 +41,6 @@ function pointIcon(bubble: string) {
  * Laid over the page from <body>, between the top bar and the tabs; the
  * form keeps the values in hidden inputs. */
 export default function MeetingPointMap({
-  step,
   place,
   onPlace,
   onFind,
@@ -57,7 +56,6 @@ export default function MeetingPointMap({
   nextLabel,
   busy,
 }: {
-  step: string;
   place: string;
   onPlace: (text: string) => void;
   onFind: (text: string) => void;
@@ -114,7 +112,7 @@ export default function MeetingPointMap({
       <div className="map-overlay-top">
         <div className="point-panel">
           <label htmlFor="location" className="block text-sm font-semibold text-slate-600">
-            {step} · {t.form.meetingPoint}
+            {t.form.meetingPoint}
           </label>
           <input
             id="location"
@@ -134,7 +132,9 @@ export default function MeetingPointMap({
               e.currentTarget.blur();
             }}
           />
-          <p id="location-check" className="mt-1 min-h-6 truncate text-base" aria-live="polite">
+          {/* Only when there's something to say: once the pin is down, the
+              map shows where it is. */}
+          <p id="location-check" className={`truncate text-base ${status || !spot ? "mt-1" : ""}`} aria-live="polite">
             {status ?? (!spot && <span className="text-slate-600">{t.form.orTapDrop}</span>)}
           </p>
           {error && (

@@ -249,8 +249,6 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const placeStatus =
     place.status === "checking" ? (
       <span className="text-slate-600">{t.form.finding}</span>
-    ) : place.status === "found" ? (
-      <span className="font-medium text-brand-700">📍 {fill(t.form.found, { place: place.label })}</span>
     ) : place.status === "not_found" ? (
       <span className="font-medium text-amber-800">{t.form.cantFind}</span>
     ) : null;
@@ -298,10 +296,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
       {!editing && (
         <div aria-live="polite">
-          <p className="text-sm font-semibold text-slate-600">
-            {fill(t.form.step, { n: step + 1, total: steps.length })}
-          </p>
-          <div className="mt-2 flex gap-1.5" aria-hidden="true">
+          <p className="sr-only">{fill(t.form.step, { n: step + 1, total: steps.length })}</p>
+          <div className="flex gap-1.5" aria-hidden="true">
             {steps.map((s, i) => (
               <span key={s} className={`h-2 flex-1 rounded-full ${i <= step ? "bg-brand-600" : "bg-slate-200"}`} />
             ))}
@@ -368,56 +364,44 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           Editing, the name is with the rest below, so just the emoji. */}
       <input type="hidden" name="emoji" value={category === "SOCIAL" ? (emoji ?? "") : ""} />
       {category === "SOCIAL" && (
-        <fieldset hidden={!show("kind")} className="space-y-4">
-          {!editing && (
-            <>
-              <legend className="mb-1 text-xl font-bold text-slate-900">{t.form.whatIsIt}</legend>
-              <div>
-                <label className="label !text-base" htmlFor="kind">
-                  {t.form.name}
-                </label>
-                <p id="kind-hint" className="text-sm text-slate-600 mb-2">
-                  {t.form.whatIsItHint}
-                </p>
-                <input
-                  className="input !text-base min-h-12"
-                  id="kind"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    setTitleTouched(true);
-                    setStepError(null);
-                  }}
-                  maxLength={120}
-                  aria-describedby="kind-hint"
-                />
-              </div>
-            </>
-          )}
-          <div>
-            <label className="label !text-base" htmlFor="own-emoji">
-              {t.form.emoji} <span className="font-normal text-slate-600">{t.common.optional}</span>
-            </label>
-            <p id="own-emoji-hint" className="text-sm text-slate-600 mb-2">
-              {t.form.emojiHint}
-            </p>
+        <fieldset hidden={!show("kind")}>
+          <legend className={editing ? "label !text-base" : "mb-3 text-xl font-bold text-slate-900"}>
+            {editing ? t.form.emoji : t.form.whatIsIt}
+          </legend>
+          <div className="flex gap-3">
             <input
               id="own-emoji"
-              className="input !w-24 min-h-14 text-center !text-3xl"
+              className="input !w-20 min-h-14 flex-none text-center !text-3xl placeholder:!text-sm"
               value={ownEmoji}
+              placeholder={t.form.emojiShort}
+              aria-label={t.form.emoji}
               maxLength={16}
               autoComplete="off"
-              aria-describedby="own-emoji-hint"
               onChange={(e) => {
                 setOwnEmoji(e.target.value);
                 setEdited(true);
                 setStepError(null);
               }}
             />
-            {ownEmoji.trim() && !emoji && (
-              <p className="mt-1 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
+            {!editing && (
+              <input
+                className="input min-h-14 flex-1 !text-lg"
+                id="kind"
+                value={title}
+                placeholder={t.form.whatIsItHint}
+                aria-label={t.form.name}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setTitleTouched(true);
+                  setStepError(null);
+                }}
+                maxLength={120}
+              />
             )}
           </div>
+          {ownEmoji.trim() && !emoji && (
+            <p className="mt-2 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
+          )}
         </fieldset>
       )}
 
@@ -474,7 +458,6 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         ) : (
           at === "where" && (
             <MeetingPointMap
-              step={fill(t.form.step, { n: step + 1, total: steps.length })}
               place={placeText}
               onPlace={(text) => {
                 typePlace(text);
@@ -512,7 +495,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           {editing ? t.form.name : t.form.nameIt}
         </legend>
         <div>
-          <label className="label !text-base" htmlFor="title">
+          <label className="sr-only" htmlFor="title">
             {t.form.meetupName}
           </label>
           <input
@@ -526,24 +509,20 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             }}
             maxLength={120}
           />
-          {!editing && <p className="mt-1 text-sm text-slate-600">{t.form.changeIt}</p>}
         </div>
 
         <div>
           <label className="label !text-base" htmlFor="description">
             {t.form.comment} <span className="font-normal text-slate-600">{t.common.optional}</span>
           </label>
-          <p id="description-hint" className="text-sm text-slate-600 mb-2">
-            {commentHint(t, category)}
-          </p>
           <textarea
             className="input !text-base"
             id="description"
             name="description"
             rows={3}
             maxLength={2000}
+            placeholder={commentHint(t, category)}
             defaultValue={initial?.description ?? ""}
-            aria-describedby="description-hint"
           />
         </div>
         {/* Only for a walk, run, ride and the like. */}
@@ -552,16 +531,13 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             <label className="label !text-base" htmlFor="pace">
               {t.form.pace} <span className="font-normal text-slate-600">{t.common.optional}</span>
             </label>
-            <p id="pace-hint" className="text-sm text-slate-600 mb-2">
-              {t.form.paceHint}
-            </p>
             <input
               className="input !text-base min-h-12"
               id="pace"
               name="pace"
+              placeholder={t.form.paceHint}
               defaultValue={initial?.pace ?? ""}
               maxLength={40}
-              aria-describedby="pace-hint"
             />
           </div>
         )}
