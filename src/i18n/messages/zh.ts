@@ -34,6 +34,7 @@ const zh: Messages = {
     tap: "点「我参加」",
     turnUp: "按时到场",
     reports: "被举报 3 次 = 永久封号。",
+    ads: "打广告 = 立即封号。",
     nearYou: "看看附近有什么活动",
   },
   welcome: {
@@ -283,7 +284,7 @@ const zh: Messages = {
   },
   errors: {
     notRight: "有点不对劲。",
-    noAds: "不能包含链接、邮箱或电话号码。",
+    noAds: "不能包含链接、邮箱或电话号码。打广告 = 立即封号。",
     notNice: "请友善：不要脏话、歧视用语或成人内容。",
     giveName: "起个名字吧。",
     pickType: "选一个类型。",
@@ -458,9 +459,10 @@ const zh: Messages = {
     rule2: "友善待人。",
     rule3: "在公共场所见面。",
     rule4: "去不了？点{button}。",
-    rule5: "禁止推销。",
+    rule5: "禁止推销或打广告。",
     rule6: "拒绝就是拒绝。",
     threeReports: "被举报 3 次 = 永久封号。",
+    adsBan: "打广告 = 立即封号。",
     fullTerms: "完整{terms}。",
     tapOne: "有问题？点一个看看。",
     contact: "联系我们",

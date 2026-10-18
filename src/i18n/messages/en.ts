@@ -35,6 +35,7 @@ const en = {
     tap: "Tap I'm in",
     turnUp: "Turn up",
     reports: "3 reports = banned for life.",
+    ads: "Advertising = instant ban.",
     nearYou: "what's on near you",
   },
   welcome: {
@@ -285,7 +286,7 @@ const en = {
   },
   errors: {
     notRight: "Something's not right.",
-    noAds: "No links, emails or phone numbers.",
+    noAds: "No links, emails or phone numbers. Advertising = instant ban.",
     notNice: "Keep it friendly: no swearing, slurs or adult stuff.",
     giveName: "Give it a name.",
     pickType: "Pick a type.",
@@ -460,9 +461,10 @@ const en = {
     rule2: "Be kind.",
     rule3: "Meet in public.",
     rule4: "Can't go? Tap {button}.",
-    rule5: "No selling.",
+    rule5: "No selling or advertising.",
     rule6: "No means no.",
     threeReports: "3 reports = banned for life.",
+    adsBan: "Advertising = instant ban.",
     fullTerms: "The full {terms}.",
     tapOne: "Questions? Tap one.",
     contact: "Contact us",

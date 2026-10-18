@@ -35,6 +35,7 @@ const es: Messages = {
     tap: "Toca «Voy»",
     turnUp: "Preséntate",
     reports: "3 denuncias = expulsión para siempre.",
+    ads: "Publicidad = expulsión inmediata.",
     nearYou: "qué hay cerca de ti",
   },
   welcome: {
@@ -284,7 +285,7 @@ const es: Messages = {
   },
   errors: {
     notRight: "Algo no está bien.",
-    noAds: "Sin enlaces, emails ni números de teléfono.",
+    noAds: "Sin enlaces, emails ni números de teléfono. Publicidad = expulsión inmediata.",
     notNice: "Buen rollo: nada de palabrotas, insultos ni contenido para adultos.",
     giveName: "Ponle un nombre.",
     pickType: "Elige un tipo.",
@@ -465,9 +466,10 @@ const es: Messages = {
     rule2: "Sé amable.",
     rule3: "Quedad en sitios públicos.",
     rule4: "¿Te ha surgido algo? Toca {button}.",
-    rule5: "Nada de vender.",
+    rule5: "Nada de vender ni hacer publicidad.",
     rule6: "No es no.",
     threeReports: "3 denuncias = expulsión para siempre.",
+    adsBan: "Publicidad = expulsión inmediata.",
     fullTerms: "Las {terms} completas.",
     tapOne: "¿Dudas? Toca una.",
     contact: "Contacto",

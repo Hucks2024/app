@@ -4,6 +4,7 @@ import { randomInt } from "crypto";
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { hashPassword, passwordChangeStamp, requireAdmin } from "@/lib/auth";
+import { banForGood } from "@/lib/moderation";
 
 export async function resolveReportAction(formData: FormData) {
   await requireAdmin();
@@ -19,6 +20,25 @@ export async function banUserAction(formData: FormData) {
   if (userId === admin.id) return;
   const prisma = await getPrisma();
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "SUSPENDED" } });
+  revalidatePath("/admin");
+}
+
+/** Caught advertising: banned for life on the spot, the first time, and
+ * their meetups called off. The reports about them are dealt with. */
+export async function banForAdvertisingAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const userId = String(formData.get("userId"));
+  if (userId === admin.id) return;
+  const prisma = await getPrisma();
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user || user.role === "ADMIN") return;
+
+  await banForGood(prisma, userId);
+  await prisma.report.updateMany({
+    where: { reportedUserId: userId, status: "OPEN" },
+    data: { status: "RESOLVED" },
+  });
+  revalidatePath("/");
   revalidatePath("/admin");
 }
 

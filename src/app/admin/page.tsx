@@ -10,6 +10,7 @@ import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
 import {
   resolveReportAction,
   banUserAction,
+  banForAdvertisingAction,
   unbanUserAction,
   setVerifiedAction,
   setAdminAction,
@@ -77,7 +78,7 @@ export default async function AdminPage() {
                   See the meetup
                 </Link>
               )}
-              <div className="flex items-center gap-3 mt-3">
+              <div className="flex flex-wrap items-start gap-3 mt-3">
                 <form action={resolveReportAction}>
                   <input type="hidden" name="reportId" value={r.id} />
                   <button type="submit" className="btn-secondary !py-1 !text-xs">
@@ -85,12 +86,17 @@ export default async function AdminPage() {
                   </button>
                 </form>
                 {r.reportedUser.accountStatus === "ACTIVE" ? (
-                  <form action={banUserAction}>
-                    <input type="hidden" name="userId" value={r.reportedUserId} />
-                    <button type="submit" className="btn-danger !py-1 !text-xs">
-                      Suspend {r.reportedUser.name}
-                    </button>
-                  </form>
+                  <>
+                    <form action={banUserAction}>
+                      <input type="hidden" name="userId" value={r.reportedUserId} />
+                      <button type="submit" className="btn-danger !py-1 !text-xs">
+                        Suspend {r.reportedUser.name}
+                      </button>
+                    </form>
+                    {r.reportedUser.role !== "ADMIN" && r.reportedUserId !== me.id && (
+                      <BanForAdvertising userId={r.reportedUserId} name={r.reportedUser.name} />
+                    )}
+                  </>
                 ) : (
                   <StatusBadge status={r.reportedUser.accountStatus} />
                 )}
@@ -178,6 +184,9 @@ export default async function AdminPage() {
                             </button>
                           </form>
                         ))}
+                      {u.role !== "ADMIN" && u.accountStatus === "ACTIVE" && (
+                        <BanForAdvertising userId={u.id} name={u.name} />
+                      )}
                       {u.id !== me.id && u.accountStatus === "ACTIVE" && (
                         // Two taps on purpose: the first only opens the
                         // confirm, so a slip on a phone-width table can't
@@ -219,6 +228,31 @@ export default async function AdminPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Caught advertising: banned for life, the first time. Two taps, the
+ * same as making an admin, because their meetups are called off and that
+ * can't be undone. */
+function BanForAdvertising({ userId, name }: { userId: string; name: string }) {
+  return (
+    <details>
+      <summary className="btn-danger !py-1 !text-xs cursor-pointer list-none whitespace-nowrap">
+        Ban for advertising
+      </summary>
+      <form
+        action={banForAdvertisingAction}
+        className="mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+      >
+        <input type="hidden" name="userId" value={userId} />
+        <p className="text-xs text-slate-600 mb-2">
+          {name} is banned for life, and their meetups are called off.
+        </p>
+        <button type="submit" className="btn-danger w-full !py-1.5 !text-xs">
+          Yes, ban {name}
+        </button>
+      </form>
+    </details>
   );
 }
 

@@ -9,7 +9,7 @@ export const metadata = { title: "Terms" };
 // asks for exactly this of apps where people post things and meet: zero
 // tolerance for nastiness, a way to report it, and a way to block people.
 
-const UPDATED = "16 October 2026";
+const UPDATED = "18 October 2026";
 
 export default function TermsPage() {
   return (
@@ -22,7 +22,7 @@ export default function TermsPage() {
         <Section title="The short version">
           <ul className="list-disc space-y-1 pl-5">
             <li>You must be {SITE.minimumAge} or over. It&apos;s made for {SITE.recommendedAges}s.</li>
-            <li>Be kind. Meet in public. No selling.</li>
+            <li>Be kind. Meet in public. No selling or advertising.</li>
             <li>We don&apos;t put up with abuse, hate or sexual content. At all.</li>
             <li>Report anything wrong.</li>
           </ul>
@@ -45,8 +45,8 @@ export default function TermsPage() {
             <li>pretend to be someone else, or post a meetup you won&apos;t turn up to.</li>
           </ul>
           <p className="mt-2">
-            Break these and we remove what you posted and ban you, for good. Three reports from people you met at
-            meetups ban you automatically.
+            Break these and we remove what you posted and ban you, for good. Advertising gets you banned the first
+            time, straight away. Three reports from people you met at meetups ban you automatically.
           </p>
         </Section>
 

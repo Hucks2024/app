@@ -14,6 +14,10 @@ import type { PrismaClient } from "@prisma/client";
 //   - it's the first counted flag from that person: three flags from one
 //     angry member are one flag.
 //
+// Advertising is different: it's a ban on the spot, the first time. An
+// admin does it from /admin (src/app/admin/actions.ts) once they've seen
+// it, so a false report can't do it.
+//
 // Admins can't be flagged out, and an admin can lift a ban on /admin if
 // one ever turns out to be wrong.
 
@@ -66,6 +70,13 @@ export async function banIfFlagged(prisma: PrismaClient, userId: string): Promis
   if (user.accountStatus === "BANNED") return true;
   if ((await redFlagCount(prisma, userId)) < RED_FLAG_LIMIT) return false;
 
+  await banForGood(prisma, userId);
+  return true;
+}
+
+/** Bans this member for life, straight away, and takes them off
+ * everything still to come. */
+export async function banForGood(prisma: PrismaClient, userId: string): Promise<void> {
   await prisma.user.update({ where: { id: userId }, data: { accountStatus: "BANNED" } });
 
   // Off everything still to come, so nobody turns up to meet them, and
@@ -91,7 +102,6 @@ export async function banIfFlagged(prisma: PrismaClient, userId: string): Promis
   for (const m of hosting) {
     await prisma.runActivity.update({ where: { id: m.id }, data: { cancelledAt: new Date() } });
   }
-  return true;
 }
 
 /** If a meetup with a cap has room, the earliest person waiting gets in.
