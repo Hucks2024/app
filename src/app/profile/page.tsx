@@ -15,6 +15,7 @@ import {
 import Avatar from "@/components/Avatar";
 import CopyableField from "@/components/CopyableField";
 import LocalTime from "@/components/LocalTime";
+import { TicketRow } from "@/components/Ticket";
 import SubmitButton from "@/components/SubmitButton";
 import ChangePasswordForm from "@/components/ChangePasswordForm";
 import InstallHint from "@/components/InstallHint";
@@ -285,26 +286,22 @@ function MeetupLinks({
   return (
     <div>
       <p className="label">{label}</p>
-      <ul className="divide-y divide-slate-100">
+      <ul className="space-y-2">
         {rows.map(({ activity: a }) => (
           <li key={a.id}>
-            <Link
-              href={`/activities/${a.id}${toPeople ? "#people" : ""}`}
-              className="flex items-center gap-3 py-2 hover:bg-slate-50 -mx-2 px-2 rounded-lg"
-            >
-              <span className="text-xl" aria-hidden="true">
-                {emojiFor(a)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium text-slate-900">{a.title}</span>
-                <span className="block text-sm text-slate-500">
-                  <LocalTime iso={a.startsAt.toISOString()} style="short" />
-                  {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">{t.meetup.cancelled}</span>}
+            <Link href={`/activities/${a.id}${toPeople ? "#people" : ""}`} className="ticket ticket-sm">
+              <TicketRow emoji={emojiFor(a)} off={a.cancelledAt != null} small>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-900">{a.title}</span>
+                  <span className="block text-sm text-slate-500">
+                    <LocalTime iso={a.startsAt.toISOString()} style="short" />
+                    {a.cancelledAt && <span className="ml-1.5 font-semibold text-red-700">{t.meetup.cancelled}</span>}
+                  </span>
                 </span>
-              </span>
-              <span className="text-slate-400" aria-hidden="true">
-                ›
-              </span>
+                <span className="self-center text-slate-400" aria-hidden="true">
+                  ›
+                </span>
+              </TicketRow>
             </Link>
           </li>
         ))}

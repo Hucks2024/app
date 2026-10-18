@@ -15,6 +15,7 @@ import { BRAND } from "@/components/Logo";
 import { useFormatWhen } from "@/components/LocalTime";
 import Avatar from "@/components/Avatar";
 import { countdown, useNow } from "@/components/MeetupList";
+import { TicketHead } from "@/components/Ticket";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
 import { useLocale, useT } from "@/i18n/client";
 import { fill, plural, typeName } from "@/i18n/format";
@@ -459,28 +460,32 @@ export type MapActivity = {
 };
 
 /** Leaflet pans an opening card into view, but doesn't know the filters,
- * tips and buttons float over the top of the map, and tucks the top of the
- * card, close button and all, under them. So it's told how far down they
- * reach each time one opens. */
+ * tips and buttons float over the map, and tucks the card under them:
+ * its close button under the filters, its big button and the pin under
+ * List and Near me. So it's told how far in they reach each time one
+ * opens. If the card can't clear both, the top wins: that's where it
+ * closes. */
 function KeepCardsClear() {
   const map = useMap();
   useEffect(() => {
     const onOpen = (e: L.PopupEvent) => {
       const box = map.getContainer().getBoundingClientRect();
+      const middle = box.top + box.height / 2;
       let top = 12;
+      let bottom = 12;
       const over = [
-        ...document.querySelectorAll(".map-overlay-top"),
-        ...map.getContainer().querySelectorAll(".leaflet-top .leaflet-control, .locate-btn"),
+        ...document.querySelectorAll(".map-overlay-top, .view-toggle"),
+        ...map.getContainer().querySelectorAll(".leaflet-control, .locate-btn"),
       ];
       for (const o of over) {
         const r = o.getBoundingClientRect();
-        // Only what's over the top half: Near me sits at the bottom of the
-        // full-screen map, under the pins rather than the cards.
-        if (r.height > 0 && r.bottom > box.top && r.top < box.top + box.height / 2) {
-          top = Math.max(top, r.bottom - box.top + 12);
-        }
+        if (r.height === 0 || r.bottom <= box.top || r.top >= box.bottom) continue;
+        if (r.top + r.height / 2 < middle) top = Math.max(top, r.bottom - box.top + 12);
+        else bottom = Math.max(bottom, box.bottom - r.top + 12);
       }
       e.popup.options.autoPanPaddingTopLeft = L.point(12, top);
+      // The pin hangs below the card's tip, and wants to stay in sight too.
+      e.popup.options.autoPanPaddingBottomRight = L.point(12, bottom + PIN_H);
     };
     map.on("popupopen", onOpen);
     return () => {
@@ -488,23 +493,6 @@ function KeepCardsClear() {
     };
   }, [map]);
   return null;
-}
-
-/** The top of a meetup's card on the map: the app's violet-to-pink, with
- * the pin's emoji in a white tile, the way the welcome screen shows the
- * app icon. Styles in globals.css (.meetup-pop). */
-function PopHead({ emoji, kind, title }: { emoji: string; kind?: string; title: string }) {
-  return (
-    <div className="pop-head">
-      <span className="pop-emoji" aria-hidden="true">
-        {emoji}
-      </span>
-      <div className="min-w-0">
-        {kind && <p className="pop-kind">{kind}</p>}
-        <p className="pop-title">{title}</p>
-      </div>
-    </div>
-  );
 }
 
 /** A meetup's card on the map, for members: when, where, who's in and who's
@@ -517,13 +505,14 @@ function MeetupPop({ a }: { a: MapActivity }) {
   const soon = now == null ? null : countdown(a.startsAt, now, t, lang);
   return (
     <>
-      <PopHead
+      <TicketHead
         emoji={emojiFor(a)}
         // "Something else" says nothing the title doesn't.
         kind={a.category === "SOCIAL" ? undefined : typeName(t, a.category)}
-        title={a.title}
-      />
-      <div className="pop-body">
+      >
+        <p className="ticket-title">{a.title}</p>
+      </TicketHead>
+      <div className="ticket-body pop-body">
         <p className="pop-row">
           <span aria-hidden="true">📅</span>
           <span>
@@ -671,7 +660,7 @@ export default function ActivitiesMap({
             // otherwise just a picture.
             title={restricted ? fill(t.map.typeMeetup, { type: typeName(t, a.category) }) : a.title}
           >
-            <Popup className="meetup-pop" minWidth={264} maxWidth={264}>
+            <Popup className="meetup-pop" minWidth={280} maxWidth={280}>
               {restricted ? (
                 // What kind of thing it is, in the clear (the pin already
                 // said so), then the shape of the details under a blur.
@@ -682,8 +671,10 @@ export default function ActivitiesMap({
                 // is one right-click away from switched off. Unblurred,
                 // these say exactly what they are.
                 <>
-                  <PopHead emoji={emojiFor(a)} title={typeName(t, a.category)} />
-                  <div className="pop-body">
+                  <TicketHead emoji={emojiFor(a)}>
+                    <p className="ticket-title">{typeName(t, a.category)}</p>
+                  </TicketHead>
+                  <div className="ticket-body pop-body">
                     <div className="relative">
                       <div aria-hidden="true" className="popup-blur space-y-1">
                         <p className="font-semibold">{t.map.teaserTitle}</p>

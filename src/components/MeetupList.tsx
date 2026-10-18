@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import LocalTime, { deviceLanguage } from "@/components/LocalTime";
+import { TicketRow } from "@/components/Ticket";
 import { emojiFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
 import { useLocale, useT } from "@/i18n/client";
@@ -85,11 +86,8 @@ export default function MeetupList({
         const going = a.joinedCount;
         return (
           <li key={a.id}>
-            <Link href={`/activities/${a.id}`} className="block">
-              <div className="card !p-4 flex items-start gap-3 meetup-row">
-                <span className="step-badge" aria-hidden="true">
-                  {emojiFor(a)}
-                </span>
+            <Link href={`/activities/${a.id}`} className="ticket">
+              <TicketRow emoji={emojiFor(a)}>
                 <div className="min-w-0 flex-1">
                   <p className="text-base font-semibold text-slate-900">{a.title}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
@@ -115,7 +113,7 @@ export default function MeetupList({
                 <span className="self-center text-xl text-slate-400" aria-hidden="true">
                   ›
                 </span>
-              </div>
+              </TicketRow>
             </Link>
           </li>
         );

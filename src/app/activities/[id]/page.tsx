@@ -23,6 +23,7 @@ import {
 import { getLocale, getT } from "@/i18n/server";
 import { fill, plural, rich, typeName } from "@/i18n/format";
 import type { Messages } from "@/i18n/messages";
+import { TicketHead } from "@/components/Ticket";
 
 const personSelect = {
   id: true,
@@ -152,120 +153,125 @@ export default async function ActivityDetailPage({
         </p>
       )}
 
-      <div className="card">
-        <span className="badge-slate mb-2 inline-flex !text-sm">
-          {emojiFor(activity)} {typeName(t, activity.category)}
-        </span>
-        <h1 className="text-2xl font-bold leading-tight">{activity.title}</h1>
+      <div className="ticket">
+        <TicketHead
+          emoji={emojiFor(activity)}
+          // "Something else" says nothing the title doesn't.
+          kind={activity.category === "SOCIAL" ? undefined : typeName(t, activity.category)}
+          off={cancelled}
+        >
+          <h1 className="ticket-title ticket-title-lg">{activity.title}</h1>
+        </TicketHead>
+        <div className="ticket-body p-6">
+          {/* The three things people come to a meetup page for, big and in
+              this order: when, where, and how to spot the group. */}
+          <dl className="space-y-3 text-base">
+            <div className="flex gap-3">
+              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whenLabel}>
+                🗓️
+              </dt>
+              <dd className="font-semibold text-slate-900">
+                <LocalTime iso={activity.startsAt.toISOString()} />
+              </dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whereLabel}>
+                📍
+              </dt>
+              <dd className="text-slate-800">{activity.location}</dd>
+            </div>
+            {activity.findUs && (
+              <div className="flex gap-3">
+                <dt className="w-7 flex-none text-xl" aria-label={t.meetup.findGroupLabel}>
+                  👀
+                </dt>
+                <dd className="text-slate-800">
+                  <span className="font-semibold">{t.meetup.findUs} </span>
+                  {activity.findUs}
+                </dd>
+              </div>
+            )}
+            {activity.afterSpot && (
+              <div className="flex gap-3">
+                <dt className="w-7 flex-none text-xl" aria-label={t.meetup.afterwardsLabel}>
+                  🍻
+                </dt>
+                <dd className="text-slate-800">
+                  <span className="font-semibold">{t.meetup.afterwards} </span>
+                  {activity.afterSpot}
+                </dd>
+              </div>
+            )}
+            {(activity.distanceKm || activity.pace) && (
+              <div className="flex gap-3">
+                <dt className="w-7 flex-none text-xl" aria-label={t.meetup.distancePaceLabel}>
+                  📏
+                </dt>
+                <dd className="text-slate-800">
+                  {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? fill(t.meetup.pace, { pace: activity.pace }) : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </dd>
+              </div>
+            )}
+          </dl>
 
-        {/* The three things people come to a meetup page for, big and in
-            this order: when, where, and how to spot the group. */}
-        <dl className="mt-4 space-y-3 text-base">
-          <div className="flex gap-3">
-            <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whenLabel}>
-              🗓️
-            </dt>
-            <dd className="font-semibold text-slate-900">
-              <LocalTime iso={activity.startsAt.toISOString()} />
-            </dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-7 flex-none text-xl" aria-label={t.meetup.whereLabel}>
-              📍
-            </dt>
-            <dd className="text-slate-800">{activity.location}</dd>
-          </div>
-          {activity.findUs && (
-            <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.findGroupLabel}>
-                👀
-              </dt>
-              <dd className="text-slate-800">
-                <span className="font-semibold">{t.meetup.findUs} </span>
-                {activity.findUs}
-              </dd>
+          {/* Big, labelled, and in thumb reach: the things people do with a
+              meetup once they've decided to go. */}
+          {upcoming && (
+            <div className="tool-grid mt-5 grid grid-cols-2 gap-2">
+              <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
+                <span aria-hidden="true">🧭</span>
+                {t.meetup.directions}
+              </a>
+              <ShareButton url={pageUrl} title={activity.title} />
             </div>
           )}
-          {activity.afterSpot && (
-            <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.afterwardsLabel}>
-                🍻
-              </dt>
-              <dd className="text-slate-800">
-                <span className="font-semibold">{t.meetup.afterwards} </span>
-                {activity.afterSpot}
-              </dd>
-            </div>
-          )}
-          {(activity.distanceKm || activity.pace) && (
-            <div className="flex gap-3">
-              <dt className="w-7 flex-none text-xl" aria-label={t.meetup.distancePaceLabel}>
-                📏
-              </dt>
-              <dd className="text-slate-800">
-                {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? fill(t.meetup.pace, { pace: activity.pace }) : null]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </dd>
-            </div>
-          )}
-        </dl>
 
-        {/* Big, labelled, and in thumb reach: the things people do with a
-            meetup once they've decided to go. */}
-        {upcoming && (
-          <div className="tool-grid mt-5 grid grid-cols-2 gap-2">
-            <a href={directions} target="_blank" rel="noopener noreferrer" className="tool-btn">
-              <span aria-hidden="true">🧭</span>
-              {t.meetup.directions}
+          {activity.description && (
+            <p className="mt-5 whitespace-pre-wrap text-base text-slate-800">{activity.description}</p>
+          )}
+          {activity.stravaUrl && (
+            <a
+              href={activity.stravaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex min-h-11 items-center gap-1 text-base font-medium text-orange-700 underline"
+            >
+              🧡 {t.meetup.strava}
             </a>
-            <ShareButton url={pageUrl} title={activity.title} />
+          )}
+
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
+            <span className="text-slate-600">{t.meetup.host}</span>
+            <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} version={activity.host.photoUpdatedAt} size={8} />
+            <span className="font-semibold">{activity.host.name}</span>
+            <TrustMarks t={t} person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
           </div>
-        )}
 
-        {activity.description && (
-          <p className="mt-5 whitespace-pre-wrap text-base text-slate-800">{activity.description}</p>
-        )}
-        {activity.stravaUrl && (
-          <a
-            href={activity.stravaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 inline-flex min-h-11 items-center gap-1 text-base font-medium text-orange-700 underline"
-          >
-            🧡 {t.meetup.strava}
-          </a>
-        )}
-
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-base">
-          <span className="text-slate-600">{t.meetup.host}</span>
-          <Avatar userId={activity.host.id} hasPhoto={!!activity.host.profilePhotoType} version={activity.host.photoUpdatedAt} size={8} />
-          <span className="font-semibold">{activity.host.name}</span>
-          <TrustMarks t={t} person={activity.host} thumbs={thumbs.get(activity.host.id) ?? 0} />
+          {canManage && (
+            <div className="mt-4 flex flex-wrap items-start gap-3">
+              <Link href={`/activities/${activity.id}/edit`} className="btn-secondary min-h-11">
+                ✏️ {t.meetup.change}
+              </Link>
+              {/* Two taps: calling a meetup off can't be undone. */}
+              <details>
+                <summary className="btn-secondary min-h-11 cursor-pointer list-none !text-red-700">
+                  {t.meetup.cancel}
+                </summary>
+                <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
+                  <input type="hidden" name="activityId" value={activity.id} />
+                  <p className="text-base text-slate-700 mb-3">
+                    {t.meetup.cancelWarning}
+                  </p>
+                  <SubmitButton className="btn-danger w-full min-h-11" pending={t.meetup.cancelling}>
+                    {t.meetup.yesCancel}
+                  </SubmitButton>
+                </form>
+              </details>
+            </div>
+          )}
         </div>
-
-        {canManage && (
-          <div className="mt-4 flex flex-wrap items-start gap-3">
-            <Link href={`/activities/${activity.id}/edit`} className="btn-secondary min-h-11">
-              ✏️ {t.meetup.change}
-            </Link>
-            {/* Two taps: calling a meetup off can't be undone. */}
-            <details>
-              <summary className="btn-secondary min-h-11 cursor-pointer list-none !text-red-700">
-                {t.meetup.cancel}
-              </summary>
-              <form action={cancelActivityAction} className="mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4">
-                <input type="hidden" name="activityId" value={activity.id} />
-                <p className="text-base text-slate-700 mb-3">
-                  {t.meetup.cancelWarning}
-                </p>
-                <SubmitButton className="btn-danger w-full min-h-11" pending={t.meetup.cancelling}>
-                  {t.meetup.yesCancel}
-                </SubmitButton>
-              </form>
-            </details>
-          </div>
-        )}
       </div>
 
       {/* The one thing to do on this page, pinned to the bottom of a phone

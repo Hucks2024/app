@@ -49,8 +49,12 @@ body {
   @apply btn bg-red-600 text-white hover:bg-red-700;
 }
 
+/* Every card: the tickets' corners and soft violet shadow, so they look
+   like one family on the gradient. */
 .card {
-  @apply bg-white rounded-2xl border border-slate-200 shadow-sm p-6;
+  @apply bg-white p-6;
+  border-radius: 22px;
+  box-shadow: 0 10px 28px rgb(46 16 101 / 0.18);
 }
 
 .input {
@@ -72,9 +76,6 @@ body {
 }
 .badge-red {
   @apply badge bg-red-100 text-red-800;
-}
-.badge-slate {
-  @apply badge bg-slate-100 text-slate-700;
 }
 
 /* Map markers (ActivitiesMap): the app's own logo drop, in the brand
@@ -288,13 +289,10 @@ body {
 
 /* Rows lean in when you point at them, and give a little when pressed. */
 .meetup-row {
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.15s ease;
 }
 a:hover > .meetup-row {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgb(15 23 42 / 0.14);
 }
 a:active > .meetup-row {
   transform: translateY(0) scale(0.99);
@@ -510,20 +508,6 @@ a:active > .meetup-row {
     inset 0 0 0 1px rgb(255 255 255 / 0.18);
 }
 
-/* The emoji beside each "how it works" step. */
-.step-badge {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: #f5f3ff;
-  font-size: 22px;
-  line-height: 1;
-}
-
 /* "● 12 meetups on this week 🌍" */
 .live-pill {
   display: inline-flex;
@@ -720,7 +704,7 @@ button[aria-busy="true"] {
   align-items: flex-start;
   gap: 8px;
   padding: 12px 14px;
-  border-radius: 18px;
+  border-radius: 22px;
   background: rgb(255 255 255 / 0.97);
   box-shadow: 0 10px 28px rgb(46 16 101 / 0.3);
   animation: notice-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1317,15 +1301,171 @@ body:has(.map-screen) {
 }
 
 
-/* A meetup's card on the map (ActivitiesMap.tsx): the app's violet-to-pink
-   on top with the pin's emoji in a white tile, the details on white under
-   it, and one big button. Leaflet's own padding, margins and grey close
-   button are undone so the colour runs to the edges. */
+/* Tickets (Ticket.tsx): every meetup in the app. The colour on top, or
+   down the left in a list, a notch cut out of each side where it would
+   tear, and a dashed line across. The notches are masks, so they're
+   really see-through, and the shadow is a drop-shadow on the whole
+   ticket, so it follows them. */
+.ticket {
+  display: block;
+  filter: drop-shadow(0 10px 20px rgb(46 16 101 / 0.24));
+}
+.ticket-sm {
+  filter: drop-shadow(0 3px 8px rgb(46 16 101 / 0.18));
+}
+.ticket-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 65%, #db2777 100%);
+  color: #fff;
+  -webkit-mask:
+    radial-gradient(circle 11px at 0 100%, #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% 100%, #0000 98%, #000) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle 11px at 0 100%, #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% 100%, #0000 98%, #000) right / 51% 100% no-repeat;
+}
+.ticket-off {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+.ticket-emoji {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #fff;
+  font-size: 30px;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgb(46 16 101 / 0.35);
+}
+.ticket-kind {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.ticket-title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+.ticket-title-lg {
+  font-size: 26px;
+}
+.ticket-body {
+  position: relative;
+  border-radius: 0 0 22px 22px;
+  background: #fff;
+  -webkit-mask:
+    radial-gradient(circle 11px at 0 0, #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% 0, #0000 98%, #000) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle 11px at 0 0, #0000 98%, #000) left / 51% 100% no-repeat,
+    radial-gradient(circle 11px at 100% 0, #0000 98%, #000) right / 51% 100% no-repeat;
+}
+/* Where it tears. */
+.ticket-body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  border-top: 2px dashed rgb(124 58 237 / 0.3);
+}
+.ticket-row {
+  display: flex;
+  align-items: stretch;
+}
+.ticket-stub {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  border-radius: 20px 0 0 20px;
+  background: linear-gradient(160deg, #7c3aed 0%, #c026d3 65%, #db2777 100%);
+  -webkit-mask:
+    radial-gradient(circle 9px at 100% 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 100% 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle 9px at 100% 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 100% 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+.ticket-stub .ticket-emoji {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 26px;
+}
+.ticket-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 0 20px 20px 0;
+  background: #fff;
+  -webkit-mask:
+    radial-gradient(circle 9px at 0 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 0 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+  mask:
+    radial-gradient(circle 9px at 0 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle 9px at 0 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+.ticket-main::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  border-left: 2px dashed rgb(124 58 237 / 0.3);
+}
+.ticket-row-sm .ticket-stub {
+  width: 54px;
+  border-radius: 16px 0 0 16px;
+}
+.ticket-row-sm .ticket-emoji {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 20px;
+  box-shadow: 0 3px 8px rgb(46 16 101 / 0.3);
+}
+.ticket-row-sm .ticket-main {
+  padding: 10px 12px;
+  border-radius: 0 16px 16px 0;
+}
+.ticket-row-sm .ticket-main::before {
+  top: 10px;
+  bottom: 10px;
+}
+
+/* A meetup's card on the map (ActivitiesMap.tsx): a ticket, with the tip
+   under it pointing at the pin. Leaflet's white box, padding, margins and
+   grey close button are undone so the ticket's own shape shows. */
+.leaflet-popup.meetup-pop {
+  /* The app's own font, not the one Leaflet sets on the map. */
+  @apply font-sans;
+  filter: drop-shadow(0 12px 22px rgb(46 16 101 / 0.35));
+}
 .leaflet-container .meetup-pop .leaflet-popup-content-wrapper {
   padding: 0;
   border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 14px 34px rgb(46 16 101 / 0.35);
+  background: none;
+  box-shadow: none;
+}
+.leaflet-container .meetup-pop .leaflet-popup-tip {
+  box-shadow: none;
 }
 .leaflet-container .meetup-pop .leaflet-popup-content {
   margin: 0;
@@ -1348,26 +1488,16 @@ body:has(.map-screen) {
   background: rgb(255 255 255 / 0.35);
   color: #fff;
 }
-.pop-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 48px 16px 16px;
-  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 65%, #db2777 100%);
-  color: #fff;
+.meetup-pop .ticket-head {
+  padding: 16px 50px 16px 16px;
 }
-.pop-emoji {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: #fff;
-  font-size: 30px;
-  line-height: 1;
-  box-shadow: 0 6px 14px rgb(46 16 101 / 0.35);
+.meetup-pop .ticket-head .ticket-emoji {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 26px;
+}
+.meetup-pop .ticket-emoji {
   animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes pop-in {
@@ -1377,19 +1507,6 @@ body:has(.map-screen) {
   to {
     transform: scale(1) rotate(0);
   }
-}
-.pop-kind {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-.pop-title {
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
 }
 .pop-body {
   display: flex;
@@ -1459,7 +1576,7 @@ body:has(.map-screen) {
   transform: scale(0.96);
 }
 @media (prefers-reduced-motion: reduce) {
-  .pop-emoji {
+  .meetup-pop .ticket-emoji {
     animation: none;
   }
   .leaflet-container .leaflet-popup-content a.pop-go {
