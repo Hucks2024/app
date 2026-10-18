@@ -63,9 +63,6 @@ export function emojiFor(meetup: { category: string; emoji?: string | null }): s
   return (meetup.category === "SOCIAL" && meetup.emoji) || categoryFor(meetup.category).emoji;
 }
 
-/** Offered for "Something else", before typing one's own. */
-export const EMOJI_IDEAS = ["🎉", "🧘", "🎳", "🎤", "🎮", "🏓", "🎾", "⛳", "🛼", "🎬", "🍕", "🌳", "🐶", "🎭", "🎯", "🧩"];
-
 // Rude on a public map: never a pin.
 const RUDE = /[\u{1F595}\u{1F346}\u{1F351}\u{1F4A6}\u{1F51E}\u{1F52B}]/u;
 

@@ -377,7 +377,9 @@ const zh: Messages = {
     posting: "发布中…",
     postMeetup: "发布活动",
     emoji: "地图上的表情",
-    ownEmoji: "或者自己输入：",
+    whatIsIt: "是什么活动？",
+    whatIsItHint: "比如：瑜伽、保龄球、卡拉 OK",
+    emojiHint: "一个表情，用表情键盘输入，比如 🧘",
     oneEmoji: "只能一个表情。",
   },
   post: {
@@ -389,7 +391,7 @@ const zh: Messages = {
     tapImIn: "点{button}",
     go: "去参加",
     findMeetup: "找一个活动",
-    quickQuestions: "4 个简单问题。",
+    quickQuestions: "几个简单问题。",
     editMeetup: "编辑活动",
   },
   me: {
@@ -446,7 +448,7 @@ const zh: Messages = {
     join2: "点{button}。",
     join3: "按时到场。去不了？点{button}。",
     postQ: "怎么发布活动？",
-    postA: "点{post}，回答 4 个问题。参加过第一个活动后就能发布。",
+    postA: "点{post}，回答几个问题。参加过第一个活动后就能发布。",
     photoQ: "需要照片吗？",
     photoA: "需要，一张你的脸部照片，这样大家知道该找谁。",
     safeQ: "怎么保证安全？",

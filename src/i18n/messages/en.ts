@@ -379,7 +379,9 @@ const en = {
     posting: "Posting…",
     postMeetup: "Post meetup",
     emoji: "Emoji for the map",
-    ownEmoji: "Or type your own:",
+    whatIsIt: "What is it?",
+    whatIsItHint: "e.g. Yoga, bowling, karaoke",
+    emojiHint: "One emoji, from your emoji keyboard. e.g. 🧘",
     oneEmoji: "Just one emoji.",
   },
   post: {
@@ -391,7 +393,7 @@ const en = {
     tapImIn: "Tap {button}",
     go: "Go",
     findMeetup: "Find a meetup",
-    quickQuestions: "4 quick questions.",
+    quickQuestions: "A few quick questions.",
     editMeetup: "Edit meetup",
   },
   me: {
@@ -448,7 +450,7 @@ const en = {
     join2: "Tap {button}.",
     join3: "Turn up. Can't go? Tap {button}.",
     postQ: "How do I post a meetup?",
-    postA: "Tap {post} and answer 4 questions. You can post after your first meetup.",
+    postA: "Tap {post} and answer a few questions. You can post after your first meetup.",
     photoQ: "Do I need a photo?",
     photoA: "Yes, of your face, so people know who to look for.",
     safeQ: "How do I stay safe?",

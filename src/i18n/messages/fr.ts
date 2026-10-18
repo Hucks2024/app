@@ -385,7 +385,9 @@ const fr: Messages = {
     posting: "Publication…",
     postMeetup: "Publier la sortie",
     emoji: "Emoji pour la carte",
-    ownEmoji: "Ou tape le tien :",
+    whatIsIt: "C'est quoi ?",
+    whatIsItHint: "ex. Yoga, bowling, karaoké",
+    emojiHint: "Un emoji, depuis le clavier emoji. ex. 🧘",
     oneEmoji: "Un seul emoji.",
   },
   post: {
@@ -397,7 +399,7 @@ const fr: Messages = {
     tapImIn: "Appuie sur {button}",
     go: "Vas-y",
     findMeetup: "Trouve une sortie",
-    quickQuestions: "4 questions rapides.",
+    quickQuestions: "Quelques questions rapides.",
     editMeetup: "Modifier la sortie",
   },
   me: {
@@ -454,7 +456,7 @@ const fr: Messages = {
     join2: "Appuie sur {button}.",
     join3: "Viens. Un empêchement ? Appuie sur {button}.",
     postQ: "Comment publier une sortie ?",
-    postA: "Appuie sur {post} et réponds à 4 questions. Tu peux publier après ta première sortie.",
+    postA: "Appuie sur {post} et réponds à quelques questions. Tu peux publier après ta première sortie.",
     photoQ: "Il me faut une photo ?",
     photoA: "Oui, de ton visage, pour qu'on sache qui chercher.",
     safeQ: "Comment rester prudent ?",

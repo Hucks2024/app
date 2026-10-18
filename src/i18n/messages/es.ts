@@ -384,7 +384,9 @@ const es: Messages = {
     posting: "Publicando…",
     postMeetup: "Publicar plan",
     emoji: "Emoji para el mapa",
-    ownEmoji: "O escribe el tuyo:",
+    whatIsIt: "¿Qué es?",
+    whatIsItHint: "p. ej. Yoga, bolos, karaoke",
+    emojiHint: "Un emoji, del teclado de emojis. p. ej. 🧘",
     oneEmoji: "Solo un emoji.",
   },
   post: {
@@ -396,7 +398,7 @@ const es: Messages = {
     tapImIn: "Toca {button}",
     go: "Ve",
     findMeetup: "Encuentra un plan",
-    quickQuestions: "4 preguntas rápidas.",
+    quickQuestions: "Unas preguntas rápidas.",
     editMeetup: "Editar plan",
   },
   me: {
@@ -453,7 +455,7 @@ const es: Messages = {
     join2: "Toca {button}.",
     join3: "Preséntate. ¿Te ha surgido algo? Toca {button}.",
     postQ: "¿Cómo publico un plan?",
-    postA: "Toca {post} y responde 4 preguntas. Puedes publicar después de tu primer plan.",
+    postA: "Toca {post} y responde unas preguntas. Puedes publicar después de tu primer plan.",
     photoQ: "¿Necesito una foto?",
     photoA: "Sí, de tu cara, para que sepan a quién buscar.",
     safeQ: "¿Cómo me cuido?",

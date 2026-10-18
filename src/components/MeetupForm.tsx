@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { CATEGORIES, CATEGORY_GROUPS, EMOJI_IDEAS, categoryFor, oneEmoji } from "@/lib/categories";
+import { CATEGORIES, CATEGORY_GROUPS, categoryFor, oneEmoji } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
@@ -55,7 +55,11 @@ function kmApart(a: { lat: number; lng: number }, b: { lat: number; lng: number 
   return Math.hypot(x, b.lat - a.lat) * 111.32;
 }
 
-const STEPS = ["What", "Where", "When", "Name"] as const;
+type Step = "what" | "kind" | "where" | "when" | "name";
+const STEPS: Step[] = ["what", "where", "when", "name"];
+// "Something else" asks what it is straight after: its name, and the
+// emoji its pin will have.
+const SOMETHING_ELSE_STEPS: Step[] = ["what", "kind", "where", "when", "name"];
 
 /** The part of a place's name that says where it is, for a suggested
  * meetup name: "1a, High Street, Clapham" is "High Street", not "1a". */
@@ -125,12 +129,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const [focus, setFocus] = useState(0);
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
-  // "Something else" has its own emoji, picked from a few or typed: the
-  // pin on the map. Typed ones live in their own box until they're one emoji.
-  const [emoji, setEmoji] = useState(initial?.emoji ?? EMOJI_IDEAS[0]);
-  const [ownEmoji, setOwnEmoji] = useState(
-    initial?.emoji && !EMOJI_IDEAS.includes(initial.emoji) ? initial.emoji : ""
-  );
+  // "Something else" has its own emoji, typed: the pin on the map. Until
+  // the box holds just one emoji, the pin is the type's own 🎉.
+  const [ownEmoji, setOwnEmoji] = useState(initial?.emoji ?? "");
+  const emoji = oneEmoji(ownEmoji);
   const [titleTouched, setTitleTouched] = useState(editing);
   // An error is about the form as it was sent. Once they start fixing it,
   // it's out of date.
@@ -143,7 +145,9 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   // Distance, pace and a Strava route only mean something for a run, a
   // ride and the like; a painting meetup isn't asked for them.
   const route = categoryFor(category).route;
-  const show = (i: number) => editing || step === i;
+  const steps = category === "SOCIAL" ? SOMETHING_ELSE_STEPS : STEPS;
+  const at = steps[step];
+  const show = (s: Step) => editing || at === s;
 
   function locationText(): string {
     return placeRef.current.trim();
@@ -217,8 +221,12 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
 
   async function next() {
     setStepError(null);
-    if (step === 0 && !category) return setStepError(t.form.pickOne);
-    if (step === 1) {
+    if (at === "what" && !category) return setStepError(t.form.pickOne);
+    if (at === "kind") {
+      if (title.trim().length < 3) return setStepError(t.errors.giveName);
+      if (ownEmoji.trim() && !emoji) return setStepError(t.form.oneEmoji);
+    }
+    if (at === "where") {
       const text = locationText();
       if (text.length < 3) return setStepError(t.errors.typeWhere);
       const before = pinRef.current;
@@ -233,7 +241,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       // A marked spot's name is whatever the host has in the box.
       suggestTitle(found.status === "found" && !now?.byHand ? found.label : undefined);
     }
-    if (step === 2 && !when) return setStepError(t.errors.pickDayTime);
+    if (at === "when" && !when) return setStepError(t.errors.pickDayTime);
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -260,7 +268,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       onSubmit={async (e) => {
         e.preventDefault();
         setEdited(false);
-        if (!editing && step < STEPS.length - 1) return next();
+        if (!editing && step < steps.length - 1) return next();
         if (!when) return setStepError(t.errors.pickDayTime);
         const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
@@ -291,10 +299,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       {!editing && (
         <div aria-live="polite">
           <p className="text-sm font-semibold text-slate-600">
-            {fill(t.form.step, { n: step + 1, total: STEPS.length })}
+            {fill(t.form.step, { n: step + 1, total: steps.length })}
           </p>
           <div className="mt-2 flex gap-1.5" aria-hidden="true">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <span key={s} className={`h-2 flex-1 rounded-full ${i <= step ? "bg-brand-600" : "bg-slate-200"}`} />
             ))}
           </div>
@@ -308,7 +316,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       ) : null}
 
       {/* 1. What */}
-      <fieldset hidden={!show(0)}>
+      <fieldset hidden={!show("what")}>
         <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.what}</legend>
         {(() => {
           const pick = (c: (typeof CATEGORIES)[number]) => (
@@ -356,9 +364,66 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         })()}
       </fieldset>
 
-      {/* 2. Meeting point. Posting, it's the whole screen, a map like the
+      {/* 2. "Something else" only: what it is, and its emoji for the map.
+          Editing, the name is with the rest below, so just the emoji. */}
+      <input type="hidden" name="emoji" value={category === "SOCIAL" ? (emoji ?? "") : ""} />
+      {category === "SOCIAL" && (
+        <fieldset hidden={!show("kind")} className="space-y-4">
+          {!editing && (
+            <>
+              <legend className="mb-1 text-xl font-bold text-slate-900">{t.form.whatIsIt}</legend>
+              <div>
+                <label className="label !text-base" htmlFor="kind">
+                  {t.form.name}
+                </label>
+                <p id="kind-hint" className="text-sm text-slate-600 mb-2">
+                  {t.form.whatIsItHint}
+                </p>
+                <input
+                  className="input !text-base min-h-12"
+                  id="kind"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setTitleTouched(true);
+                    setStepError(null);
+                  }}
+                  maxLength={120}
+                  aria-describedby="kind-hint"
+                />
+              </div>
+            </>
+          )}
+          <div>
+            <label className="label !text-base" htmlFor="own-emoji">
+              {t.form.emoji} <span className="font-normal text-slate-600">{t.common.optional}</span>
+            </label>
+            <p id="own-emoji-hint" className="text-sm text-slate-600 mb-2">
+              {t.form.emojiHint}
+            </p>
+            <input
+              id="own-emoji"
+              className="input !w-24 min-h-14 text-center !text-3xl"
+              value={ownEmoji}
+              maxLength={16}
+              autoComplete="off"
+              aria-describedby="own-emoji-hint"
+              onChange={(e) => {
+                setOwnEmoji(e.target.value);
+                setEdited(true);
+                setStepError(null);
+              }}
+            />
+            {ownEmoji.trim() && !emoji && (
+              <p className="mt-1 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
+            )}
+          </div>
+        </fieldset>
+      )}
+
+      {/* 3. Meeting point. Posting, it's the whole screen, a map like the
           main one (MeetingPointMap); editing, a map in the page. */}
-      <fieldset hidden={!show(1)} className="space-y-4">
+      <fieldset hidden={!show("where")} className="space-y-4">
         {editing ? (
           <>
             <legend className="mb-1 text-xl font-bold text-slate-900">{t.form.meetingPoint}</legend>
@@ -407,9 +472,9 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             </div>
           </>
         ) : (
-          step === 1 && (
+          at === "where" && (
             <MeetingPointMap
-              step={fill(t.form.step, { n: 2, total: STEPS.length })}
+              step={fill(t.form.step, { n: step + 1, total: steps.length })}
               place={placeText}
               onPlace={(text) => {
                 typePlace(text);
@@ -435,14 +500,14 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         )}
       </fieldset>
 
-      {/* 3. When */}
-      <fieldset hidden={!show(2)}>
+      {/* 4. When */}
+      <fieldset hidden={!show("when")}>
         <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.when}</legend>
         <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
       </fieldset>
 
-      {/* 4. Name and extras */}
-      <fieldset hidden={!show(3)} className="space-y-4">
+      {/* 5. Name and extras */}
+      <fieldset hidden={!show("name")} className="space-y-4">
         <legend className="mb-1 text-xl font-bold text-slate-900">
           {editing ? t.form.name : t.form.nameIt}
         </legend>
@@ -461,58 +526,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
             }}
             maxLength={120}
           />
-          {!editing && category !== "SOCIAL" && (
-            <p className="mt-1 text-sm text-slate-600">{t.form.changeIt}</p>
-          )}
+          {!editing && <p className="mt-1 text-sm text-slate-600">{t.form.changeIt}</p>}
         </div>
-
-        <input type="hidden" name="emoji" value={category === "SOCIAL" ? emoji : ""} />
-        {category === "SOCIAL" && (
-          <fieldset>
-            <legend className="label !text-base">
-              {t.form.emoji}{" "}
-              <span className="text-2xl align-middle" aria-hidden="true">
-                {emoji}
-              </span>
-            </legend>
-            <div className="emoji-row" role="group">
-              {EMOJI_IDEAS.map((idea) => (
-                <button
-                  key={idea}
-                  type="button"
-                  className={`emoji-btn ${emoji === idea ? "emoji-btn-on" : ""}`}
-                  aria-pressed={emoji === idea}
-                  onClick={() => {
-                    setEmoji(idea);
-                    setOwnEmoji("");
-                    setEdited(true);
-                  }}
-                >
-                  {idea}
-                </button>
-              ))}
-            </div>
-            <label htmlFor="own-emoji" className="mt-3 flex items-center gap-3 text-base text-slate-700">
-              {t.form.ownEmoji}
-              <input
-                id="own-emoji"
-                className="input !w-20 min-h-12 text-center !text-2xl"
-                value={ownEmoji}
-                maxLength={16}
-                autoComplete="off"
-                onChange={(e) => {
-                  setOwnEmoji(e.target.value);
-                  const one = oneEmoji(e.target.value);
-                  if (one) setEmoji(one);
-                  setEdited(true);
-                }}
-              />
-            </label>
-            {ownEmoji.trim() && !oneEmoji(ownEmoji) && (
-              <p className="mt-1 text-sm font-medium text-amber-800">{t.form.oneEmoji}</p>
-            )}
-          </fieldset>
-        )}
 
         <div>
           <label className="label !text-base" htmlFor="description">
@@ -574,7 +589,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               ? saving
                 ? t.meetup.saving
                 : t.form.saveChanges
-              : step < STEPS.length - 1
+              : step < steps.length - 1
                 ? place.status === "checking"
                   ? t.form.finding
                   : t.common.next
