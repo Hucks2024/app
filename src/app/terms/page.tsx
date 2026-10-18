@@ -45,8 +45,8 @@ export default function TermsPage() {
             <li>pretend to be someone else, or post a meetup you won&apos;t turn up to.</li>
           </ul>
           <p className="mt-2">
-            Break these and we remove what you posted and ban you, for good. Advertising gets you banned the first
-            time, straight away. Three reports from people you met at meetups ban you automatically.
+            Break these and we remove what you posted and ban you for good, the first time. Three reports from people
+            you met at meetups ban you automatically.
           </p>
         </Section>
 

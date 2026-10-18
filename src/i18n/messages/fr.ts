@@ -36,7 +36,6 @@ const fr: Messages = {
     tap: "Appuie sur Je viens",
     turnUp: "Viens",
     reports: "3 signalements = banni à vie.",
-    ads: "Publicité = banni sur-le-champ.",
     nearYou: "ce qui se passe près de toi",
   },
   welcome: {
@@ -470,7 +469,8 @@ const fr: Messages = {
     rule5: "Pas de vente ni de publicité.",
     rule6: "Non, c'est non.",
     threeReports: "3 signalements = banni à vie.",
-    adsBan: "Publicité = banni sur-le-champ.",
+    instantBan: "Banni sur-le-champ pour :",
+    banFor: ["Publicité", "Haine ou harcèlement", "Menaces ou violence", "Contenu sexuel", "Faux comptes"],
     fullTerms: "Les {terms} complètes.",
     tapOne: "Des questions ? Appuie sur l'une d'elles.",
     contact: "Nous contacter",

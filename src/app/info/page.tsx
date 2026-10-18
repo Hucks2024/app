@@ -159,7 +159,12 @@ export default async function InfoPage() {
           <li>{i.rule6}</li>
         </ol>
         <p className="mt-3 text-base font-semibold text-slate-900">🚩 {i.threeReports}</p>
-        <p className="mt-1 text-base font-semibold text-slate-900">🚫 {i.adsBan}</p>
+        <p className="mt-3 text-base font-semibold text-slate-900">🚫 {i.instantBan}</p>
+        <ul className="mt-1 list-disc space-y-1 pl-5 text-base text-slate-800">
+          {i.banFor.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
         <p className="mt-2 text-sm text-slate-600">
           {rich(i.fullTerms, {
             terms: (

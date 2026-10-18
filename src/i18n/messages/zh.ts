@@ -34,7 +34,6 @@ const zh: Messages = {
     tap: "点「我参加」",
     turnUp: "按时到场",
     reports: "被举报 3 次 = 永久封号。",
-    ads: "打广告 = 立即封号。",
     nearYou: "看看附近有什么活动",
   },
   welcome: {
@@ -462,7 +461,8 @@ const zh: Messages = {
     rule5: "禁止推销或打广告。",
     rule6: "拒绝就是拒绝。",
     threeReports: "被举报 3 次 = 永久封号。",
-    adsBan: "打广告 = 立即封号。",
+    instantBan: "以下行为立即封号：",
+    banFor: ["打广告", "仇恨或骚扰", "威胁或暴力", "色情内容", "虚假账号"],
     fullTerms: "完整{terms}。",
     tapOne: "有问题？点一个看看。",
     contact: "联系我们",

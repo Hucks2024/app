@@ -35,7 +35,6 @@ const en = {
     tap: "Tap I'm in",
     turnUp: "Turn up",
     reports: "3 reports = banned for life.",
-    ads: "Advertising = instant ban.",
     nearYou: "what's on near you",
   },
   welcome: {
@@ -464,7 +463,8 @@ const en = {
     rule5: "No selling or advertising.",
     rule6: "No means no.",
     threeReports: "3 reports = banned for life.",
-    adsBan: "Advertising = instant ban.",
+    instantBan: "Instant ban for:",
+    banFor: ["Advertising", "Hate or harassment", "Threats or violence", "Sexual content", "Fake accounts"],
     fullTerms: "The full {terms}.",
     tapOne: "Questions? Tap one.",
     contact: "Contact us",

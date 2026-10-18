@@ -23,9 +23,10 @@ export async function banUserAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
-/** Caught advertising: banned for life on the spot, the first time, and
- * their meetups called off. The reports about them are dealt with. */
-export async function banForAdvertisingAction(formData: FormData) {
+/** Caught advertising, or anything else on the instant-ban list on
+ * /info#rules: banned for life on the spot, the first time, and their
+ * meetups called off. The reports about them are dealt with. */
+export async function banForLifeAction(formData: FormData) {
   const admin = await requireAdmin();
   const userId = String(formData.get("userId"));
   if (userId === admin.id) return;

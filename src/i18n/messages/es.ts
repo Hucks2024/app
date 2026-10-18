@@ -35,7 +35,6 @@ const es: Messages = {
     tap: "Toca «Voy»",
     turnUp: "Preséntate",
     reports: "3 denuncias = expulsión para siempre.",
-    ads: "Publicidad = expulsión inmediata.",
     nearYou: "qué hay cerca de ti",
   },
   welcome: {
@@ -469,7 +468,8 @@ const es: Messages = {
     rule5: "Nada de vender ni hacer publicidad.",
     rule6: "No es no.",
     threeReports: "3 denuncias = expulsión para siempre.",
-    adsBan: "Publicidad = expulsión inmediata.",
+    instantBan: "Expulsión inmediata por:",
+    banFor: ["Publicidad", "Odio o acoso", "Amenazas o violencia", "Contenido sexual", "Cuentas falsas"],
     fullTerms: "Las {terms} completas.",
     tapOne: "¿Dudas? Toca una.",
     contact: "Contacto",

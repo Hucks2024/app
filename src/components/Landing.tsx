@@ -82,13 +82,10 @@ export default async function Landing() {
             </li>
           ))}
         </ol>
-        {/* The house rules, said up front: they're part of what this place
-            is, and the people they're meant to put off should read them
-            first. */}
+        {/* The house rule, said up front: it's part of what this place is,
+            and the people it's meant to put off should read it first. */}
         <p className="mt-3 text-center text-sm font-medium text-white">
           🚩 {t.landing.reports}
-          <br />
-          🚫 {t.landing.ads}
         </p>
       </section>
 

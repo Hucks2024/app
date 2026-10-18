@@ -14,9 +14,10 @@ import type { PrismaClient } from "@prisma/client";
 //   - it's the first counted flag from that person: three flags from one
 //     angry member are one flag.
 //
-// Advertising is different: it's a ban on the spot, the first time. An
-// admin does it from /admin (src/app/admin/actions.ts) once they've seen
-// it, so a false report can't do it.
+// Some things are a ban on the spot, the first time: advertising, hate,
+// threats and the rest of the list on /info#rules. An admin does it from
+// /admin (src/app/admin/actions.ts) once they've seen it, so a false
+// report can't.
 //
 // Admins can't be flagged out, and an admin can lift a ban on /admin if
 // one ever turns out to be wrong.

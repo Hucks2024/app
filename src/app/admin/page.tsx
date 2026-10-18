@@ -10,7 +10,7 @@ import { RED_FLAG_LIMIT, redFlagCount } from "@/lib/moderation";
 import {
   resolveReportAction,
   banUserAction,
-  banForAdvertisingAction,
+  banForLifeAction,
   unbanUserAction,
   setVerifiedAction,
   setAdminAction,
@@ -94,7 +94,7 @@ export default async function AdminPage() {
                       </button>
                     </form>
                     {r.reportedUser.role !== "ADMIN" && r.reportedUserId !== me.id && (
-                      <BanForAdvertising userId={r.reportedUserId} name={r.reportedUser.name} />
+                      <BanForLife userId={r.reportedUserId} name={r.reportedUser.name} />
                     )}
                   </>
                 ) : (
@@ -185,7 +185,7 @@ export default async function AdminPage() {
                           </form>
                         ))}
                       {u.role !== "ADMIN" && u.accountStatus === "ACTIVE" && (
-                        <BanForAdvertising userId={u.id} name={u.name} />
+                        <BanForLife userId={u.id} name={u.name} />
                       )}
                       {u.id !== me.id && u.accountStatus === "ACTIVE" && (
                         // Two taps on purpose: the first only opens the
@@ -231,17 +231,17 @@ export default async function AdminPage() {
   );
 }
 
-/** Caught advertising: banned for life, the first time. Two taps, the
- * same as making an admin, because their meetups are called off and that
- * can't be undone. */
-function BanForAdvertising({ userId, name }: { userId: string; name: string }) {
+/** For anything on the instant-ban list on /info#rules: banned for life,
+ * the first time. Two taps, the same as making an admin, because their
+ * meetups are called off and that can't be undone. */
+function BanForLife({ userId, name }: { userId: string; name: string }) {
   return (
     <details>
       <summary className="btn-danger !py-1 !text-xs cursor-pointer list-none whitespace-nowrap">
-        Ban for advertising
+        Ban for life
       </summary>
       <form
-        action={banForAdvertisingAction}
+        action={banForLifeAction}
         className="mt-2 w-56 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
       >
         <input type="hidden" name="userId" value={userId} />
