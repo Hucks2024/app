@@ -70,7 +70,9 @@ email and password in the sign-in fields (not here).
 >   every meetup has "Stay safe · Report" with "Report this meetup" in it.
 >   Reports reach our moderators,
 >   and three reports from people met at meetups ban an account
->   automatically, with no moderator needed.
+>   automatically, with no moderator needed. Advertising, hate,
+>   harassment, threats, sexual content or a fake account is a ban the
+>   first time (Info → House rules).
 > - Blocking hides both people's meetups from each other. Unblock on Me.
 > - Contact: hello at packmates.live, shown on Info → Contact us.
 >
