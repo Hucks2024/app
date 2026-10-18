@@ -52,14 +52,19 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
   // somebody new looks at before saying they'll turn up. And how many are
   // going, for the number on the pin.
   const [hosts, thumbs, going] = await Promise.all([
-    hostIds.length ? prisma.user.findMany({ where: { id: { in: hostIds } }, select: { id: true, name: true } }) : [],
+    hostIds.length
+      ? prisma.user.findMany({
+          where: { id: { in: hostIds } },
+          select: { id: true, name: true, profilePhotoType: true, photoUpdatedAt: true },
+        })
+      : [],
     thumbsFor(prisma, hostIds),
     goingCounts(
       prisma,
       activities.map((a) => a.id)
     ),
   ]);
-  const hostName = new Map(hosts.map((h) => [h.id, h.name]));
+  const hostById = new Map(hosts.map((h) => [h.id, h]));
 
   const mapActivities = activities.map((a) => ({
     id: a.id,
@@ -75,7 +80,13 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     afterSpot: a.afterSpot,
     joinedCount: going.get(a.id) ?? 0,
     maxParticipants: a.maxParticipants,
-    host: { name: hostName.get(a.hostId) ?? "", thumbs: thumbs.get(a.hostId) ?? 0 },
+    host: {
+      id: a.hostId,
+      name: hostById.get(a.hostId)?.name ?? "",
+      thumbs: thumbs.get(a.hostId) ?? 0,
+      hasPhoto: !!hostById.get(a.hostId)?.profilePhotoType,
+      photoAt: hostById.get(a.hostId)?.photoUpdatedAt?.toISOString() ?? null,
+    },
   }));
 
   return (

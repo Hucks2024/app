@@ -150,7 +150,7 @@ const zh: Messages = {
     joinFree: "免费加入",
     inCount: "{n} 人参加",
     after: "之后：{place}",
-    open: "打开",
+    open: "去看看 👀",
     comingUpSignIn: { one: "{n} 个即将开始 · 登录查看", other: "{n} 个即将开始 · 登录查看" },
     nothingYet: "还没有活动",
   },

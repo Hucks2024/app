@@ -151,7 +151,7 @@ const en = {
     joinFree: "Join free",
     inCount: "{n} in",
     after: "After: {place}",
-    open: "Open",
+    open: "Take a look 👀",
     comingUpSignIn: { one: "{n} coming up · sign in to see", other: "{n} coming up · sign in to see" },
     nothingYet: "Nothing on yet",
   },

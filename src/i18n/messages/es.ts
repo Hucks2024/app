@@ -151,7 +151,7 @@ const es: Messages = {
     joinFree: "Únete gratis",
     inCount: "Van {n}",
     after: "Después: {place}",
-    open: "Abrir",
+    open: "Echa un vistazo 👀",
     comingUpSignIn: { one: "{n} próximamente · entra para verlo", other: "{n} próximamente · entra para verlos" },
     nothingYet: "Aún no hay nada",
   },

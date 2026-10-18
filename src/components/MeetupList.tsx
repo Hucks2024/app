@@ -15,13 +15,27 @@ import type { Messages } from "@/i18n/messages/en";
  * A countdown is the difference between a listing and something about to
  * happen, so it shows up inside the day and goes quiet beyond it, where
  * "in 6 days" tells you nothing the date didn't. */
-function countdown(iso: string, now: number, t: Messages, lang: Locale): string | null {
+export function countdown(iso: string, now: number, t: Messages, lang: Locale): string | null {
   const minutes = Math.round((new Date(iso).getTime() - now) / 60000);
   if (minutes < 0) return t.list.happeningNow;
   if (minutes < 5) return t.list.startingNow;
   if (minutes < 60) return fill(t.list.inMinutes, { n: minutes });
   if (minutes < 60 * 24) return plural(t.list.inHours, Math.round(minutes / 60), lang);
   return null;
+}
+
+/** The time now, for countdowns: ticks so "In 5 min" doesn't go stale on
+ * a page left open. Null until it's running in the browser, since the
+ * server's minute and the phone's needn't agree. */
+export function useNow(): number | null {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
 }
 
 /** Straight-line distance, in km, between two points on the globe. */
@@ -60,18 +74,9 @@ export default function MeetupList({
   // Where the viewer is, once they've tapped "Near me": adds "1.2 km away".
   here: { lat: number; lng: number } | null;
 }) {
-  // The clock only runs in the browser (the server's minute and the
-  // phone's needn't agree), and ticks so "In 5 min" doesn't go stale on a
-  // page left open.
-  const [now, setNow] = useState<number | null>(null);
+  const now = useNow();
   const t = useT();
   const lang = useLocale();
-  useEffect(() => {
-    const tick = () => setNow(Date.now());
-    tick();
-    const timer = setInterval(tick, 30_000);
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <ul className="space-y-3">

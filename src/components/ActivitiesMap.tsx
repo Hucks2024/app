@@ -13,6 +13,8 @@ import { callNative } from "@/lib/native";
 import { emojiFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
 import { useFormatWhen } from "@/components/LocalTime";
+import Avatar from "@/components/Avatar";
+import { countdown, useNow } from "@/components/MeetupList";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
 import { useLocale, useT } from "@/i18n/client";
 import { fill, plural, typeName } from "@/i18n/format";
@@ -451,10 +453,125 @@ export type MapActivity = {
   afterSpot: string | null;
   joinedCount: number;
   maxParticipants: number | null;
-  // Who's running it and their 👍 count. Null on the logged-out map:
-  // who is going is members-only.
-  host: { name: string; thumbs: number } | null;
+  // Who's running it, their photo and their 👍 count. Null on the
+  // logged-out map: who is going is members-only.
+  host: { id: string; name: string; thumbs: number; hasPhoto: boolean; photoAt: string | null } | null;
 };
+
+/** Leaflet pans an opening card into view, but doesn't know the filters,
+ * tips and buttons float over the top of the map, and tucks the top of the
+ * card, close button and all, under them. So it's told how far down they
+ * reach each time one opens. */
+function KeepCardsClear() {
+  const map = useMap();
+  useEffect(() => {
+    const onOpen = (e: L.PopupEvent) => {
+      const box = map.getContainer().getBoundingClientRect();
+      let top = 12;
+      const over = [
+        ...document.querySelectorAll(".map-overlay-top"),
+        ...map.getContainer().querySelectorAll(".leaflet-top .leaflet-control, .locate-btn"),
+      ];
+      for (const o of over) {
+        const r = o.getBoundingClientRect();
+        // Only what's over the top half: Near me sits at the bottom of the
+        // full-screen map, under the pins rather than the cards.
+        if (r.height > 0 && r.bottom > box.top && r.top < box.top + box.height / 2) {
+          top = Math.max(top, r.bottom - box.top + 12);
+        }
+      }
+      e.popup.options.autoPanPaddingTopLeft = L.point(12, top);
+    };
+    map.on("popupopen", onOpen);
+    return () => {
+      map.off("popupopen", onOpen);
+    };
+  }, [map]);
+  return null;
+}
+
+/** The top of a meetup's card on the map: the app's violet-to-pink, with
+ * the pin's emoji in a white tile, the way the welcome screen shows the
+ * app icon. Styles in globals.css (.meetup-pop). */
+function PopHead({ emoji, kind, title }: { emoji: string; kind?: string; title: string }) {
+  return (
+    <div className="pop-head">
+      <span className="pop-emoji" aria-hidden="true">
+        {emoji}
+      </span>
+      <div className="min-w-0">
+        {kind && <p className="pop-kind">{kind}</p>}
+        <p className="pop-title">{title}</p>
+      </div>
+    </div>
+  );
+}
+
+/** A meetup's card on the map, for members: when, where, who's in and who's
+ * hosting, then one big button to the meetup. */
+function MeetupPop({ a }: { a: MapActivity }) {
+  const t = useT();
+  const lang = useLocale();
+  const when = useFormatWhen();
+  const now = useNow();
+  const soon = now == null ? null : countdown(a.startsAt, now, t, lang);
+  return (
+    <>
+      <PopHead
+        emoji={emojiFor(a)}
+        // "Something else" says nothing the title doesn't.
+        kind={a.category === "SOCIAL" ? undefined : typeName(t, a.category)}
+        title={a.title}
+      />
+      <div className="pop-body">
+        <p className="pop-row">
+          <span aria-hidden="true">📅</span>
+          <span>
+            {when(a.startsAt, "short")} {soon && <span className="soon-badge">{soon}</span>}
+          </span>
+        </p>
+        <p className="pop-row">
+          <span aria-hidden="true">📍</span>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${a.latitude},${a.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pop-where"
+          >
+            {a.location}
+          </a>
+        </p>
+        {a.afterSpot && (
+          <p className="pop-row">
+            <span aria-hidden="true">🍻</span>
+            <span>{fill(t.map.after, { place: a.afterSpot })}</span>
+          </p>
+        )}
+        <p className="pop-chips">
+          <span className="pop-chip">
+            🙌 {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })}
+          </span>
+          {a.distanceKm ? <span className="pop-chip">📏 {a.distanceKm} km</span> : null}
+        </p>
+        {a.host && (
+          <div className="pop-host">
+            <Avatar
+              userId={a.host.id}
+              hasPhoto={a.host.hasPhoto}
+              version={a.host.photoAt ? new Date(a.host.photoAt) : null}
+              size={9}
+            />
+            <span className="min-w-0 flex-1 truncate">{fill(t.list.host, { name: a.host.name })}</span>
+            <span className="pop-chip">👍 {a.host.thumbs}</span>
+          </div>
+        )}
+        <Link href={`/activities/${a.id}`} className="pop-go">
+          {t.map.open}
+        </Link>
+      </div>
+    </>
+  );
+}
 
 export default function ActivitiesMap({
   activities,
@@ -544,6 +661,7 @@ export default function ActivitiesMap({
         <Credits />
         {full && <ZoomControl position="bottomleft" />}
         <LocateControl onLocated={onLocated} full={full} />
+        <KeepCardsClear />
         {activities.map((a) => (
           <Marker
             key={a.id}
@@ -553,7 +671,7 @@ export default function ActivitiesMap({
             // otherwise just a picture.
             title={restricted ? fill(t.map.typeMeetup, { type: typeName(t, a.category) }) : a.title}
           >
-            <Popup>
+            <Popup className="meetup-pop" minWidth={264} maxWidth={264}>
               {restricted ? (
                 // What kind of thing it is, in the clear (the pin already
                 // said so), then the shape of the details under a blur.
@@ -563,61 +681,30 @@ export default function ActivitiesMap({
                 // never sent to this page, because a blur is CSS and CSS
                 // is one right-click away from switched off. Unblurred,
                 // these say exactly what they are.
-                <div className="space-y-1 max-w-[200px]">
-                  <p className="font-semibold">
-                    {emojiFor(a)} {typeName(t, a.category)}
-                  </p>
-                  <div className="relative">
-                    <div aria-hidden="true" className="popup-blur space-y-1">
-                      <p className="font-semibold">{t.map.teaserTitle}</p>
-                      <p className="text-sm text-slate-600">{t.map.teaserWhen}</p>
-                      <p className="text-sm text-slate-600 underline">{t.map.teaserWhere} ↗</p>
-                      <p className="text-sm text-slate-500">{t.map.teaserWho} 🙌</p>
+                <>
+                  <PopHead emoji={emojiFor(a)} title={typeName(t, a.category)} />
+                  <div className="pop-body">
+                    <div className="relative">
+                      <div aria-hidden="true" className="popup-blur space-y-1">
+                        <p className="font-semibold">{t.map.teaserTitle}</p>
+                        <p className="text-slate-600">📅 {t.map.teaserWhen}</p>
+                        <p className="text-slate-600">📍 {t.map.teaserWhere}</p>
+                        <p className="text-slate-600">🙌 {t.map.teaserWho}</p>
+                      </div>
+                      <Link
+                        href="/login"
+                        className="absolute inset-0 m-auto flex h-9 w-fit items-center whitespace-nowrap rounded-full bg-slate-900/85 px-3 text-sm font-semibold !text-white shadow"
+                      >
+                        🔒 {t.map.signInToSee}
+                      </Link>
                     </div>
-                    <Link
-                      href="/login"
-                      className="absolute inset-0 m-auto flex h-9 w-fit items-center whitespace-nowrap rounded-full bg-slate-900/85 px-3 text-sm font-semibold !text-white shadow"
-                    >
-                      🔒 {t.map.signInToSee}
+                    <Link href="/login" className="pop-go">
+                      {t.map.joinFree} ✨
                     </Link>
                   </div>
-                  <Link href="/login" className="text-brand-600 underline text-sm font-medium block pt-1">
-                    {t.map.joinFree} →
-                  </Link>
-                </div>
+                </>
               ) : (
-                <div className="space-y-1">
-                  <p className="font-semibold">
-                    {emojiFor(a)} {a.title}
-                  </p>
-                  <p className="text-sm text-slate-600">{when(a.startsAt, "short")}</p>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${a.latitude},${a.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-slate-600 underline block"
-                  >
-                    {a.location} ↗
-                  </a>
-                  <p className="text-sm text-slate-500">
-                    {a.distanceKm ? `${a.distanceKm} km · ` : ""}
-                    {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })} 🙌
-                  </p>
-                  {a.afterSpot && (
-                    <p className="text-sm text-slate-600">🍻 {fill(t.map.after, { place: a.afterSpot })}</p>
-                  )}
-                  {a.host && (
-                    <p className="text-sm text-slate-500">
-                      {fill(t.list.host, { name: a.host.name })} · 👍 {a.host.thumbs}
-                    </p>
-                  )}
-                  <Link
-                    href={`/activities/${a.id}`}
-                    className="text-brand-600 underline text-sm font-medium"
-                  >
-                    {t.map.open} →
-                  </Link>
-                </div>
+                <MeetupPop a={a} />
               )}
             </Popup>
           </Marker>

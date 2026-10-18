@@ -152,7 +152,7 @@ const hi: Messages = {
     joinFree: "मुफ़्त जॉइन करें",
     inCount: "{n} शामिल",
     after: "बाद में: {place}",
-    open: "खोलें",
+    open: "देखें 👀",
     comingUpSignIn: { one: "{n} आने वाला · देखने के लिए साइन इन करें", other: "{n} आने वाले · देखने के लिए साइन इन करें" },
     nothingYet: "अभी कुछ नहीं है",
   },

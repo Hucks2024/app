@@ -152,7 +152,7 @@ const fr: Messages = {
     joinFree: "Inscription gratuite",
     inCount: "{n} inscrits",
     after: "Après : {place}",
-    open: "Ouvrir",
+    open: "Jeter un œil 👀",
     comingUpSignIn: { one: "{n} à venir · connecte-toi pour voir", other: "{n} à venir · connecte-toi pour voir" },
     nothingYet: "Rien de prévu pour l'instant",
   },
