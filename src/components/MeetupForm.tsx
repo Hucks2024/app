@@ -266,7 +266,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       onSubmit={async (e) => {
         e.preventDefault();
         setEdited(false);
-        if (!editing && step < steps.length - 1) return next();
+        // The last step (a comment, the name) is optional: from When, Post
+        // sends it as it is. Only with no name yet does it go there first.
+        const canPost = editing || at === "name" || (at === "when" && title.trim().length >= 3);
+        if (!canPost) return next();
         if (!when) return setStepError(t.errors.pickDayTime);
         const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
@@ -274,10 +277,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         const data = new FormData(formRef.current!);
         // The pin as the host left it: marked by hand, or found for this place.
         const p = pinRef.current;
-        const at = p && (p.byHand || p.for === text) ? p : null;
-        if (at) {
-          data.set("latitude", String(at.lat));
-          data.set("longitude", String(at.lng));
+        const spot = p && (p.byHand || p.for === text) ? p : null;
+        if (spot) {
+          data.set("latitude", String(spot.lat));
+          data.set("longitude", String(spot.lng));
           data.set("placeFor", text);
         } else if (found?.status === "found") {
           data.set("latitude", String(found.latitude));
@@ -565,7 +568,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
               ? saving
                 ? t.meetup.saving
                 : t.form.saveChanges
-              : step < steps.length - 1
+              : at !== "when" && at !== "name"
                 ? place.status === "checking"
                   ? t.form.finding
                   : t.common.next
@@ -575,6 +578,16 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
           </button>
         )}
       </div>
+      {/* The last step is there for whoever wants it. */}
+      {!editing && at === "when" && (
+        <button
+          type="button"
+          onClick={() => void next()}
+          className="btn-secondary -mt-2 min-h-12 w-full text-base"
+        >
+          + {t.form.addComment}
+        </button>
+      )}
     </form>
   );
 }
