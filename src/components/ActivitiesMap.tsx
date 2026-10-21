@@ -464,11 +464,20 @@ export type MapActivity = {
  * its close button under the filters, its big button and the pin under
  * List and Near me. So it's told how far in they reach each time one
  * opens. If the card can't clear both, the top wins: that's where it
- * closes. */
+ * closes.
+ *
+ * The card can end up under them again after that: zooming moves the pin
+ * it hangs off, and the card grows upwards when the countdown turns up a
+ * moment after it opens. Either way it's slid clear again. Unless a zoom
+ * has taken the pin off the screen: then the card is put away. */
 function KeepCardsClear() {
   const map = useMap();
   useEffect(() => {
+    let open: L.Popup | null = null;
+    // update() re-runs Leaflet's pan, with the padding worked out below.
+    const grew = new ResizeObserver(() => open?.update());
     const onOpen = (e: L.PopupEvent) => {
+      open = e.popup;
       const box = map.getContainer().getBoundingClientRect();
       const middle = box.top + box.height / 2;
       let top = 12;
@@ -486,10 +495,25 @@ function KeepCardsClear() {
       e.popup.options.autoPanPaddingTopLeft = L.point(12, top);
       // The pin hangs below the card's tip, and wants to stay in sight too.
       e.popup.options.autoPanPaddingBottomRight = L.point(12, bottom + PIN_H);
+      grew.disconnect();
+      const card = e.popup.getElement();
+      if (card) grew.observe(card);
     };
-    map.on("popupopen", onOpen);
+    const onClose = (e: L.PopupEvent) => {
+      if (e.popup !== open) return;
+      open = null;
+      grew.disconnect();
+    };
+    const onZoom = () => {
+      const pin = open?.getLatLng();
+      if (!open || !pin) return;
+      if (map.getBounds().contains(pin)) open.update();
+      else map.closePopup(open);
+    };
+    map.on({ popupopen: onOpen, popupclose: onClose, zoomend: onZoom });
     return () => {
-      map.off("popupopen", onOpen);
+      map.off({ popupopen: onOpen, popupclose: onClose, zoomend: onZoom });
+      grew.disconnect();
     };
   }, [map]);
   return null;
