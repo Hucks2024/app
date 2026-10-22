@@ -69,7 +69,7 @@ export default async function Welcome({
         />
       </div>
 
-      <StoreBadges className="mt-6" />
+      <StoreBadges className="mt-6" soon />
     </section>
   );
 }

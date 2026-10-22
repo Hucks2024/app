@@ -3,7 +3,10 @@ import { getT } from "@/i18n/server";
 
 // The app in the App Store and Google Play. Each button shows once its
 // link is set (GitHub secrets APP_STORE_URL, GOOGLE_PLAY_URL), and only if it
-// really is a store link; with neither set, nothing shows.
+// really is a store link; with neither set, nothing shows. Except where
+// "soon" is asked for: there the App Store one shows anyway, as a picture
+// that goes nowhere, with "Coming soon" under it, and turns into the link
+// the moment APP_STORE_URL is set.
 
 function storeLink(url: string | undefined, host: string): string | null {
   try {
@@ -21,18 +24,24 @@ export function storeLinks() {
   };
 }
 
-export default async function StoreBadges({ className = "" }: { className?: string }) {
+export default async function StoreBadges({ className = "", soon = false }: { className?: string; soon?: boolean }) {
   const { apple, google } = storeLinks();
   // Not in the app itself, which is what they'd download.
-  if ((!apple && !google) || (await inApp())) return null;
+  if ((!apple && !google && !soon) || (await inApp())) return null;
   const t = await getT();
+  // eslint-disable-next-line @next/next/no-img-element
+  const appleBadge = <img src="/badges/app-store.svg" alt={t.welcome.appStore} width={135} height={40} className="h-12 w-auto" />;
   return (
     <div className={`flex flex-wrap items-center justify-center gap-3 ${className}`}>
-      {apple && (
-        <a href={apple}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/badges/app-store.svg" alt={t.welcome.appStore} width={135} height={40} className="h-12 w-auto" />
-        </a>
+      {apple ? (
+        <a href={apple}>{appleBadge}</a>
+      ) : (
+        soon && (
+          <span className="flex flex-col items-center gap-1">
+            {appleBadge}
+            <span className="text-sm font-semibold text-white">{t.welcome.comingSoon}</span>
+          </span>
+        )
       )}
       {google && (
         <a href={google}>
