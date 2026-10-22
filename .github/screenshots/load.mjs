@@ -24,3 +24,28 @@ for (const table of ["User", "RunActivity", "Participation"]) {
   }
   console.log(table, data[table].length);
 }
+
+// What the demo predates: how long the walks, runs and rides take, and
+// who everyone is. Every meetup stays for all, so the whole map shows.
+const durations = {
+  "demo-serpentine-5k": 30,
+  "demo-vicky-park-10k": 60,
+  "demo-richmond-loops": 120,
+  "demo-hampstead-ponds": 120,
+  "demo-greenwich-hills": 45,
+  "demo-lido-dip": 45,
+};
+for (const [id, mins] of Object.entries(durations)) {
+  await db.execute({ sql: `UPDATE "RunActivity" SET "durationMins" = ? WHERE id = ?`, args: [mins, id] });
+}
+const genders = {
+  "demo-user-tom": "MALE",
+  "demo-user-sam": "MALE",
+  "demo-user-ayo": "TREX",
+  "demo-user-mira": "FEMALE",
+  "demo-user-priya": "FEMALE",
+  "demo-user-lena": "FEMALE",
+};
+for (const [id, gender] of Object.entries(genders)) {
+  await db.execute({ sql: `UPDATE "User" SET "gender" = ? WHERE id = ?`, args: [gender, id] });
+}

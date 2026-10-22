@@ -41,8 +41,13 @@ async function shot(name, path, signedIn, wait, before) {
 }
 await shot("1-welcome", "/", false, 4000);
 await shot("2-map", "/", true, 15000);
+// A meetup's card on the map: the ticket, with how far and how long.
+await shot("3-map-card", "/", true, 6000, async (p) => {
+  await p.waitForTimeout(9000);
+  await p.locator('.leaflet-marker-icon[title="Hampstead ponds loop + hill"]').dispatchEvent("click");
+});
 // The same map closer in: neighbourhoods, then streets.
-for (const [name, steps] of [["5-map-closer", 3], ["6-map-streets", 6]]) {
+for (const [name, steps] of [["6-map-closer", 3], ["7-map-streets", 6]]) {
   await shot(name, "/", true, 9000, async (p) => {
     await p.locator(".leaflet-container").first().focus();
     for (let i = 0; i < steps; i++) {
@@ -51,6 +56,6 @@ for (const [name, steps] of [["5-map-closer", 3], ["6-map-streets", 6]]) {
     }
   });
 }
-await shot("3-meetup", `/activities/${meetup}`, true, 6000);
-await shot("4-post", "/activities/new", true, 3000);
+await shot("4-meetup", `/activities/${meetup}`, true, 6000);
+await shot("5-post", "/activities/new", true, 3000);
 await b.close();
