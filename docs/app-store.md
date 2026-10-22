@@ -59,6 +59,8 @@ email and password in the sign-in fields (not here).
 >
 > The demo account already has a profile photo, which is required to join
 > a meetup so the group knows who to look for, and can post meetups.
+> New accounts confirm their email with a 6-digit code; the demo account
+> is already confirmed.
 >
 > Safety (guideline 1.2):
 > - Sign up requires ticking "I'm 18 or over and agree to the Terms and
@@ -100,7 +102,8 @@ with them, each run signs the app and sends it to App Store Connect.
 
 ## Demo account (set up once, before submitting)
 
-1. Sign up on packmates.live with an email you control, name "App Review".
+1. Sign up on packmates.live with an email you control, name "App Review",
+   and type in the code it emails you.
 2. Add a face photo (Me → tap the photo).
 3. On /admin, mark it as verified so it can post meetups straight away.
 4. Make sure at least one upcoming meetup is on the map for them to join.
