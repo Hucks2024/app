@@ -41,7 +41,6 @@ const zh: Messages = {
     comingUp: { one: "{n} 个活动即将开始", other: "{n} 个活动即将开始" },
     appStore: "在 App Store 下载",
     googlePlay: "下载应用，请到 Google Play",
-    comingSoon: "即将上线",
   },
   install: {
     iphone: "获取应用：点 {share}，再点 {add}。",

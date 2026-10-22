@@ -43,7 +43,6 @@ const hi: Messages = {
     comingUp: { one: "{n} मीटअप आने वाला है", other: "{n} मीटअप आने वाले हैं" },
     appStore: "App Store से डाउनलोड करें",
     googlePlay: "इसे Google Play पर पाएँ",
-    comingSoon: "जल्द आ रहा है",
   },
   install: {
     iphone: "ऐप पाएँ: {share} दबाएँ, फिर {add}।",

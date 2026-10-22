@@ -43,7 +43,6 @@ const fr: Messages = {
     comingUp: { one: "{n} sortie à venir", other: "{n} sorties à venir" },
     appStore: "Télécharger dans l'App Store",
     googlePlay: "Disponible sur Google Play",
-    comingSoon: "Bientôt disponible",
   },
   install: {
     iphone: "Installe l'app : appuie sur {share}, puis sur {add}.",

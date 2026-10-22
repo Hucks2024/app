@@ -42,7 +42,6 @@ const es: Messages = {
     comingUp: { one: "{n} plan próximamente", other: "{n} planes próximamente" },
     appStore: "Descárgalo en el App Store",
     googlePlay: "Disponible en Google Play",
-    comingSoon: "Próximamente",
   },
   install: {
     iphone: "Consigue la app: toca {share} y luego {add}.",

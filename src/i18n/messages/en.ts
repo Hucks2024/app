@@ -42,7 +42,6 @@ const en = {
     comingUp: { one: "{n} meetup coming up", other: "{n} meetups coming up" },
     appStore: "Download on the App Store",
     googlePlay: "Get it on Google Play",
-    comingSoon: "Coming soon",
   },
   install: {
     iphone: "Get the app: tap {share}, then {add}.",
