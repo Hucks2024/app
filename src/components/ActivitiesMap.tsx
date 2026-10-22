@@ -450,7 +450,7 @@ export type MapActivity = {
   distanceKm: number | null;
   durationMins: number | null;
   pace: string | null;
-  // "ALL" (mixed), or the one group it's for (see src/lib/gender.ts).
+  // "ALL", or the one group it's for (see src/lib/gender.ts).
   forWho: string;
   category: string;
   // The host's own, for "Something else" (see emojiFor).

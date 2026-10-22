@@ -52,6 +52,11 @@ const en = {
     getApp: "Get the app",
   },
   signIn: {
+    genderHint: "Can't be changed later.",
+    pickedGender: "You picked {gender}. Sure?",
+    cantChange: "It decides which meetups you see, and it can't be changed later.",
+    yesSure: "Yes, I'm sure",
+    changeIt: "No, change it",
     continueWith: "Continue with {provider}",
     continueWithEmail: "Continue with email",
     byContinuing: "By continuing you confirm you're {age} or over and agree to the {terms} and {privacy}.",
@@ -98,7 +103,7 @@ const en = {
   },
   forWho: {
     label: "Who's it for?",
-    ALL: "Mixed",
+    ALL: "All",
     MALE: "Men only",
     FEMALE: "Women only",
     TREX: "T-Rex only",
@@ -415,6 +420,7 @@ const en = {
     editMeetup: "Edit meetup",
   },
   me: {
+    genderSet: "Picked when you joined. It can't be changed.",
     changePhoto: "Change your photo",
     diamond: "Diamond+ member",
     thumbsUp: "thumbs up",
@@ -482,6 +488,7 @@ const en = {
     tapPath: "Tap {path}.",
     homeQ: "Put it on my phone",
     quote: "Every friend was once a stranger.",
+    quote2: "Every stranger is a door to a new world. Open more doors, expand your universe.",
     diamondHeading: "Everyone is Diamond+",
     diamondText: "Everyone is treated equally in this app.",
     rules: "House rules",

@@ -6,7 +6,6 @@ import { getPrisma } from "@/lib/db";
 import { refreshVerified } from "@/lib/trust";
 import LocalTime from "@/components/LocalTime";
 import MeetupForm from "@/components/MeetupForm";
-import { forWhoChoices } from "@/lib/gender";
 import { getT } from "@/i18n/server";
 import { rich } from "@/i18n/format";
 
@@ -86,7 +85,7 @@ export default async function NewActivityPage({
         </p>
       )}
 
-      <MeetupForm forWho={forWhoChoices(user.gender)} />
+      <MeetupForm />
     </div>
   );
 }

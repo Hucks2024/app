@@ -40,10 +40,10 @@ model User {
   /// "UNSUBMITTED" | "PENDING" | "APPROVED" | "REJECTED"
   verificationStatus String @default("UNSUBMITTED")
 
-  /// "MALE" | "FEMALE" | "TREX", picked at sign up and changed on Me.
+  /// "MALE" | "FEMALE" | "TREX", picked at sign up and never changed.
   /// Decides which men-only, women-only and T-Rex-only meetups they see
   /// and can join (see src/lib/gender.ts). Null for somebody who came in
-  /// with Apple or Google and hasn't said: mixed meetups only.
+  /// with Apple or Google and hasn't said: meetups for all only.
   gender String?
 
   /// "ACTIVE" | "SUSPENDED" | "BANNED"
@@ -220,8 +220,8 @@ model RunActivity {
   // labels and map-pin emoji.
   category String @default("RUN")
 
-  // Who can come: "ALL" (mixed), or only "MALE", "FEMALE" or "TREX"
-  // members. A host can only pick mixed or their own.
+  // Who can come: "ALL", or only "MALE", "FEMALE" or "TREX" members.
+  // The host picks (see src/lib/gender.ts).
   forWho String @default("ALL")
 
   // The host's own emoji for a "Something else" meetup (🧘, 🎳): its pin

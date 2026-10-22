@@ -27,7 +27,7 @@ import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import PickOne from "@/components/PickOne";
-import { GENDERS, GENDER_EMOJI } from "@/lib/gender";
+import { GENDERS, GENDER_EMOJI, isGender } from "@/lib/gender";
 
 export async function generateMetadata() {
   return { title: (await getT()).common.me };
@@ -219,14 +219,25 @@ export default async function ProfilePage({
               </label>
               <input className="input" id="name" name="name" defaultValue={user.name} required />
             </div>
-            <fieldset>
-              <legend className="label">{t.gender.iAm}</legend>
-              <PickOne
-                name="gender"
-                defaultValue={user.gender}
-                options={GENDERS.map((g) => ({ value: g, emoji: GENDER_EMOJI[g], label: t.gender[g] }))}
-              />
-            </fieldset>
+            {/* Set for good at sign up (see updateProfileAction): shown, not
+                changed. Only somebody with none yet gets to pick. */}
+            {isGender(user.gender) ? (
+              <div>
+                <p className="label">{t.gender.iAm}</p>
+                <p className="text-base font-semibold text-slate-900">
+                  {GENDER_EMOJI[user.gender]} {t.gender[user.gender]}
+                </p>
+                <p className="mt-0.5 text-sm text-slate-600">{t.me.genderSet}</p>
+              </div>
+            ) : (
+              <fieldset>
+                <legend className="label">{t.gender.iAm}</legend>
+                <PickOne
+                  name="gender"
+                  options={GENDERS.map((g) => ({ value: g, emoji: GENDER_EMOJI[g], label: t.gender[g] }))}
+                />
+              </fieldset>
+            )}
             <SubmitButton className="btn-primary w-full" pending={t.meetup.saving}>
               {t.me.save}
             </SubmitButton>

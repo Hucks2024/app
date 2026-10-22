@@ -133,6 +133,9 @@ export default async function InfoPage() {
         <blockquote className="text-xl font-semibold leading-snug text-slate-900">
           &ldquo;{i.quote}&rdquo;
         </blockquote>
+        <blockquote className="mt-4 border-t border-slate-200 pt-4 text-xl font-semibold leading-snug text-slate-900">
+          &ldquo;{i.quote2}&rdquo;
+        </blockquote>
       </figure>
 
       {/* One membership, the same for everyone: nobody pays to be seen

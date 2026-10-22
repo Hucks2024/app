@@ -53,6 +53,11 @@ const hi: Messages = {
     getApp: "ऐप पाएँ",
   },
   signIn: {
+    genderHint: "बाद में बदला नहीं जा सकता।",
+    pickedGender: "आपने {gender} चुना। पक्का?",
+    cantChange: "इससे तय होता है कि आपको कौन-से मीटअप दिखेंगे, और इसे बाद में बदला नहीं जा सकता।",
+    yesSure: "हाँ, पक्का",
+    changeIt: "नहीं, बदलें",
     continueWith: "{provider} के साथ जारी रखें",
     continueWithEmail: "ईमेल के साथ जारी रखें",
     byContinuing: "जारी रखकर आप पुष्टि करते हैं कि आपकी उम्र {age} साल या उससे ज़्यादा है और आप {terms} और {privacy} से सहमत हैं।",
@@ -99,7 +104,7 @@ const hi: Messages = {
   },
   forWho: {
     label: "किसके लिए?",
-    ALL: "सबके लिए",
+    ALL: "सभी",
     MALE: "सिर्फ़ पुरुष",
     FEMALE: "सिर्फ़ महिलाएँ",
     TREX: "सिर्फ़ टी-रेक्स",
@@ -421,6 +426,7 @@ const hi: Messages = {
     editMeetup: "मीटअप एडिट करें",
   },
   me: {
+    genderSet: "जुड़ते समय चुना गया। इसे बदला नहीं जा सकता।",
     changePhoto: "अपनी फ़ोटो बदलें",
     diamond: "डायमंड+ सदस्य",
     thumbsUp: "थम्स अप",
@@ -488,6 +494,7 @@ const hi: Messages = {
     tapPath: "{path} दबाएँ।",
     homeQ: "इसे अपने फ़ोन पर रखें",
     quote: "हर दोस्त कभी अजनबी था।",
+    quote2: "हर अजनबी एक नई दुनिया का दरवाज़ा है। और दरवाज़े खोलिए, अपना ब्रह्मांड बढ़ाइए।",
     diamondHeading: "सब डायमंड+ हैं",
     diamondText: "इस ऐप में सब बराबर हैं।",
     rules: "घर के नियम",

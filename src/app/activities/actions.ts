@@ -13,7 +13,7 @@ import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES, DURATIONS, categoryFor, kmFrom, oneEmoji } from "@/lib/categories";
 import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import { block } from "@/lib/blocks";
-import { forWhoChoices } from "@/lib/gender";
+import { isForWho } from "@/lib/gender";
 import { getT } from "@/i18n/server";
 import { errorText, fill } from "@/i18n/format";
 
@@ -147,19 +147,10 @@ export async function saveMeetupAction(
   // older meetup had them; the form doesn't ask for them any more.
   const route = categoryFor(parsed.data.category).route;
 
-  // Mixed, or the host's own group: a man can't post a women-only meetup.
-  // An edit can keep what it had, even if the host has since changed
-  // theirs, and one that doesn't say keeps it too.
-  const hostGender = existing
-    ? (await prisma.user.findUnique({ where: { id: existing.hostId }, select: { gender: true } }))?.gender
-    : user.gender;
+  // Men, women or T-Rex only, or all: anything else is for all. A form
+  // that doesn't say keeps what it had.
   const asked = formData.get("forWho");
-  const forWho =
-    typeof asked !== "string"
-      ? (existing?.forWho ?? "ALL")
-      : (forWhoChoices(hostGender) as string[]).includes(asked) || asked === existing?.forWho
-        ? asked
-        : "ALL";
+  const forWho = isForWho(asked) ? asked : (existing?.forWho ?? "ALL");
 
   const fields = {
     title: parsed.data.title,

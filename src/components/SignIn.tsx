@@ -13,7 +13,7 @@ import {
 } from "@/app/(auth)/actions";
 import { useT } from "@/i18n/client";
 import PickOne from "@/components/PickOne";
-import { GENDERS, GENDER_EMOJI } from "@/lib/gender";
+import { GENDERS, GENDER_EMOJI, isGender, type Gender } from "@/lib/gender";
 import { fill, rich } from "@/i18n/format";
 
 // The buttons under "welcome to packmates": one big tap to get in.
@@ -107,6 +107,10 @@ export default function SignIn({
   // Kept from the form for the code screen, which sends it along with the
   // code (see confirmEmailAction for why).
   const [password, setPassword] = useState("");
+  // Male, female or T-Rex is for good, so it's asked twice: the form waits
+  // here while "Are you sure?" is up.
+  const [sureOf, setSureOf] = useState<Gender | null>(null);
+  const signupForm = useRef<HTMLFormElement | null>(null);
   // A fresh code screen each time one's sent, with no errors left over
   // from the last.
   const [confirmKey, setConfirmKey] = useState(0);
@@ -362,7 +366,15 @@ export default function SignIn({
   return (
     <form
       onSubmit={(e) => {
-        setPassword(String(new FormData(e.currentTarget).get("password") ?? ""));
+        const data = new FormData(e.currentTarget);
+        setPassword(String(data.get("password") ?? ""));
+        const picked = data.get("gender");
+        if (creating && isGender(picked)) {
+          e.preventDefault();
+          signupForm.current = e.currentTarget;
+          setSureOf(picked);
+          return;
+        }
         submitWith(formAction)(e);
       }}
       className="space-y-3"
@@ -429,8 +441,8 @@ export default function SignIn({
             autoFocus
             className="pill-input"
           />
-          {/* Which meetups they see: mixed ones, and their own group's.
-              Changed later on Me. */}
+          {/* Which meetups they see: ones for all, and their own group's.
+              For good, or a man could switch to see the women-only ones. */}
           <fieldset>
             <legend className="field-label mb-2">{t.gender.iAm}</legend>
             <PickOne
@@ -438,6 +450,7 @@ export default function SignIn({
               required
               options={GENDERS.map((g) => ({ value: g, emoji: GENDER_EMOJI[g], label: t.gender[g] }))}
             />
+            <p className="field-hint mt-2">{t.signIn.genderHint}</p>
           </fieldset>
         </>
       )}
@@ -499,6 +512,40 @@ export default function SignIn({
         {submitting && <Spinner />}
         {creating ? t.signIn.createAccount : t.signIn.signIn}
       </button>
+      {sureOf && (
+        <div
+          className="sure-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="sure-title"
+          onKeyDown={(e) => e.key === "Escape" && setSureOf(null)}
+        >
+          <div className="sure-card">
+            <p className="text-5xl leading-none" aria-hidden="true">
+              {GENDER_EMOJI[sureOf]}
+            </p>
+            <p id="sure-title" className="mt-3 text-xl font-bold text-slate-900">
+              {fill(t.signIn.pickedGender, { gender: t.gender[sureOf] })}
+            </p>
+            <p className="mt-2 text-base text-slate-700">{t.signIn.cantChange}</p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => {
+                const form = signupForm.current;
+                setSureOf(null);
+                if (form) startTransition(() => formAction(new FormData(form)));
+              }}
+              className="btn-primary mt-5 min-h-12 w-full text-lg"
+            >
+              {t.signIn.yesSure}
+            </button>
+            <button type="button" onClick={() => setSureOf(null)} className="btn-secondary mt-2 min-h-12 w-full text-base">
+              {t.signIn.changeIt}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-center gap-4 pt-1">
         {back}
         {!creating && (

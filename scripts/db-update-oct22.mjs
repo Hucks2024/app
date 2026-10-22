@@ -2,10 +2,9 @@
 // prisma/migrations/20261022120000_meetup_duration and 20261022130000_gender:
 //
 // - RunActivity.durationMins: how long a walk, run or ride takes.
-// - RunActivity.forWho: who a meetup is for. Every meetup so far is mixed.
+// - RunActivity.forWho: who a meetup is for. Every meetup so far is for all.
 // - User.gender: male, female or T-Rex. Everybody who joined before this
-//   is male (the owner's word), so they're set to that; they can change
-//   it on Me.
+//   is male (the owner's word), so they're set to that.
 //
 // Safe to re-run: columns already there are left alone, and only members
 // with no gender yet are set. Prints column names and counts only, never

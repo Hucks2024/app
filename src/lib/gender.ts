@@ -1,7 +1,7 @@
-// Men-only, women-only and T-Rex-only meetups, and mixed ones. Everyone
-// says which they are when they join (and can change it on Me); a host can
-// keep a meetup to their own group or open it to everyone. A meetup for
-// another group isn't on your map at all, and can't be joined.
+// Men-only, women-only and T-Rex-only meetups, and ones for all. Everyone
+// says which they are when they join, for good; a host
+// picks who a meetup is for. A meetup for another group isn't on your map
+// at all, and can't be joined.
 
 export const GENDERS = ["MALE", "FEMALE", "TREX"] as const;
 export type Gender = (typeof GENDERS)[number];
@@ -20,18 +20,19 @@ export function isForWho(value: unknown): value is ForWho {
   return value === "ALL" || isGender(value);
 }
 
-/** Whether somebody can go: a mixed meetup, anyone; the rest, the group
- * it's for. Somebody who hasn't said which they are, mixed ones only. */
+/** What a host picks from, in this order; "ALL" unless they say. */
+export const FOR_WHO_PICKS: ForWho[] = ["MALE", "FEMALE", "TREX", "ALL"];
+
+/** Whether somebody can go: one for all, anyone; the rest, the group
+ * it's for. Somebody who hasn't said which they are, ones for all only. */
 export function canGo(forWho: string, gender: string | null | undefined): boolean {
   return forWho === "ALL" || forWho === gender;
 }
 
-/** Who a host can keep a meetup to: everyone, or their own group. */
-export function forWhoChoices(gender: string | null | undefined): ForWho[] {
-  return isGender(gender) ? ["ALL", gender] : ["ALL"];
-}
-
-/** The meetups somebody sees, as a database filter. */
-export function meetupsFor(gender: string | null | undefined) {
-  return { forWho: { in: forWhoChoices(gender) } };
+/** The meetups somebody sees, as a database filter: ones for all, ones
+ * for their group, and any they're hosting themselves. */
+export function meetupsFor(user: { id: string; gender: string | null }) {
+  return {
+    OR: [{ forWho: { in: isGender(user.gender) ? ["ALL", user.gender] : ["ALL"] } }, { hostId: user.id }],
+  };
 }

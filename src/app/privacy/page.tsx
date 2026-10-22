@@ -42,8 +42,8 @@ export default function PrivacyPage() {
               you are. Your password is stored scrambled; nobody can read it, us included.
             </li>
             <li>
-              <strong>Male, female or T-Rex:</strong> whichever you pick, so you see mixed meetups and your own
-              group&apos;s, and can post one just for your group. Change it on Me, any time.
+              <strong>Male, female or T-Rex:</strong> whichever you pick, so you see meetups for all and for your
+              own group. It&apos;s set when you join.
             </li>
             <li>
               <strong>Your photo:</strong> the one photo of your face you choose, so the group knows who to look for.

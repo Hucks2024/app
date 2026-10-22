@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { DURATIONS, categoryFor, kmFrom, oneEmoji } from "@/lib/categories";
-import { FOR_WHO_EMOJI, type ForWho } from "@/lib/gender";
+import { FOR_WHO_EMOJI, FOR_WHO_PICKS } from "@/lib/gender";
 import PickOne from "@/components/PickOne";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
@@ -82,14 +82,7 @@ function placeWord(text: string): string {
  * whole lot is sent once at the end. Sent by hand rather than through the
  * form's action prop, so a mistake comes back as a line of red with
  * everything still filled in. */
-export default function MeetupForm({
-  initial,
-  forWho,
-}: {
-  initial?: MeetupInitial;
-  // Who the host can keep it to: mixed, and their own group.
-  forWho: ForWho[];
-}) {
+export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const editing = Boolean(initial);
   const t = useT();
   const lang = useLocale();
@@ -500,17 +493,15 @@ export default function MeetupForm({
       <fieldset hidden={!show("when")}>
         <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.when}</legend>
         <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
-        {/* Mixed, or only the host's own group. Mixed unless they say. */}
-        {forWho.length > 1 && (
-          <fieldset className="mt-5">
-            <legend className="label !text-base">{t.forWho.label}</legend>
-            <PickOne
-              name="forWho"
-              defaultValue={initial?.forWho ?? "ALL"}
-              options={forWho.map((v) => ({ value: v, emoji: FOR_WHO_EMOJI[v], label: t.forWho[v] }))}
-            />
-          </fieldset>
-        )}
+        {/* Men, women or T-Rex only, or all. All unless they say. */}
+        <fieldset className="mt-5">
+          <legend className="label !text-base">{t.forWho.label}</legend>
+          <PickOne
+            name="forWho"
+            defaultValue={initial?.forWho ?? "ALL"}
+            options={FOR_WHO_PICKS.map((v) => ({ value: v, emoji: FOR_WHO_EMOJI[v], label: t.forWho[v] }))}
+          />
+        </fieldset>
         {/* How far and how long: a walk, run, ride and the like. Neither
             has to be filled in. The time gets the wider half: "Not sure"
             and "1 h 30 min" are longer than any distance. */}

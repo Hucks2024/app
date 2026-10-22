@@ -53,6 +53,11 @@ const fr: Messages = {
     getApp: "Installer l'app",
   },
   signIn: {
+    genderHint: "Impossible à changer ensuite.",
+    pickedGender: "Tu as choisi {gender}. Tu confirmes ?",
+    cantChange: "Ça décide des sorties que tu vois, et ça ne pourra plus changer.",
+    yesSure: "Oui, je confirme",
+    changeIt: "Non, je change",
     continueWith: "Continuer avec {provider}",
     continueWithEmail: "Continuer avec un e-mail",
     byContinuing: "En continuant, tu confirmes avoir {age} ans ou plus et accepter les {terms} et la {privacy}.",
@@ -99,7 +104,7 @@ const fr: Messages = {
   },
   forWho: {
     label: "Pour qui ?",
-    ALL: "Mixte",
+    ALL: "Tous",
     MALE: "Hommes seulement",
     FEMALE: "Femmes seulement",
     TREX: "T-Rex seulement",
@@ -421,6 +426,7 @@ const fr: Messages = {
     editMeetup: "Modifier la sortie",
   },
   me: {
+    genderSet: "Choisi à l'inscription. Impossible de le changer.",
     changePhoto: "Changer ta photo",
     diamond: "Membre Diamant+",
     thumbsUp: "pouces",
@@ -488,6 +494,7 @@ const fr: Messages = {
     tapPath: "Appuie sur {path}.",
     homeQ: "L'avoir sur mon téléphone",
     quote: "Chaque ami a d'abord été un inconnu.",
+    quote2: "Chaque inconnu est une porte vers un nouveau monde. Ouvre plus de portes, agrandis ton univers.",
     diamondHeading: "Tout le monde est Diamant+",
     diamondText: "Dans cette app, tout le monde est traité pareil.",
     rules: "Règles de la maison",

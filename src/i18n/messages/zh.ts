@@ -51,6 +51,11 @@ const zh: Messages = {
     getApp: "获取应用",
   },
   signIn: {
+    genderHint: "之后不能改。",
+    pickedGender: "你选了「{gender}」。确定吗？",
+    cantChange: "这决定你能看到哪些活动，之后不能改。",
+    yesSure: "确定",
+    changeIt: "不，改一下",
     continueWith: "通过 {provider} 继续",
     continueWithEmail: "用邮箱继续",
     byContinuing: "继续即表示你已年满 {age} 岁，并同意{terms}和{privacy}。",
@@ -97,7 +102,7 @@ const zh: Messages = {
   },
   forWho: {
     label: "谁可以来？",
-    ALL: "不限",
+    ALL: "所有人",
     MALE: "仅限男性",
     FEMALE: "仅限女性",
     TREX: "仅限霸王龙",
@@ -413,6 +418,7 @@ const zh: Messages = {
     editMeetup: "编辑活动",
   },
   me: {
+    genderSet: "注册时选的，之后不能改。",
     changePhoto: "更换照片",
     diamond: "钻石+ 会员",
     thumbsUp: "个赞",
@@ -480,6 +486,7 @@ const zh: Messages = {
     tapPath: "点 {path}。",
     homeQ: "放到我的手机上",
     quote: "每个朋友都曾是陌生人。",
+    quote2: "每个陌生人都是一扇通往新世界的门。多打开几扇门，拓展你的宇宙。",
     diamondHeading: "人人都是钻石+",
     diamondText: "在这个应用里，人人平等。",
     rules: "规则",

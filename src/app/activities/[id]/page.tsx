@@ -105,7 +105,7 @@ export default async function ActivityDetailPage({
   // until it starts.
   const canManage = (isHost || user.role === "ADMIN") && !cancelled && !happened;
   const upcoming = !cancelled && !happened;
-  // Men only, women only or T-Rex only; null for a mixed one.
+  // Men only, women only or T-Rex only; null for one for all.
   const forWho = isForWho(activity.forWho) && activity.forWho !== "ALL" ? activity.forWho : null;
 
   // Somebody else's group's meetup, reached by a link: what kind it is and

@@ -52,6 +52,11 @@ const es: Messages = {
     getApp: "Consigue la app",
   },
   signIn: {
+    genderHint: "No se puede cambiar después.",
+    pickedGender: "Elegiste {gender}. ¿Seguro?",
+    cantChange: "Decide qué planes ves y no se puede cambiar después.",
+    yesSure: "Sí, seguro",
+    changeIt: "No, cambiarlo",
     continueWith: "Continuar con {provider}",
     continueWithEmail: "Continuar con email",
     byContinuing: "Al continuar confirmas que tienes {age} años o más y aceptas las {terms} y la {privacy}.",
@@ -98,7 +103,7 @@ const es: Messages = {
   },
   forWho: {
     label: "¿Para quién?",
-    ALL: "Mixto",
+    ALL: "Todos",
     MALE: "Solo hombres",
     FEMALE: "Solo mujeres",
     TREX: "Solo T-Rex",
@@ -420,6 +425,7 @@ const es: Messages = {
     editMeetup: "Editar plan",
   },
   me: {
+    genderSet: "Lo elegiste al unirte. No se puede cambiar.",
     changePhoto: "Cambiar tu foto",
     diamond: "Miembro Diamante+",
     thumbsUp: "pulgares arriba",
@@ -487,6 +493,7 @@ const es: Messages = {
     tapPath: "Toca {path}.",
     homeQ: "Ponerla en mi móvil",
     quote: "Cada amigo fue una vez un desconocido.",
+    quote2: "Cada desconocido es una puerta a un mundo nuevo. Abre más puertas, expande tu universo.",
     diamondHeading: "Todo el mundo es Diamante+",
     diamondText: "En esta app, todo el mundo recibe el mismo trato.",
     rules: "Normas de la casa",

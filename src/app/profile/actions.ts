@@ -40,13 +40,14 @@ export async function updateProfileAction(formData: FormData) {
     redirect(`/profile?${errorQuery(errorText(await getT(), parsed.error.issues[0]?.message))}`);
   }
 
-  // Male, female or T-Rex: which group's meetups they see. Anything else
-  // leaves it as it was.
+  // Male, female or T-Rex: picked once, at sign up, and never changed
+  // after, or a man could switch to see the women-only meetups. Only
+  // somebody with none yet (in with Apple or Google) picks it here.
   const gender = formData.get("gender");
   const prisma = await getPrisma();
   await prisma.user.update({
     where: { id: user.id },
-    data: { name: parsed.data.name, ...(isGender(gender) ? { gender } : {}) },
+    data: { name: parsed.data.name, ...(isGender(gender) && !user.gender ? { gender } : {}) },
   });
 
   redirect("/profile?saved=1");

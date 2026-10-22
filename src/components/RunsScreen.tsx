@@ -26,11 +26,11 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     blockedEitherWay(prisma, user.id),
     prisma.runActivity.findMany({
       // Only the ones with a pin: the map has nowhere to put the rest. And
-      // only ones they can go to: mixed, and their own group's.
+      // only ones they can go to: for all, and for their own group.
       where: {
         startsAt: { gte: now },
         ...liveMeetup,
-        ...meetupsFor(user.gender),
+        ...meetupsFor(user),
         latitude: { not: null },
         longitude: { not: null },
       },
