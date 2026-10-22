@@ -2,12 +2,12 @@
 
 import { startTransition, useActionState, useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { categoryFor, oneEmoji } from "@/lib/categories";
+import { DURATIONS, categoryFor, kmFrom, oneEmoji } from "@/lib/categories";
 import { saveMeetupAction, type MeetupFormState } from "@/app/activities/actions";
 import { geocodeLocation, placeName } from "@/lib/geocode";
 import WhenPicker from "@/components/WhenPicker";
-import { useT } from "@/i18n/client";
-import { commentHint, fill, typeName } from "@/i18n/format";
+import { useLocale, useT } from "@/i18n/client";
+import { commentHint, fill, howLong, typeName } from "@/i18n/format";
 
 // Only in the browser (Leaflet needs a window), and only once the
 // meeting point step is showing. The same height while it loads, so
@@ -34,6 +34,8 @@ export type MeetupInitial = {
   longitude: number | null;
   findUs: string | null;
   startsAt: string;
+  distanceKm: number | null;
+  durationMins: number | null;
   pace: string | null;
   description: string | null;
   emoji: string | null;
@@ -80,6 +82,7 @@ function placeWord(text: string): string {
 export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const editing = Boolean(initial);
   const t = useT();
+  const lang = useLocale();
   const [state, action, pending] = useActionState<MeetupFormState, FormData>(saveMeetupAction, {
     error: null,
   });
@@ -125,6 +128,8 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const [focus, setFocus] = useState(0);
   const [when, setWhen] = useState<Date | null>(null);
   const [title, setTitle] = useState(initial?.title ?? "");
+  // As typed: "7,5" is as good as "7.5" (see kmFrom).
+  const [distance, setDistance] = useState(initial?.distanceKm != null ? String(initial.distanceKm) : "");
   // "Something else" has its own emoji, typed: the pin on the map. Until
   // the box holds just one emoji, the pin is the type's own 🎉.
   const [ownEmoji, setOwnEmoji] = useState(initial?.emoji ?? "");
@@ -138,9 +143,10 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
   const onWhen = useCallback((d: Date | null) => setWhen(d), []);
 
   const saving = pending || place.status === "checking";
-  // Distance, pace and a Strava route only mean something for a run, a
-  // ride and the like; a painting meetup isn't asked for them.
+  // A distance, a time and a pace only mean something for a run, a ride
+  // and the like; a painting meetup isn't asked for them.
   const route = categoryFor(category).route;
+  const badDistance = route && distance.trim() !== "" && kmFrom(distance) == null;
   const steps = STEPS;
   const at = steps[step];
   const show = (s: Step) => editing || at === s;
@@ -241,6 +247,7 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       suggestTitle(found.status === "found" && !now?.byHand ? found.label : undefined);
     }
     if (at === "when" && !when) return setStepError(t.errors.pickDayTime);
+    if (at === "when" && badDistance) return setStepError(t.errors.checkDistance);
     setStep(step + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -270,6 +277,11 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
         const canPost = editing || at === "name" || (at === "when" && title.trim().length >= 3);
         if (!canPost) return next();
         if (!when) return setStepError(t.errors.pickDayTime);
+        if (badDistance) {
+          // Back to the box it's in, if it's a step behind.
+          if (!editing) setStep(steps.indexOf("when"));
+          return setStepError(t.errors.checkDistance);
+        }
         const text = locationText();
         // An edit that leaves the place alone keeps the pin it has.
         const found = initial && text === initial.location ? null : await lookUp(text);
@@ -478,6 +490,60 @@ export default function MeetupForm({ initial }: { initial?: MeetupInitial }) {
       <fieldset hidden={!show("when")}>
         <legend className="mb-3 text-xl font-bold text-slate-900">{t.form.when}</legend>
         <WhenPicker initialIso={initial?.startsAt} onChange={onWhen} />
+        {/* How far and how long: a walk, run, ride and the like. Neither
+            has to be filled in. The time gets the wider half: "Not sure"
+            and "1 h 30 min" are longer than any distance. */}
+        {route && (
+          <div className="mt-5 grid grid-cols-[minmax(0,4fr)_minmax(0,5fr)] gap-3">
+            <div>
+              <label className="label !text-base" htmlFor="distanceKm">
+                {t.form.howFar}
+                <span className="sr-only"> (km)</span>
+              </label>
+              <div className="relative">
+                <input
+                  className="input !text-base min-h-12 !pr-11"
+                  id="distanceKm"
+                  name="distanceKm"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder={t.form.kmHint}
+                  value={distance}
+                  onChange={(e) => {
+                    setDistance(e.target.value);
+                    setStepError(null);
+                  }}
+                  maxLength={8}
+                  aria-invalid={badDistance || undefined}
+                />
+                <span
+                  className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-base text-slate-600"
+                  aria-hidden="true"
+                >
+                  km
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="label !text-base" htmlFor="durationMins">
+                {t.form.howLong}
+              </label>
+              <select
+                className="input !text-base min-h-12"
+                id="durationMins"
+                name="durationMins"
+                defaultValue={initial?.durationMins ?? ""}
+              >
+                <option value="">{t.form.notSure}</option>
+                {DURATIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {howLong(t, m, lang)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </fieldset>
 
       {/* 5. Name and extras */}

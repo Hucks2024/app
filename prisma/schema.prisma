@@ -200,6 +200,9 @@ model RunActivity {
   longitude       Float?
   startsAt        DateTime
   distanceKm      Float?
+  // How long it takes, roughly: one of DURATIONS in src/lib/categories.ts.
+  // Like the distance, only for a walk, run, ride and the like.
+  durationMins    Int?
   pace            String?
   maxParticipants Int?
   stravaUrl       String?

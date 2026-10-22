@@ -40,6 +40,16 @@ export function typeName(t: Messages, value: string): string {
   return names[value] ?? names.SOCIAL;
 }
 
+/** How long a meetup takes: "45 min", "1 h 30 min", "2 days". */
+export function howLong(t: Messages, mins: number, locale: Locale): string {
+  if (mins >= 1440 && mins % 1440 === 0) return plural(t.duration.days, mins / 1440, locale);
+  const h = Math.floor(mins / 60);
+  const m = fill(t.duration.m, { n: mins % 60 });
+  if (!h) return m;
+  const hours = plural(t.duration.h, h, locale);
+  return mins % 60 ? `${hours} ${m}` : hours;
+}
+
 /** An example for the comment that fits the type: coffee gets a coffee
  * one, not "bring water". */
 export function commentHint(t: Messages, value: string): string {

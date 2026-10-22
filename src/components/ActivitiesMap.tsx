@@ -18,7 +18,7 @@ import { countdown, useNow } from "@/components/MeetupList";
 import { TicketHead } from "@/components/Ticket";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
 import { useLocale, useT } from "@/i18n/client";
-import { fill, plural, typeName } from "@/i18n/format";
+import { fill, howLong, plural, typeName } from "@/i18n/format";
 import type { Messages } from "@/i18n/messages/en";
 
 // The app's own logo as the map marker: the same teardrop from
@@ -447,6 +447,7 @@ export type MapActivity = {
   latitude: number;
   longitude: number;
   distanceKm: number | null;
+  durationMins: number | null;
   pace: string | null;
   category: string;
   // The host's own, for "Something else" (see emojiFor).
@@ -565,6 +566,7 @@ function MeetupPop({ a }: { a: MapActivity }) {
             🙌 {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })}
           </span>
           {a.distanceKm ? <span className="pop-chip">📏 {a.distanceKm} km</span> : null}
+          {a.durationMins ? <span className="pop-chip">⏱️ {howLong(t, a.durationMins, lang)}</span> : null}
         </p>
         {a.host && (
           <div className="pop-host">

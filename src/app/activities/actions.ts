@@ -10,7 +10,7 @@ import { requireUser } from "@/lib/auth";
 import { refreshVerified } from "@/lib/trust";
 import { banIfFlagged, promoteWaitlist } from "@/lib/moderation";
 import { geocodeLocation } from "@/lib/geocode";
-import { CATEGORY_VALUES, categoryFor, oneEmoji } from "@/lib/categories";
+import { CATEGORY_VALUES, DURATIONS, categoryFor, kmFrom, oneEmoji } from "@/lib/categories";
 import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import { block } from "@/lib/blocks";
 import { getT } from "@/i18n/server";
@@ -36,6 +36,17 @@ const createSchema = z.object({
   location: text(200).pipe(z.string().min(3, "typeWhere")),
   startsAt: z.string().min(1, "pickDayTime"),
   pace: text(40).optional(),
+  // Left empty, none; anything else has to be a distance (see kmFrom).
+  distanceKm: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => !v || kmFrom(v) != null, "checkDistance")
+    .transform((v) => (v ? kmFrom(v) : null)),
+  // Off the list, or nothing.
+  durationMins: z
+    .unknown()
+    .transform((v) => DURATIONS.find((d) => String(d) === v) ?? null),
   // One emoji, or none: anything else is quietly dropped (see oneEmoji).
   emoji: z.unknown().transform(oneEmoji),
 });
@@ -52,6 +63,8 @@ function readMeetupForm(formData: FormData) {
     location: formData.get("location"),
     startsAt: formData.get("startsAt"),
     pace: formData.get("pace") || undefined,
+    distanceKm: formData.get("distanceKm") ?? undefined,
+    durationMins: formData.get("durationMins"),
     emoji: formData.get("emoji"),
   };
 }
@@ -128,10 +141,9 @@ export async function saveMeetupAction(
     longitude = place.longitude;
   }
 
-  // Only a run, a ride and the like keep a pace, distance and route. The
-  // form asks for the pace alone now: a distance, a Strava route, a place
-  // to go after and a cap are kept as an older meetup had them, and new
-  // ones have none.
+  // Only a run, a ride and the like keep a distance, a time, a pace and a
+  // route. A Strava route, a place to go after and a cap are kept as an
+  // older meetup had them; the form doesn't ask for them any more.
   const route = categoryFor(parsed.data.category).route;
   const fields = {
     title: parsed.data.title,
@@ -143,7 +155,8 @@ export async function saveMeetupAction(
     latitude,
     longitude,
     startsAt,
-    distanceKm: route ? (existing?.distanceKm ?? null) : null,
+    distanceKm: route ? parsed.data.distanceKm : null,
+    durationMins: route ? parsed.data.durationMins : null,
     pace: route ? (parsed.data.pace ?? null) : null,
     // Only "Something else" has its own; every other type has one already.
     emoji: parsed.data.category === "SOCIAL" ? parsed.data.emoji : null,

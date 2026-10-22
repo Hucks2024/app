@@ -21,7 +21,7 @@ import {
   toggleThumbsUpAction,
 } from "@/app/activities/actions";
 import { getLocale, getT } from "@/i18n/server";
-import { fill, plural, rich, typeName } from "@/i18n/format";
+import { fill, howLong, plural, rich, typeName } from "@/i18n/format";
 import type { Messages } from "@/i18n/messages";
 import { TicketHead } from "@/components/Ticket";
 
@@ -211,6 +211,16 @@ export default async function ActivityDetailPage({
                   {[activity.distanceKm ? `${activity.distanceKm} km` : null, activity.pace ? fill(t.meetup.pace, { pace: activity.pace }) : null]
                     .filter(Boolean)
                     .join(" · ")}
+                </dd>
+              </div>
+            )}
+            {activity.durationMins && (
+              <div className="flex gap-3">
+                <dt className="w-7 flex-none text-xl" aria-label={t.meetup.howLongLabel}>
+                  ⏱️
+                </dt>
+                <dd className="text-slate-800">
+                  {fill(t.meetup.takes, { time: howLong(t, activity.durationMins, lang) })}
                 </dd>
               </div>
             )}

@@ -63,6 +63,21 @@ export function emojiFor(meetup: { category: string; emoji?: string | null }): s
   return (meetup.category === "SOCIAL" && meetup.emoji) || categoryFor(meetup.category).emoji;
 }
 
+/** How long a walk, run or ride can say it takes, in minutes: picked from
+ * a list rather than typed, so it's one go of the phone's wheel. Whole
+ * days at the end, for a trek or a tour. */
+export const DURATIONS = [
+  15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 480, 1440, 2880, 4320, 5760, 7200, 10080,
+] as const;
+
+/** A distance as typed ("5", "7,5", "10 km"), in km to one decimal, or
+ * null for anything that isn't a sensible one. */
+export function kmFrom(text: unknown): number | null {
+  if (typeof text !== "string") return null;
+  const km = Math.round(Number(text.trim().replace(/\s*km$/i, "").replace(",", ".")) * 10) / 10;
+  return Number.isFinite(km) && km > 0 && km <= 1000 ? km : null;
+}
+
 // Rude on a public map: never a pin.
 const RUDE = /[\u{1F595}\u{1F346}\u{1F351}\u{1F4A6}\u{1F51E}\u{1F52B}]/u;
 

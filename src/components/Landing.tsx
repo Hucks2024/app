@@ -52,6 +52,7 @@ export default async function Landing() {
       latitude: jitter(a.latitude as number),
       longitude: jitter(a.longitude as number),
       distanceKm: null,
+      durationMins: null,
       pace: null,
       category: a.category,
       emoji: a.emoji,

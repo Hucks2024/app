@@ -31,6 +31,8 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
           longitude: a.longitude,
           findUs: a.findUs,
           startsAt: a.startsAt.toISOString(),
+          distanceKm: a.distanceKm,
+          durationMins: a.durationMins,
           pace: a.pace,
           description: a.description,
           emoji: a.emoji,
