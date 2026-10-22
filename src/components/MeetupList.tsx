@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import LocalTime, { deviceLanguage } from "@/components/LocalTime";
 import { TicketRow } from "@/components/Ticket";
+import { FOR_WHO_EMOJI, isForWho } from "@/lib/gender";
 import { emojiFor } from "@/lib/categories";
 import type { MapActivity } from "@/components/ActivitiesMap";
 import { useLocale, useT } from "@/i18n/client";
@@ -93,6 +94,11 @@ export default function MeetupList({
                   <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-700">
                     <LocalTime iso={a.startsAt} style="short" />
                     {soon && <span className="soon-badge">{soon}</span>}
+                    {isForWho(a.forWho) && a.forWho !== "ALL" && (
+                      <span className="for-badge">
+                        {FOR_WHO_EMOJI[a.forWho]} {t.forWho[a.forWho]}
+                      </span>
+                    )}
                   </p>
                   <p className="text-sm text-slate-600">
                     📍 {a.location}

@@ -89,6 +89,19 @@ const zh: Messages = {
     m: "{n}\u00a0分钟",
     days: { one: "{n}\u00a0天", other: "{n}\u00a0天" },
   },
+  gender: {
+    iAm: "我是",
+    MALE: "男",
+    FEMALE: "女",
+    TREX: "霸王龙",
+  },
+  forWho: {
+    label: "谁可以来？",
+    ALL: "不限",
+    MALE: "仅限男性",
+    FEMALE: "仅限女性",
+    TREX: "仅限霸王龙",
+  },
   when: {
     whichDay: "哪一天？",
     another: "其他",
@@ -299,6 +312,8 @@ const zh: Messages = {
     pickDayTime: "选择日期和时间。",
     checkDayTime: "检查一下日期和时间。",
     checkDistance: "填公里数，比如 5 或 7.5。",
+    pickGender: "选男、女或霸王龙。",
+    notForYou: "这个活动你不能参加。",
     meetupCancelled: "这个活动已取消。",
     meetupStarted: "这个活动已经开始了。",
     placeNotFound: "找不到「{place}」。加上城市名，比如「Hyde Park, London」。",

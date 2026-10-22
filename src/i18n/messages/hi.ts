@@ -91,6 +91,19 @@ const hi: Messages = {
     m: "{n}\u00a0मिनट",
     days: { one: "{n}\u00a0दिन", other: "{n}\u00a0दिन" },
   },
+  gender: {
+    iAm: "मैं हूँ",
+    MALE: "पुरुष",
+    FEMALE: "महिला",
+    TREX: "टी-रेक्स",
+  },
+  forWho: {
+    label: "किसके लिए?",
+    ALL: "सबके लिए",
+    MALE: "सिर्फ़ पुरुष",
+    FEMALE: "सिर्फ़ महिलाएँ",
+    TREX: "सिर्फ़ टी-रेक्स",
+  },
   when: {
     whichDay: "कौन-सा दिन?",
     another: "दूसरी",
@@ -301,6 +314,8 @@ const hi: Messages = {
     pickDayTime: "दिन और समय चुनें।",
     checkDayTime: "दिन और समय जाँच लें।",
     checkDistance: "दूरी किलोमीटर में लिखें, जैसे 5 या 7.5।",
+    pickGender: "पुरुष, महिला या टी-रेक्स चुनें।",
+    notForYou: "आप इसमें शामिल नहीं हो सकते।",
     meetupCancelled: "यह मीटअप रद्द हो गया है।",
     meetupStarted: "यह मीटअप शुरू हो चुका है।",
     placeNotFound: "\"{place}\" नहीं मिला। शहर का नाम जोड़ें, जैसे \"Hyde Park, London\"।",

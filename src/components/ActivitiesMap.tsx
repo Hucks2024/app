@@ -16,6 +16,7 @@ import { useFormatWhen } from "@/components/LocalTime";
 import Avatar from "@/components/Avatar";
 import { countdown, useNow } from "@/components/MeetupList";
 import { TicketHead } from "@/components/Ticket";
+import { FOR_WHO_EMOJI, isForWho } from "@/lib/gender";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
 import { useLocale, useT } from "@/i18n/client";
 import { fill, howLong, plural, typeName } from "@/i18n/format";
@@ -449,6 +450,8 @@ export type MapActivity = {
   distanceKm: number | null;
   durationMins: number | null;
   pace: string | null;
+  // "ALL" (mixed), or the one group it's for (see src/lib/gender.ts).
+  forWho: string;
   category: string;
   // The host's own, for "Something else" (see emojiFor).
   emoji: string | null;
@@ -562,6 +565,11 @@ function MeetupPop({ a }: { a: MapActivity }) {
           </p>
         )}
         <p className="pop-chips">
+          {isForWho(a.forWho) && a.forWho !== "ALL" && (
+            <span className="pop-chip">
+              {FOR_WHO_EMOJI[a.forWho]} {t.forWho[a.forWho]}
+            </span>
+          )}
           <span className="pop-chip">
             🙌 {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })}
           </span>

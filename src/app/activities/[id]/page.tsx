@@ -24,6 +24,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { fill, howLong, plural, rich, typeName } from "@/i18n/format";
 import type { Messages } from "@/i18n/messages";
 import { TicketHead } from "@/components/Ticket";
+import { FOR_WHO_EMOJI, canGo, isForWho } from "@/lib/gender";
 
 const personSelect = {
   id: true,
@@ -104,6 +105,34 @@ export default async function ActivityDetailPage({
   // until it starts.
   const canManage = (isHost || user.role === "ADMIN") && !cancelled && !happened;
   const upcoming = !cancelled && !happened;
+  // Men only, women only or T-Rex only; null for a mixed one.
+  const forWho = isForWho(activity.forWho) && activity.forWho !== "ALL" ? activity.forWho : null;
+
+  // Somebody else's group's meetup, reached by a link: what kind it is and
+  // who it's for, and nothing about where, when or who's going. The host,
+  // the admins and anybody already on it see it all.
+  if (forWho && !canGo(forWho, user.gender) && !isHost && user.role !== "ADMIN" && !myParticipation) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pt-6 pb-10">
+        <div className="ticket">
+          <TicketHead
+            emoji={emojiFor(activity)}
+            kind={activity.category === "SOCIAL" ? undefined : typeName(t, activity.category)}
+          >
+            <h1 className="ticket-title ticket-title-lg">
+              {FOR_WHO_EMOJI[forWho]} {t.forWho[forWho]}
+            </h1>
+          </TicketHead>
+          <div className="ticket-body p-6">
+            <p className="text-base text-slate-800">{t.errors.notForYou}</p>
+            <Link href="/" className="btn-primary mt-4 min-h-12 w-full text-base">
+              {t.post.findMeetup}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const [thumbs, givenByMe] = await Promise.all([
     thumbsFor(prisma, [activity.hostId, ...joined.map((p) => p.userId)]),
@@ -180,6 +209,14 @@ export default async function ActivityDetailPage({
               </dt>
               <dd className="text-slate-800">{activity.location}</dd>
             </div>
+            {forWho && (
+              <div className="flex gap-3">
+                <dt className="w-7 flex-none text-xl" aria-label={t.forWho.label}>
+                  {FOR_WHO_EMOJI[forWho]}
+                </dt>
+                <dd className="font-semibold text-slate-900">{t.forWho[forWho]}</dd>
+              </div>
+            )}
             {activity.findUs && (
               <div className="flex gap-3">
                 <dt className="w-7 flex-none text-xl" aria-label={t.meetup.findGroupLabel}>

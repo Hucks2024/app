@@ -8,6 +8,7 @@ import MeetupList, { kmBetween } from "@/components/MeetupList";
 import type { MapActivity } from "@/components/ActivitiesMap";
 import { useT } from "@/i18n/client";
 import { fill } from "@/i18n/format";
+import { GENDER_EMOJI, type Gender } from "@/lib/gender";
 
 function MapLoading() {
   const t = useT();
@@ -54,6 +55,7 @@ export default function MeetupBoard({
   canPost = false,
   notice,
   stage = "fill",
+  gender = null,
 }: {
   activities: MapActivity[];
   // The logged-out preview: blurred pins, no filters, no list.
@@ -67,8 +69,12 @@ export default function MeetupBoard({
   canPost?: boolean;
   // A tip floating over the top of the map (see MapNotice).
   notice?: React.ReactNode;
+  // Male, female or T-Rex: a button for just their own group's meetups.
+  gender?: Gender | null;
 }) {
   const [day, setDay] = useState<Day>("ANY");
+  // Just the men-only, women-only or T-Rex-only ones for them.
+  const [ownOnly, setOwnOnly] = useState(false);
   // Set once the viewer taps "Near me" and allows it; adds distances.
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
   // The map, or the list laid over it.
@@ -77,11 +83,8 @@ export default function MeetupBoard({
   const t = useT();
 
   const filtered = useMemo(
-    () =>
-      activities.filter(
-        (a) => matchesDay(a.startsAt, day)
-      ),
-    [activities, day]
+    () => activities.filter((a) => matchesDay(a.startsAt, day) && (!ownOnly || a.forWho === gender)),
+    [activities, day, ownOnly, gender]
   );
 
   const total = activities.filter((a) => matchesDay(a.startsAt, day)).length;
@@ -155,13 +158,17 @@ export default function MeetupBoard({
       )}
 
       <div className="map-overlay-top">
-        {/* Three plain buttons: when, not what. The pins already say what. */}
+        {/* Plain buttons: when, not what (the pins already say what), and
+            just their own group's meetups. */}
         <div className="chip-row chip-row-float" role="group" aria-label={t.board.filter}>
           <button
             type="button"
-            onClick={() => setDay("ANY")}
-            className={`chip ${day === "ANY" ? "chip-on" : ""}`}
-            aria-pressed={day === "ANY"}
+            onClick={() => {
+              setDay("ANY");
+              setOwnOnly(false);
+            }}
+            className={`chip ${day === "ANY" && !ownOnly ? "chip-on" : ""}`}
+            aria-pressed={day === "ANY" && !ownOnly}
           >
             {t.board.all} ({activities.length})
           </button>
@@ -181,6 +188,16 @@ export default function MeetupBoard({
           >
             {t.board.thisWeek}
           </button>
+          {gender && (
+            <button
+              type="button"
+              onClick={() => setOwnOnly(!ownOnly)}
+              className={`chip ${ownOnly ? "chip-on" : ""}`}
+              aria-pressed={ownOnly}
+            >
+              {GENDER_EMOJI[gender]} {t.forWho[gender]}
+            </button>
+          )}
         </div>
         {view === "map" && (notice || (far && !farClosed)) && (
           <div className="map-cards">

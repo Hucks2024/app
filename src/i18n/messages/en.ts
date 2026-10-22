@@ -90,6 +90,19 @@ const en = {
     m: "{n}\u00a0min",
     days: { one: "{n}\u00a0day", other: "{n}\u00a0days" },
   },
+  gender: {
+    iAm: "I am",
+    MALE: "Male",
+    FEMALE: "Female",
+    TREX: "T-Rex",
+  },
+  forWho: {
+    label: "Who's it for?",
+    ALL: "Mixed",
+    MALE: "Men only",
+    FEMALE: "Women only",
+    TREX: "T-Rex only",
+  },
   when: {
     whichDay: "Which day?",
     another: "Another",
@@ -301,6 +314,8 @@ const en = {
     pickDayTime: "Pick a day and time.",
     checkDayTime: "Check the day and time.",
     checkDistance: "Type how far in km, like 5 or 7.5.",
+    pickGender: "Pick Male, Female or T-Rex.",
+    notForYou: "You can't join this one.",
     meetupCancelled: "This meetup is cancelled.",
     meetupStarted: "This meetup has started.",
     placeNotFound: "Can't find \"{place}\". Add the town, like \"Hyde Park, London\".",

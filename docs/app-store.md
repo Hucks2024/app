@@ -42,6 +42,7 @@ Tracking: **No**. Data is never used to track people or for adverts.
 | --- | --- | --- | --- |
 | Contact info: email address | Yes | Yes | App functionality |
 | Contact info: name (first name) | Yes | Yes | App functionality |
+| Other data: male, female or T-Rex | Yes | Yes | App functionality (which men-only, women-only and T-Rex-only meetups they see) |
 | User content: photos (one profile photo) | Yes | Yes | App functionality |
 | User content: other (meetups, reports) | Yes | Yes | App functionality |
 | Identifiers: user ID | Yes | Yes | App functionality |

@@ -91,6 +91,19 @@ const fr: Messages = {
     m: "{n}\u00a0min",
     days: { one: "{n}\u00a0jour", other: "{n}\u00a0jours" },
   },
+  gender: {
+    iAm: "Je suis",
+    MALE: "Homme",
+    FEMALE: "Femme",
+    TREX: "T-Rex",
+  },
+  forWho: {
+    label: "Pour qui ?",
+    ALL: "Mixte",
+    MALE: "Hommes seulement",
+    FEMALE: "Femmes seulement",
+    TREX: "T-Rex seulement",
+  },
   when: {
     whichDay: "Quel jour ?",
     another: "Autre",
@@ -301,6 +314,8 @@ const fr: Messages = {
     pickDayTime: "Choisis un jour et une heure.",
     checkDayTime: "Vérifie le jour et l'heure.",
     checkDistance: "Indique la distance en km, comme 5 ou 7,5.",
+    pickGender: "Choisis Homme, Femme ou T-Rex.",
+    notForYou: "Tu ne peux pas rejoindre celle-ci.",
     meetupCancelled: "Cette sortie est annulée.",
     meetupStarted: "Cette sortie a commencé.",
     placeNotFound: "Impossible de trouver « {place} ». Ajoute la ville, comme « Hyde Park, London ».",

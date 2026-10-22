@@ -9,7 +9,7 @@ export const metadata = { title: "Privacy" };
 // plain words. Keep it true: when the app starts keeping something new,
 // it goes in here in the same change.
 
-const UPDATED = "18 October 2026";
+const UPDATED = "22 October 2026";
 
 export default function PrivacyPage() {
   return (
@@ -40,6 +40,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Your account:</strong> email address, first name and member number, to sign you in and show who
               you are. Your password is stored scrambled; nobody can read it, us included.
+            </li>
+            <li>
+              <strong>Male, female or T-Rex:</strong> whichever you pick, so you see mixed meetups and your own
+              group&apos;s, and can post one just for your group. Change it on Me, any time.
             </li>
             <li>
               <strong>Your photo:</strong> the one photo of your face you choose, so the group knows who to look for.

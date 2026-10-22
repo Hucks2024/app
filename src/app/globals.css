@@ -264,6 +264,19 @@ body {
 /* "in 20m" next to a meetup that's about to start. Warm rather than the
    surrounding slate, and it pulses, because the whole point is that this
    one is different from the six below it. */
+/* Who a meetup is for, when it isn't everyone: "👩 Women only". */
+.for-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #5b21b6;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .soon-badge {
   display: inline-flex;
   align-items: center;
@@ -1032,6 +1045,63 @@ button[aria-busy="true"] {
   border-color: #7c3aed;
   background: #7c3aed;
   color: #fff;
+}
+
+/* Male, female or T-Rex, and who a meetup is for: big buttons that are
+   radio buttons underneath. See-through on the purple at sign up; white
+   in a card, filled in when picked, like the day buttons. */
+.gender-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 8px 4px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: rgb(255 255 255 / 0.15);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.gender-pick:active {
+  transform: scale(0.96);
+}
+.gender-pick-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+.gender-pick:has(input:checked) {
+  background: #fff;
+  color: #6d28d9;
+}
+.gender-pick:has(input:focus-visible) {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+.card .gender-pick {
+  border-color: rgb(var(--slate-200));
+  background: #fff;
+  color: rgb(var(--slate-900));
+  font-weight: 600;
+}
+.card .gender-pick:has(input:checked) {
+  border-color: #7c3aed;
+  background: #7c3aed;
+  color: #fff;
+}
+.card .gender-pick:has(input:focus-visible) {
+  outline-color: #7c3aed;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gender-pick {
+    transition: none;
+  }
 }
 
 /* Help questions: the + turns into a − when an answer is open. */

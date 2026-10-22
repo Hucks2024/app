@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth";
 import { getT } from "@/i18n/server";
 import { errorText } from "@/i18n/format";
+import { isGender } from "@/lib/gender";
 
 const profileSchema = z.object({
   name: z
@@ -39,8 +40,14 @@ export async function updateProfileAction(formData: FormData) {
     redirect(`/profile?${errorQuery(errorText(await getT(), parsed.error.issues[0]?.message))}`);
   }
 
+  // Male, female or T-Rex: which group's meetups they see. Anything else
+  // leaves it as it was.
+  const gender = formData.get("gender");
   const prisma = await getPrisma();
-  await prisma.user.update({ where: { id: user.id }, data: { name: parsed.data.name } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { name: parsed.data.name, ...(isGender(gender) ? { gender } : {}) },
+  });
 
   redirect("/profile?saved=1");
 }

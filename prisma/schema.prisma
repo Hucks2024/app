@@ -40,6 +40,12 @@ model User {
   /// "UNSUBMITTED" | "PENDING" | "APPROVED" | "REJECTED"
   verificationStatus String @default("UNSUBMITTED")
 
+  /// "MALE" | "FEMALE" | "TREX", picked at sign up and changed on Me.
+  /// Decides which men-only, women-only and T-Rex-only meetups they see
+  /// and can join (see src/lib/gender.ts). Null for somebody who came in
+  /// with Apple or Google and hasn't said: mixed meetups only.
+  gender String?
+
   /// "ACTIVE" | "SUSPENDED" | "BANNED"
   /// BANNED is for life: three red flags from people who met them at
   /// meetups (see src/lib/moderation.ts). SUSPENDED is an admin's call.
@@ -213,6 +219,10 @@ model RunActivity {
   // src/lib/categories.ts, which is the single source of truth for the
   // labels and map-pin emoji.
   category String @default("RUN")
+
+  // Who can come: "ALL" (mixed), or only "MALE", "FEMALE" or "TREX"
+  // members. A host can only pick mixed or their own.
+  forWho String @default("ALL")
 
   // The host's own emoji for a "Something else" meetup (🧘, 🎳): its pin
   // and badge. Null for every other type, which go by their type's emoji.

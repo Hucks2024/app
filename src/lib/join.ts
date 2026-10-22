@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { isBlockedEitherWay } from "@/lib/blocks";
+import { canGo } from "@/lib/gender";
 
 /** Says someone's going (or on the waitlist, if it's full), and where to
  * send them after. Shared by "I'm in" and the photo page, which finishes
@@ -15,6 +16,10 @@ export async function joinMeetup(prisma: PrismaClient, userId: string, activityI
   if (activity.startsAt <= new Date() || activity.cancelledAt) return `/activities/${activityId}`;
   // Blocked either way: their meetups aren't there for you to join.
   if (await isBlockedEitherWay(prisma, userId, activity.hostId)) return "/";
+  // A men-only, women-only or T-Rex-only meetup, for somebody else: its
+  // page says so.
+  const me = await prisma.user.findUnique({ where: { id: userId }, select: { gender: true } });
+  if (!canGo(activity.forWho, me?.gender)) return `/activities/${activityId}`;
 
   const alreadyIn = activity.participations.some((p) => p.userId === userId);
   const isFull = !!activity.maxParticipants && activity.participations.length >= activity.maxParticipants;

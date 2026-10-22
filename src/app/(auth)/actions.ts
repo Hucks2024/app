@@ -30,6 +30,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { errorText, fill, plural } from "@/i18n/format";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
+import { isGender } from "@/lib/gender";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -111,6 +112,8 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     // for abuse) and the privacy policy. Checked here as well as in the
     // browser, which a script could skip.
     if (formData.get("agree") !== "on") return { error: fill(t.errors.agree, { age: SITE.minimumAge }) };
+    const gender = formData.get("gender");
+    if (!isGender(gender)) return { error: t.errors.pickGender };
     const { name, email, password } = parsed.data;
     if (isThrowawayEmail(email)) return { error: t.errors.throwaway };
     // Proof the form was filled in by hand (see src/lib/bots.ts).
@@ -133,6 +136,7 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
         name,
         email,
         passwordHash: await hashPassword(password),
+        gender,
         emailVerifiedAt: confirm ? null : new Date(),
       },
     });

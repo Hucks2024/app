@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { refreshVerified, thumbsFor } from "@/lib/trust";
 import { goingCounts, liveMeetup } from "@/lib/meetups";
 import { blockedEitherWay } from "@/lib/blocks";
+import { isGender, meetupsFor } from "@/lib/gender";
 import MeetupBoard from "@/components/MeetupBoard";
 import MapNotice from "@/components/MapNotice";
 import { getT } from "@/i18n/server";
@@ -24,8 +25,15 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     // Not the meetups of anyone they've blocked, or who's blocked them.
     blockedEitherWay(prisma, user.id),
     prisma.runActivity.findMany({
-      // Only the ones with a pin: the map has nowhere to put the rest.
-      where: { startsAt: { gte: now }, ...liveMeetup, latitude: { not: null }, longitude: { not: null } },
+      // Only the ones with a pin: the map has nowhere to put the rest. And
+      // only ones they can go to: mixed, and their own group's.
+      where: {
+        startsAt: { gte: now },
+        ...liveMeetup,
+        ...meetupsFor(user.gender),
+        latitude: { not: null },
+        longitude: { not: null },
+      },
       orderBy: { startsAt: "asc" },
       select: {
         id: true,
@@ -40,6 +48,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
         pace: true,
         category: true,
         emoji: true,
+        forWho: true,
         afterSpot: true,
         maxParticipants: true,
       },
@@ -79,6 +88,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
     pace: a.pace,
     category: a.category,
     emoji: a.emoji,
+    forWho: a.forWho,
     afterSpot: a.afterSpot,
     joinedCount: going.get(a.id) ?? 0,
     maxParticipants: a.maxParticipants,
@@ -102,6 +112,7 @@ export default async function RunsScreen({ user }: { user: CurrentUser }) {
         activities={mapActivities}
         post={{ href: "/activities/new", label: verified ? t.common.postMeetup : t.board.howToPost }}
         canPost={verified}
+        gender={isGender(user.gender) ? user.gender : null}
         notice={noticeFor(t, verified, justVerified, toThank)}
       />
     </>

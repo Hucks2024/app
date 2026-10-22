@@ -56,6 +56,7 @@ export default async function Landing() {
       pace: null,
       category: a.category,
       emoji: a.emoji,
+      forWho: "ALL",
       afterSpot: null,
       // Who's going is members-only. The logged-out map shows that
       // meetups exist, never who or how many are at them.

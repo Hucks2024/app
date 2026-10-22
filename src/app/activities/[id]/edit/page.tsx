@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getPrisma } from "@/lib/db";
 import MeetupForm from "@/components/MeetupForm";
+import { forWhoChoices, isForWho } from "@/lib/gender";
 import { getT } from "@/i18n/server";
 
 export async function generateMetadata() {
@@ -14,7 +15,7 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
   const user = await requireUser();
   const { id } = await params;
   const [prisma, t] = await Promise.all([getPrisma(), getT()]);
-  const a = await prisma.runActivity.findUnique({ where: { id } });
+  const a = await prisma.runActivity.findUnique({ where: { id }, include: { host: { select: { gender: true } } } });
   if (!a || (a.hostId !== user.id && user.role !== "ADMIN")) notFound();
   if (a.cancelledAt || a.startsAt <= new Date()) redirect(`/activities/${id}`);
 
@@ -22,6 +23,9 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
     <div className="mx-auto max-w-xl px-4 py-12">
       <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">{t.post.editMeetup}</h1>
       <MeetupForm
+        // The host's own choices, whoever is editing; and what it has now,
+        // even if the host has since changed theirs.
+        forWho={[...new Set([...forWhoChoices(a.host.gender), ...(isForWho(a.forWho) ? [a.forWho] : [])])]}
         initial={{
           id: a.id,
           title: a.title,
@@ -36,6 +40,7 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
           pace: a.pace,
           description: a.description,
           emoji: a.emoji,
+          forWho: a.forWho,
         }}
       />
     </div>

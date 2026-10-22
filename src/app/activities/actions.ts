@@ -13,6 +13,7 @@ import { geocodeLocation } from "@/lib/geocode";
 import { CATEGORY_VALUES, DURATIONS, categoryFor, kmFrom, oneEmoji } from "@/lib/categories";
 import { NOT_NICE, NO_ADS, looksLikeAdvert, looksOffensive } from "@/lib/bots";
 import { block } from "@/lib/blocks";
+import { forWhoChoices } from "@/lib/gender";
 import { getT } from "@/i18n/server";
 import { errorText, fill } from "@/i18n/format";
 
@@ -145,6 +146,21 @@ export async function saveMeetupAction(
   // route. A Strava route, a place to go after and a cap are kept as an
   // older meetup had them; the form doesn't ask for them any more.
   const route = categoryFor(parsed.data.category).route;
+
+  // Mixed, or the host's own group: a man can't post a women-only meetup.
+  // An edit can keep what it had, even if the host has since changed
+  // theirs, and one that doesn't say keeps it too.
+  const hostGender = existing
+    ? (await prisma.user.findUnique({ where: { id: existing.hostId }, select: { gender: true } }))?.gender
+    : user.gender;
+  const asked = formData.get("forWho");
+  const forWho =
+    typeof asked !== "string"
+      ? (existing?.forWho ?? "ALL")
+      : (forWhoChoices(hostGender) as string[]).includes(asked) || asked === existing?.forWho
+        ? asked
+        : "ALL";
+
   const fields = {
     title: parsed.data.title,
     category: parsed.data.category,
@@ -160,6 +176,7 @@ export async function saveMeetupAction(
     pace: route ? (parsed.data.pace ?? null) : null,
     // Only "Something else" has its own; every other type has one already.
     emoji: parsed.data.category === "SOCIAL" ? parsed.data.emoji : null,
+    forWho,
     maxParticipants: existing?.maxParticipants ?? null,
     stravaUrl: route ? (existing?.stravaUrl ?? null) : null,
   };

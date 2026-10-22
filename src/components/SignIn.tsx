@@ -12,6 +12,8 @@ import {
   type AuthState,
 } from "@/app/(auth)/actions";
 import { useT } from "@/i18n/client";
+import PickOne from "@/components/PickOne";
+import { GENDERS, GENDER_EMOJI } from "@/lib/gender";
 import { fill, rich } from "@/i18n/format";
 
 // The buttons under "welcome to packmates": one big tap to get in.
@@ -427,6 +429,16 @@ export default function SignIn({
             autoFocus
             className="pill-input"
           />
+          {/* Which meetups they see: mixed ones, and their own group's.
+              Changed later on Me. */}
+          <fieldset>
+            <legend className="field-label mb-2">{t.gender.iAm}</legend>
+            <PickOne
+              name="gender"
+              required
+              options={GENDERS.map((g) => ({ value: g, emoji: GENDER_EMOJI[g], label: t.gender[g] }))}
+            />
+          </fieldset>
         </>
       )}
       <label htmlFor="signin-password" className="field-label">
