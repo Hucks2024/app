@@ -114,8 +114,9 @@ body {
    part of the drop (the white disc ends 33px down and the drop is still
    about 27px wide there). */
 /* With Today picked: the start time on a tag at the top of the pin, the
-   same look as the number going at the bottom. Wider than the pin for a
-   12-hour clock, so it hangs over both sides. */
+   number going at the bottom turned inside out: white with black writing
+   and a black edge. Wider than the pin for a 12-hour clock, so it hangs
+   over both sides. */
 .map-pin-time {
   position: absolute;
   top: -11px;
@@ -124,9 +125,9 @@ body {
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: #0f172a;
-  color: #fff;
-  border: 2px solid #fff;
+  background: #fff;
+  color: #0f172a;
+  border: 2px solid #0f172a;
   font-size: 11px;
   font-weight: 700;
   line-height: 14px;
