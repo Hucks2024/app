@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isToday, isWithinInterval, addDays, startOfDay } from "date-fns";
@@ -72,7 +72,23 @@ export default function MeetupBoard({
   // Male, female or T-Rex: a button for just their own group's meetups.
   gender?: Gender | null;
 }) {
-  const [day, setDay] = useState<Day>("ANY");
+  // Members open on what's on soonest: today, or with nothing on today,
+  // this week, or with nothing this week either, everything. Worked out
+  // in the phone, which knows what day it is where it is; until then (a
+  // moment) nothing's picked and the map waits. The front door's preview
+  // shows everything.
+  const [day, setDay] = useState<Day | null>(restricted ? "ANY" : null);
+  useEffect(() => {
+    setDay(
+      (now) =>
+        now ??
+        (activities.some((a) => matchesDay(a.startsAt, "TODAY"))
+          ? "TODAY"
+          : activities.some((a) => matchesDay(a.startsAt, "WEEK"))
+            ? "WEEK"
+            : "ANY")
+    );
+  }, [activities]);
   // Just the men-only, women-only or T-Rex-only ones for them.
   const [ownOnly, setOwnOnly] = useState(false);
   // Set once the viewer taps "Near me" and allows it; adds distances.
@@ -83,11 +99,11 @@ export default function MeetupBoard({
   const t = useT();
 
   const filtered = useMemo(
-    () => activities.filter((a) => matchesDay(a.startsAt, day) && (!ownOnly || a.forWho === gender)),
+    () => activities.filter((a) => matchesDay(a.startsAt, day ?? "ANY") && (!ownOnly || a.forWho === gender)),
     [activities, day, ownOnly, gender]
   );
 
-  const total = activities.filter((a) => matchesDay(a.startsAt, day)).length;
+  const total = activities.filter((a) => matchesDay(a.startsAt, day ?? "ANY")).length;
 
   // Once we know where they are: how far the nearest meetup is. Far away
   // means this app hasn't reached them yet, which is worth saying plainly
@@ -131,13 +147,15 @@ export default function MeetupBoard({
       {/* Never swapped out for a card. The map handles having nothing on
           it, and taking it away because a filter matched nothing makes the
           app look broken rather than quiet. */}
-      <ActivitiesMap
-        activities={filtered}
-        post={post}
-        full
-        showTimes={day === "TODAY"}
-        onLocated={(lat, lng) => setHere({ lat, lng })}
-      />
+      {day && (
+        <ActivitiesMap
+          activities={filtered}
+          post={post}
+          full
+          showTimes={day === "TODAY"}
+          onLocated={(lat, lng) => setHere({ lat, lng })}
+        />
+      )}
 
       {view === "list" && (
         <section className="list-panel" aria-labelledby="coming-up">
@@ -159,20 +177,9 @@ export default function MeetupBoard({
       )}
 
       <div className="map-overlay-top">
-        {/* Plain buttons: when, not what (the pins already say what), and
-            just their own group's meetups. */}
+        {/* Plain buttons: when, soonest first, not what (the pins already
+            say what), and just their own group's meetups. */}
         <div className="chip-row chip-row-float" role="group" aria-label={t.board.filter}>
-          <button
-            type="button"
-            onClick={() => {
-              setDay("ANY");
-              setOwnOnly(false);
-            }}
-            className={`chip ${day === "ANY" && !ownOnly ? "chip-on" : ""}`}
-            aria-pressed={day === "ANY" && !ownOnly}
-          >
-            {t.board.all} ({activities.length})
-          </button>
           <button
             type="button"
             onClick={() => setDay(day === "TODAY" ? "ANY" : "TODAY")}
@@ -188,6 +195,17 @@ export default function MeetupBoard({
             aria-pressed={day === "WEEK"}
           >
             {t.board.thisWeek}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDay("ANY");
+              setOwnOnly(false);
+            }}
+            className={`chip ${day === "ANY" && !ownOnly ? "chip-on" : ""}`}
+            aria-pressed={day === "ANY" && !ownOnly}
+          >
+            {t.board.all} ({activities.length})
           </button>
           {/* Just the emoji, so the row fits on a phone; the words are
               for screen readers. */}
