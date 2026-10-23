@@ -242,11 +242,12 @@ export default function MeetupBoard({
         )}
       </div>
 
-      {/* Post, bottom left, opposite Near me: on the map, where people
-          think "there's nothing near me, I'll start one". Somebody who
-          can't post yet finds out how on the page it goes to. */}
+      {/* Post, bottom left, opposite Near me and dressed the same: on the
+          map, where people think "there's nothing near me, I'll start
+          one". Somebody who can't post yet finds out how on the page it
+          goes to. */}
       {view === "map" && (
-        <Link href="/activities/new" className="post-float">
+        <Link href="/activities/new" className="locate-btn post-float">
           <svg
             viewBox="0 0 24 24"
             width="22"
