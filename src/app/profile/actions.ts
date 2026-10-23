@@ -18,6 +18,7 @@ import {
 import { getT } from "@/i18n/server";
 import { errorText } from "@/i18n/format";
 import { isGender } from "@/lib/gender";
+import { rememberGender } from "@/lib/deleted-email";
 
 const profileSchema = z.object({
   name: z
@@ -118,6 +119,9 @@ export async function deleteAccountAction() {
       );
     }
   }
+  // Their male, female or T-Rex stays with a fingerprint of their email,
+  // so joining again with it gets the same (see src/lib/deleted-email.ts).
+  await rememberGender(prisma, user.email, user.gender);
   await prisma.user.delete({ where: { id: user.id } });
   await destroySession();
   redirect("/");

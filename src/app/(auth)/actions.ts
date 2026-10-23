@@ -32,6 +32,7 @@ import { errorText, fill, plural } from "@/i18n/format";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { isGender } from "@/lib/gender";
+import { genderFromBefore } from "@/lib/deleted-email";
 import { passedPersonCheck } from "@/lib/turnstile";
 
 // One way in for email, in two steps: the address first, then either the
@@ -114,8 +115,8 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     // for abuse) and the privacy policy. Checked here as well as in the
     // browser, which a script could skip.
     if (formData.get("agree") !== "on") return { error: fill(t.errors.agree, { age: SITE.minimumAge }) };
-    const gender = formData.get("gender");
-    if (!isGender(gender)) return { error: t.errors.pickGender };
+    const picked = formData.get("gender");
+    if (!isGender(picked)) return { error: t.errors.pickGender };
     const { name, email, password } = parsed.data;
     if (isThrowawayEmail(email)) return { error: t.errors.throwaway };
     // Proof the form was filled in by hand (see src/lib/bots.ts).
@@ -139,6 +140,11 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
     // whoever owns the address can take it back with "Forgot your
     // password?". Only a copy of the app with no email set up lets people
     // straight in.
+    // An email that had an account before gets what it had picked then,
+    // whatever was picked now: it's for good, deleting or not. Not said
+    // here, as anybody can type anybody's email; the owner sees it on Me
+    // once they're in.
+    const gender = (await genderFromBefore(prisma, email)) ?? picked;
     const confirm = canSendEmail();
     const user = await prisma.user.create({
       data: {

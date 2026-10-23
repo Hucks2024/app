@@ -24,7 +24,7 @@ export default function PrivacyPage() {
             <li>We keep what the app needs to work, and nothing else.</li>
             <li>No adverts, no tracking, no selling your data. Ever.</li>
             <li>Your location stays on your phone.</li>
-            <li>Delete your account and it&apos;s gone.</li>
+            <li>Delete your account and it&apos;s gone, bar one scrambled line (see How long we keep it).</li>
           </ul>
         </Section>
 
@@ -117,6 +117,11 @@ export default function PrivacyPage() {
           <p>
             Until you delete your account: <strong>Me</strong> → <strong>Settings</strong> → <strong>Delete my account</strong>. That removes your
             account, photo, the meetups you host and your places on others, straight away. Server logs go within weeks.
+          </p>
+          <p className="mt-3">
+            One thing stays: a scrambled fingerprint of your email (not the email itself) with whether you were male,
+            female or T-Rex. If that email joins again, it gets the same, so nobody can delete and rejoin to see
+            meetups meant for another group.
           </p>
         </Section>
 

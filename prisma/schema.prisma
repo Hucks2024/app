@@ -318,3 +318,14 @@ model Block {
   @@unique([blockerId, blockedId])
   @@index([blockedId])
 }
+
+// Somebody who deleted their account: a fingerprint of their email (never
+// the email itself, see src/lib/deleted-email.ts) and the
+// male, female or T-Rex they'd picked. The same email joining again gets
+// the same back, so deleting and rejoining isn't a way round it being for
+// good. Nothing else about them is kept.
+model DeletedEmail {
+  emailHash String   @id
+  gender    String
+  deletedAt DateTime @default(now())
+}
