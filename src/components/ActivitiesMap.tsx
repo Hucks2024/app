@@ -34,7 +34,7 @@ import type { Messages } from "@/i18n/messages/en";
 //
 // The pin says what it is and how many are going, and on a tag at its top
 // when: the time it starts if that's today, or how many days off it is
-// ("1 day", "5 days"). Pace and duration used to hang underneath every pin
+// ("in 1 day", "in 5 days"). Pace and duration used to hang underneath every pin
 // as well; they belong in the list, where there's room to read them,
 // rather than on a map where eight of them at once is just noise.
 // Big enough to spot at a glance and hit with a thumb; must match .map-pin
@@ -635,12 +635,12 @@ export default function ActivitiesMap({
     const map = new Map<string, L.DivIcon>();
     const now = new Date();
     for (const a of activities) {
-      // Days by the calendar on this phone: tomorrow is "1 day" even if
+      // Days by the calendar on this phone: tomorrow is "in 1 day" even if
       // it's only a few hours off. None on the visitors' map, which
       // doesn't get to know when.
       const start = a.startsAt ? new Date(a.startsAt) : null;
       const days = start ? differenceInCalendarDays(start, now) : 0;
-      const tag = !start ? null : days < 1 ? clockTime(start, prefs) : plural(t.duration.days, days, lang);
+      const tag = !start ? null : days < 1 ? clockTime(start, prefs) : plural(t.map.inDays, days, lang);
       map.set(a.id, emojiIcon(emojiFor(a), a.joinedCount, tag));
     }
     return map;

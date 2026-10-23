@@ -160,6 +160,7 @@ const fr: Messages = {
     host: "Organisé par {name}",
   },
   map: {
+    inDays: { one: "dans {n} jour", other: "dans {n} jours" },
     blocked: "La localisation est bloquée. Autorise-la dans les Réglages du téléphone, puis réessaie.",
     tooLong: "Trop long. Réessaie.",
     notFound: "Impossible de te trouver. Réessaie.",

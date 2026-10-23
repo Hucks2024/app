@@ -159,6 +159,8 @@ const en = {
     host: "Host {name}",
   },
   map: {
+    // On the tag at the top of a pin, for a meetup after today.
+    inDays: { one: "in {n} day", other: "in {n} days" },
     blocked: "Location is blocked. Allow it in your phone's Settings, then try again.",
     tooLong: "Took too long. Try again.",
     notFound: "Couldn't find you. Try again.",

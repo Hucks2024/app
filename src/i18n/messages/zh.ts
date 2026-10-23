@@ -158,6 +158,7 @@ const zh: Messages = {
     host: "发起人 {name}",
   },
   map: {
+    inDays: { one: "{n} 天后", other: "{n} 天后" },
     blocked: "定位已关闭。请在手机「设置」里允许定位，然后再试一次。",
     tooLong: "时间太长了，再试一次。",
     notFound: "找不到你的位置，再试一次。",

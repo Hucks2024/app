@@ -159,6 +159,7 @@ const es: Messages = {
     host: "Organiza {name}",
   },
   map: {
+    inDays: { one: "en {n} día", other: "en {n} días" },
     blocked: "La ubicación está bloqueada. Permítela en los Ajustes del móvil y vuelve a intentarlo.",
     tooLong: "Ha tardado demasiado. Inténtalo de nuevo.",
     notFound: "No te encontramos. Inténtalo de nuevo.",
