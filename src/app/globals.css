@@ -1084,6 +1084,14 @@ button[aria-busy="true"] {
   outline: 3px solid #fff;
   outline-offset: 2px;
 }
+/* Not one they can pick: there, but faded, and nothing happens. */
+.gender-pick:has(input:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.gender-pick:has(input:disabled):active {
+  transform: none;
+}
 .card .gender-pick {
   border-color: rgb(var(--slate-200));
   background: #fff;

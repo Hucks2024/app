@@ -85,7 +85,7 @@ export default async function NewActivityPage({
         </p>
       )}
 
-      <MeetupForm />
+      <MeetupForm hostGender={user.gender} />
     </div>
   );
 }

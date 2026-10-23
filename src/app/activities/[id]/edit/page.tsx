@@ -14,7 +14,7 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
   const user = await requireUser();
   const { id } = await params;
   const [prisma, t] = await Promise.all([getPrisma(), getT()]);
-  const a = await prisma.runActivity.findUnique({ where: { id } });
+  const a = await prisma.runActivity.findUnique({ where: { id }, include: { host: { select: { gender: true } } } });
   if (!a || (a.hostId !== user.id && user.role !== "ADMIN")) notFound();
   if (a.cancelledAt || a.startsAt <= new Date()) redirect(`/activities/${id}`);
 
@@ -22,6 +22,8 @@ export default async function EditMeetupPage({ params }: { params: Promise<{ id:
     <div className="mx-auto max-w-xl px-4 py-12">
       <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">{t.post.editMeetup}</h1>
       <MeetupForm
+        // The host's, whoever is editing: it's their meetup.
+        hostGender={a.host.gender}
         initial={{
           id: a.id,
           title: a.title,

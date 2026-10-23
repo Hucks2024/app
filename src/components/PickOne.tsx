@@ -11,12 +11,15 @@ export default function PickOne({
   defaultValue,
   required = false,
   onPick,
+  off = [],
 }: {
   name: string;
   options: PickOption[];
   defaultValue?: string | null;
   required?: boolean;
   onPick?: (value: string) => void;
+  // Shown, greyed out, and can't be picked.
+  off?: string[];
 }) {
   return (
     <div className={`grid gap-2 ${options.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
@@ -28,6 +31,7 @@ export default function PickOne({
             value={o.value}
             defaultChecked={o.value === defaultValue}
             required={required}
+            disabled={off.includes(o.value)}
             onChange={onPick ? () => onPick(o.value) : undefined}
             className="sr-only"
           />
