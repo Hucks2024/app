@@ -104,6 +104,7 @@ const fr: Messages = {
   },
   forWho: {
     label: "Pour qui ?",
+    forAll: "Pour tous",
     ALL: "Tous",
     MALE: "Hommes seulement",
     FEMALE: "Femmes seulement",

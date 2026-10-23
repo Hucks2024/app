@@ -188,14 +188,18 @@ export default function MeetupBoard({
           >
             {t.board.thisWeek}
           </button>
+          {/* Just the emoji, so the row fits on a phone; the words are
+              for screen readers. */}
           {gender && (
             <button
               type="button"
               onClick={() => setOwnOnly(!ownOnly)}
-              className={`chip ${ownOnly ? "chip-on" : ""}`}
+              className={`chip chip-emoji ${ownOnly ? "chip-on" : ""}`}
               aria-pressed={ownOnly}
+              aria-label={t.forWho[gender]}
+              title={t.forWho[gender]}
             >
-              {GENDER_EMOJI[gender]} {t.forWho[gender]}
+              {GENDER_EMOJI[gender]}
             </button>
           )}
         </div>

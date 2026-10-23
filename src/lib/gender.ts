@@ -2,6 +2,7 @@
 // says which they are when they join, for good; a host keeps a meetup to
 // their own group or opens it to all. A meetup for another group isn't on
 // your map at all, and can't be joined.
+import type { Messages } from "@/i18n/messages/en";
 
 export const GENDERS = ["MALE", "FEMALE", "TREX"] as const;
 export type Gender = (typeof GENDERS)[number];
@@ -14,7 +15,8 @@ export const GENDER_EMOJI: Record<Gender, string> = { MALE: "👨", FEMALE: "�
 
 /** Who a meetup is for: everyone, or one group. */
 export type ForWho = "ALL" | Gender;
-export const FOR_WHO_EMOJI: Record<ForWho, string> = { ALL: "👥", ...GENDER_EMOJI };
+// All of them, for all.
+export const FOR_WHO_EMOJI: Record<ForWho, string> = { ALL: "👨👩🦖", ...GENDER_EMOJI };
 
 export function isForWho(value: unknown): value is ForWho {
   return value === "ALL" || isGender(value);
@@ -28,6 +30,13 @@ export const FOR_WHO_PICKS: ForWho[] = ["MALE", "FEMALE", "TREX", "ALL"];
  * post a women-only meetup. */
 export function forWhoChoices(gender: string | null | undefined): ForWho[] {
   return isGender(gender) ? ["ALL", gender] : ["ALL"];
+}
+
+/** Who a meetup is for, for its ticket: the emoji, and words for screen
+ * readers. */
+export function whoFor(t: Messages, forWho: string): { emoji: string; label: string } {
+  const f = isForWho(forWho) ? forWho : "ALL";
+  return { emoji: FOR_WHO_EMOJI[f], label: f === "ALL" ? t.forWho.forAll : t.forWho[f] };
 }
 
 /** Whether somebody can go: one for all, anyone; the rest, the group

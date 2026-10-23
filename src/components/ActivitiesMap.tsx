@@ -16,7 +16,7 @@ import { useFormatWhen } from "@/components/LocalTime";
 import Avatar from "@/components/Avatar";
 import { countdown, useNow } from "@/components/MeetupList";
 import { TicketHead } from "@/components/Ticket";
-import { FOR_WHO_EMOJI, isForWho } from "@/lib/gender";
+import { whoFor } from "@/lib/gender";
 import { MAP_CREDITS, MAP_SOURCE_ID, mapImage, mapStyleFor } from "@/lib/map-style";
 import { useLocale, useT } from "@/i18n/client";
 import { fill, howLong, plural, typeName } from "@/i18n/format";
@@ -537,6 +537,7 @@ function MeetupPop({ a }: { a: MapActivity }) {
         emoji={emojiFor(a)}
         // "Something else" says nothing the title doesn't.
         kind={a.category === "SOCIAL" ? undefined : typeName(t, a.category)}
+        who={whoFor(t, a.forWho)}
       >
         <p className="ticket-title">{a.title}</p>
       </TicketHead>
@@ -565,11 +566,6 @@ function MeetupPop({ a }: { a: MapActivity }) {
           </p>
         )}
         <p className="pop-chips">
-          {isForWho(a.forWho) && a.forWho !== "ALL" && (
-            <span className="pop-chip">
-              {FOR_WHO_EMOJI[a.forWho]} {t.forWho[a.forWho]}
-            </span>
-          )}
           <span className="pop-chip">
             🙌 {fill(t.map.inCount, { n: a.maxParticipants ? `${a.joinedCount} / ${a.maxParticipants}` : a.joinedCount })}
           </span>

@@ -103,6 +103,7 @@ const es: Messages = {
   },
   forWho: {
     label: "¿Para quién?",
+    forAll: "Para todos",
     ALL: "Todos",
     MALE: "Solo hombres",
     FEMALE: "Solo mujeres",

@@ -27,7 +27,7 @@ import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import PickOne from "@/components/PickOne";
-import { GENDERS, GENDER_EMOJI, isGender } from "@/lib/gender";
+import { GENDERS, GENDER_EMOJI, isGender, whoFor } from "@/lib/gender";
 
 export async function generateMetadata() {
   return { title: (await getT()).common.me };
@@ -44,7 +44,9 @@ export default async function ProfilePage({
 
   const [prisma, t] = await Promise.all([getPrisma(), getT()]);
   const now = new Date();
-  const meetup = { select: { id: true, title: true, startsAt: true, category: true, emoji: true, cancelledAt: true } };
+  const meetup = {
+    select: { id: true, title: true, startsAt: true, category: true, emoji: true, forWho: true, cancelledAt: true },
+  };
 
   // None of these wait on each other, so they're all asked for at once.
   const [memberNumber, { verified }, thumbs, upcoming, past, blocks, app] = await Promise.all([
@@ -288,7 +290,15 @@ export default async function ProfilePage({
 }
 
 type MeetupRow = {
-  activity: { id: string; title: string; startsAt: Date; category: string; emoji: string | null; cancelledAt: Date | null };
+  activity: {
+    id: string;
+    title: string;
+    startsAt: Date;
+    category: string;
+    emoji: string | null;
+    forWho: string;
+    cancelledAt: Date | null;
+  };
 };
 
 function MeetupLinks({
@@ -311,7 +321,7 @@ function MeetupLinks({
         {rows.map(({ activity: a }) => (
           <li key={a.id}>
             <Link href={`/activities/${a.id}${toPeople ? "#people" : ""}`} className="ticket ticket-sm">
-              <TicketRow emoji={emojiFor(a)} off={a.cancelledAt != null} small>
+              <TicketRow emoji={emojiFor(a)} off={a.cancelledAt != null} small who={whoFor(t, a.forWho)}>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-slate-900">{a.title}</span>
                   <span className="block text-sm text-slate-500">

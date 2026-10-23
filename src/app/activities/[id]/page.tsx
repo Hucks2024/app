@@ -24,7 +24,7 @@ import { getLocale, getT } from "@/i18n/server";
 import { fill, howLong, plural, rich, typeName } from "@/i18n/format";
 import type { Messages } from "@/i18n/messages";
 import { TicketHead } from "@/components/Ticket";
-import { FOR_WHO_EMOJI, canGo, isForWho } from "@/lib/gender";
+import { FOR_WHO_EMOJI, canGo, isForWho, whoFor } from "@/lib/gender";
 
 const personSelect = {
   id: true,
@@ -188,6 +188,7 @@ export default async function ActivityDetailPage({
           // "Something else" says nothing the title doesn't.
           kind={activity.category === "SOCIAL" ? undefined : typeName(t, activity.category)}
           off={cancelled}
+          who={whoFor(t, activity.forWho)}
         >
           <h1 className="ticket-title ticket-title-lg">{activity.title}</h1>
         </TicketHead>

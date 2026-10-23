@@ -264,19 +264,6 @@ body {
 /* "in 20m" next to a meetup that's about to start. Warm rather than the
    surrounding slate, and it pulses, because the whole point is that this
    one is different from the six below it. */
-/* Who a meetup is for, when it isn't everyone: "👩 Women only". */
-.for-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: #f5f3ff;
-  color: #5b21b6;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
 .soon-badge {
   display: inline-flex;
   align-items: center;
@@ -1239,10 +1226,19 @@ body:has(.map-screen) {
 .map-overlay-top > * {
   pointer-events: auto;
 }
+/* A little tighter over the map than elsewhere, so All, Today, This week
+   and the 👨 / 👩 / 🦖 button fit across a phone without scrolling. */
 .chip-row-float {
-  padding: 12px 12px 10px;
+  gap: 6px;
+  padding: 12px 10px 10px;
+}
+/* "👨": just the emoji (see MeetupBoard), a bit bigger and tighter. */
+.chip-row .chip.chip-emoji {
+  padding: 0 10px;
+  font-size: 22px;
 }
 .chip-row-float .chip {
+  padding: 0 12px;
   background: #fff;
   color: rgb(var(--slate-800));
   border-color: transparent;
@@ -1446,6 +1442,7 @@ body:has(.map-screen) {
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
 }
 .ticket-emoji {
+  position: relative;
   display: flex;
   flex: none;
   align-items: center;
@@ -1457,6 +1454,27 @@ body:has(.map-screen) {
   font-size: 30px;
   line-height: 1;
   box-shadow: 0 6px 14px rgb(46 16 101 / 0.35);
+}
+/* Who it's for (👨, 👩, 🦖, or all three for all): a white tag hanging
+   off the bottom of the emoji tile. */
+.ticket-for {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(46 16 101 / 0.3);
+}
+.ticket-row-sm .ticket-for {
+  bottom: -7px;
+  padding: 0 4px;
+  font-size: 10px;
 }
 .ticket-kind {
   font-size: 13px;

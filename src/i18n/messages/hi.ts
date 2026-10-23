@@ -104,6 +104,7 @@ const hi: Messages = {
   },
   forWho: {
     label: "किसके लिए?",
+    forAll: "सबके लिए",
     ALL: "सभी",
     MALE: "सिर्फ़ पुरुष",
     FEMALE: "सिर्फ़ महिलाएँ",

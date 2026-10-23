@@ -103,6 +103,7 @@ const en = {
   },
   forWho: {
     label: "Who's it for?",
+    forAll: "For all",
     ALL: "All",
     MALE: "Men only",
     FEMALE: "Women only",

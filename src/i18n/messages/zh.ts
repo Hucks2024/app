@@ -102,6 +102,7 @@ const zh: Messages = {
   },
   forWho: {
     label: "谁可以来？",
+    forAll: "所有人都可以来",
     ALL: "所有人",
     MALE: "仅限男性",
     FEMALE: "仅限女性",
