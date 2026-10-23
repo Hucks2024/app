@@ -319,6 +319,7 @@ const zh: Messages = {
     checkDayTime: "检查一下日期和时间。",
     checkDistance: "填公里数，比如 5 或 7.5。",
     pickGender: "选男、女或霸王龙。",
+    personCheck: "没能确认你是真人。请再试一次。",
     notForYou: "这个活动你不能参加。",
     meetupCancelled: "这个活动已取消。",
     meetupStarted: "这个活动已经开始了。",

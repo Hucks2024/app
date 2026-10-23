@@ -9,7 +9,7 @@ export const metadata = { title: "Privacy" };
 // plain words. Keep it true: when the app starts keeping something new,
 // it goes in here in the same change.
 
-const UPDATED = "22 October 2026";
+const UPDATED = "23 October 2026";
 
 export default function PrivacyPage() {
   return (
@@ -81,8 +81,8 @@ export default function PrivacyPage() {
           <p>A few services run parts of {SITE.name} for us. Each only uses your data to do that job:</p>
           <ul className="mt-2 list-disc space-y-2 pl-5">
             <li>
-              <strong>Cloudflare</strong> runs the app and makes iPhone photos smaller. Its servers keep short-lived
-              logs, including IP addresses.
+              <strong>Cloudflare</strong> runs the app and makes iPhone photos smaller, and checks that people
+              joining aren&apos;t bots. Its servers keep short-lived logs, including IP addresses.
             </li>
             <li>
               <strong>Turso</strong> stores the database: accounts, photos and meetups.

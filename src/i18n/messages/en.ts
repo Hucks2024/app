@@ -321,6 +321,7 @@ const en = {
     checkDayTime: "Check the day and time.",
     checkDistance: "Type how far in km, like 5 or 7.5.",
     pickGender: "Pick Male, Female or T-Rex.",
+    personCheck: "Couldn't check you're a person. Try again.",
     notForYou: "You can't join this one.",
     meetupCancelled: "This meetup is cancelled.",
     meetupStarted: "This meetup has started.",

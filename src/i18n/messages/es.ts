@@ -320,6 +320,7 @@ const es: Messages = {
     checkDayTime: "Revisa el día y la hora.",
     checkDistance: "Escribe la distancia en km, como 5 o 7,5.",
     pickGender: "Elige Hombre, Mujer o T-Rex.",
+    personCheck: "No pudimos comprobar que eres una persona. Inténtalo de nuevo.",
     notForYou: "No puedes unirte a este.",
     meetupCancelled: "Este plan está cancelado.",
     meetupStarted: "Este plan ya ha empezado.",

@@ -3,6 +3,7 @@
 import { z } from "zod";
 import type { PrismaClient, User } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getPrisma } from "@/lib/db";
 import {
   createSession,
@@ -31,6 +32,7 @@ import { errorText, fill, plural } from "@/i18n/format";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { isGender } from "@/lib/gender";
+import { passedPersonCheck } from "@/lib/turnstile";
 
 // One way in for email, in two steps: the address first, then either the
 // password (we know you) or a name and a new password (we don't). Nobody
@@ -123,6 +125,13 @@ export async function emailAuthAction(_prev: AuthState, formData: FormData): Pro
 
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) {
       return { error: t.errors.emailTakenSignIn };
+    }
+    // Cloudflare's "are you a person?" (src/lib/turnstile.ts). Last of the
+    // checks, as each answer from it works once: a mistake above shouldn't
+    // use it up.
+    const ip = (await headers()).get("cf-connecting-ip");
+    if (!(await passedPersonCheck(String(formData.get("cf-turnstile-response") ?? ""), ip))) {
+      return { error: t.errors.personCheck };
     }
 
     // Proof the address is theirs: a code goes to it, and there's no way

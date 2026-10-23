@@ -13,6 +13,7 @@ import {
 } from "@/app/(auth)/actions";
 import { useT } from "@/i18n/client";
 import PickOne from "@/components/PickOne";
+import PersonCheck from "@/components/PersonCheck";
 import { GENDERS, GENDER_EMOJI, isGender, type Gender } from "@/lib/gender";
 import { fill, rich } from "@/i18n/format";
 
@@ -64,6 +65,7 @@ function submitWith(dispatch: (data: FormData) => void) {
 export default function SignIn({
   providers,
   canEmail,
+  personCheck = null,
   startWithEmail = false,
   error: outsideError,
   next = "/",
@@ -72,6 +74,9 @@ export default function SignIn({
   // Whether this site can send email, which is what decides how a
   // forgotten password gets reset.
   canEmail: boolean;
+  // Cloudflare Turnstile's site key, when the "are you a person?" check
+  // on joining is switched on (see src/lib/turnstile.ts).
+  personCheck?: string | null;
   // Straight to the email box, for the /login page when email is the
   // only way in anyway: one fewer tap to get to the thing you came for.
   startWithEmail?: boolean;
@@ -508,6 +513,7 @@ export default function SignIn({
           </span>
         </label>
       )}
+      {creating && personCheck && <PersonCheck siteKey={personCheck} resetOn={state} />}
       <button type="submit" disabled={submitting} className="pill-btn pill-black">
         {submitting && <Spinner />}
         {creating ? t.signIn.createAccount : t.signIn.signIn}

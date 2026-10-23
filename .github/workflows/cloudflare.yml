@@ -54,6 +54,8 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
+          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: |
           # No session key anywhere yet (the first deploy): make one.
           if [ -z "$SESSION_SECRET" ]; then
@@ -77,7 +79,8 @@ jobs:
           SECRETS="$RUNNER_TEMP/secrets.json"
           node -e '
             const names = ["TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN", "SESSION_SECRET", "RESEND_API_KEY", "EMAIL_FROM",
-              "APP_STORE_URL", "GOOGLE_PLAY_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APPLE_CLIENT_ID"];
+              "APP_STORE_URL", "GOOGLE_PLAY_URL", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "APPLE_CLIENT_ID",
+              "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"];
             const set = Object.fromEntries(names.filter((n) => process.env[n]).map((n) => [n, process.env[n]]));
             require("fs").writeFileSync(process.argv[1], JSON.stringify(set), { mode: 0o600 });
             console.log("Secrets sent:", Object.keys(set).join(", ") || "none");

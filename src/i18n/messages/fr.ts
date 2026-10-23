@@ -321,6 +321,7 @@ const fr: Messages = {
     checkDayTime: "Vérifie le jour et l'heure.",
     checkDistance: "Indique la distance en km, comme 5 ou 7,5.",
     pickGender: "Choisis Homme, Femme ou T-Rex.",
+    personCheck: "Impossible de vérifier que tu es une personne. Réessaie.",
     notForYou: "Tu ne peux pas rejoindre celle-ci.",
     meetupCancelled: "Cette sortie est annulée.",
     meetupStarted: "Cette sortie a commencé.",

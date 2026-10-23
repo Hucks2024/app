@@ -2,6 +2,7 @@ import { getPrisma } from "@/lib/db";
 import { enabledProviders } from "@/lib/oauth";
 import { liveMeetup } from "@/lib/meetups";
 import { canSendEmail } from "@/lib/email";
+import { turnstileSiteKey } from "@/lib/turnstile";
 import Logo from "@/components/Logo";
 import SignIn from "@/components/SignIn";
 import StoreBadges from "@/components/StoreBadges";
@@ -63,6 +64,7 @@ export default async function Welcome({
         <SignIn
           providers={enabledProviders()}
           canEmail={canSendEmail()}
+          personCheck={turnstileSiteKey()}
           startWithEmail={startWithEmail}
           error={error}
           next={next}
