@@ -12,7 +12,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { callNative } from "@/lib/native";
 import { emojiFor } from "@/lib/categories";
 import { BRAND } from "@/components/Logo";
-import { useFormatWhen } from "@/components/LocalTime";
+import { clockTime, useFormatWhen, useTimePrefs } from "@/components/LocalTime";
 import Avatar from "@/components/Avatar";
 import { countdown, useNow } from "@/components/MeetupList";
 import { TicketHead } from "@/components/Ticket";
@@ -31,16 +31,17 @@ import type { Messages } from "@/i18n/messages/en";
 // Tailwind can't reach markup handed over as a raw string, and can't do
 // the keyframes either.
 //
-// The pin says what it is and how many are going. Pace and
-// duration used to hang underneath every pin as well; they belong in the
-// list, where there's room to read them, rather than on a map where eight
-// of them at once is just noise.
+// The pin says what it is and how many are going, and with Today picked,
+// what time it starts, on a tag at its top. Pace and duration used to hang
+// underneath every pin as well; they belong in the list, where there's
+// room to read them, rather than on a map where eight of them at once is
+// just noise.
 // Big enough to spot at a glance and hit with a thumb; must match .map-pin
 // in globals.css.
 const PIN_W = 39;
 const PIN_H = 55;
 
-function emojiIcon(emoji: string, going: number) {
+function emojiIcon(emoji: string, going: number, time: string | null = null) {
   // A flat fill, so nothing here depends on a <defs> id. The gradient this
   // replaced needed one copy per marker with a unique id, or whichever
   // marker Leaflet unmounted first took the definition down and left the
@@ -53,10 +54,11 @@ function emojiIcon(emoji: string, going: number) {
   // How many are going, the host included. Nothing on the logged-out map,
   // where that's members-only and comes through as 0.
   const count = going > 0 ? `<span class="map-pin-count">${going}</span>` : "";
+  const clock = time ? `<span class="map-pin-time">${time.replace(/[&<>"']/g, "")}</span>` : "";
   const html =
     `<div class="map-pin">` +
     `${svg}<span class="map-pin-emoji">${emoji.replace(/[&<>"']/g, "")}</span>` +
-    `${count}</div>`;
+    `${count}${clock}</div>`;
 
   return L.divIcon({
     html,
@@ -598,8 +600,12 @@ export default function ActivitiesMap({
   post,
   onLocated,
   full = false,
+  showTimes = false,
 }: {
   activities: MapActivity[];
+  // Each pin's start time on a tag at its top: with Today picked, when
+  // the time is what tells them apart.
+  showTimes?: boolean;
   // The members' full-screen map: edge to edge, no card around it.
   full?: boolean;
   // Told where the viewer is when "Near me" finds them, so the list can
@@ -626,13 +632,15 @@ export default function ActivitiesMap({
     return () => cancelAnimationFrame(id);
   }, []);
 
+  const prefs = useTimePrefs();
   const icons = useMemo(() => {
     const map = new Map<string, L.DivIcon>();
     for (const a of activities) {
-      map.set(a.id, emojiIcon(emojiFor(a), a.joinedCount));
+      const time = showTimes && a.startsAt ? clockTime(new Date(a.startsAt), prefs) : null;
+      map.set(a.id, emojiIcon(emojiFor(a), a.joinedCount, time));
     }
     return map;
-  }, [activities]);
+  }, [activities, showTimes, prefs]);
 
   // An empty map is still a map. It used to be replaced wholesale by a
   // card saying there was nothing on, which made a quiet week look like a
