@@ -8,6 +8,8 @@ let fails = 0;
 const ok = (label, pass, extra = "") => {
   if (!pass) fails++;
   console.log(`${pass ? "PASS" : "FAIL"}  ${label}${extra ? "  " + extra : ""}`);
+  // A failure as a GitHub note too, readable without the full log.
+  if (!pass) console.log(`::error::${label}${extra ? "  " + extra : ""}`.replace(/\r?\n/g, " "));
 };
 const get = (path, ua = UA) => fetch(BASE + path, { redirect: "manual", headers: { "User-Agent": ua } });
 
@@ -47,6 +49,10 @@ for (let i = 0; i < 5; i++) {
 console.log(`  front page took ${times.join(", ")} ms`);
 
 // The map, in a real browser.
+process.on("uncaughtException", (e) => {
+  console.log(`::error::Crashed: ${String(e?.message ?? e).split("\n")[0].slice(0, 300)}`);
+  process.exit(1);
+});
 const b = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const p = await (await b.newContext({ userAgent: UA, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
 const errors = [];
