@@ -1292,25 +1292,59 @@ body:has(.map-screen) {
   }
 }
 
-/* "Near me", bottom right, in thumb reach, above the List button's row. */
+/* Post, List and Near me in one row along the bottom, in thumb reach:
+   Near me on the right, Post on the left dressed the same (.locate-btn),
+   their middles level with List's (bottom 26px, 48 high). */
 .locate-float {
   position: absolute;
   right: 12px;
-  bottom: 84px;
+  bottom: 28px;
 }
-
-/* "+ Post", bottom left, level with Near me and dressed the same
-   (.locate-btn): a pair either side of the map. */
 .post-float {
   position: absolute;
   left: 12px;
-  bottom: 84px;
+  bottom: 28px;
   z-index: 1003;
 }
-/* On a computer the + and - sit in that corner: Post goes above them. */
+/* The map's ⓘ, out of their way: up above Near me. */
+.map-screen .leaflet-control-attribution.map-credits {
+  margin-bottom: 84px;
+}
+/* On a computer the + and - sit bottom left: up above Post. */
 @media (min-width: 640px) {
-  .post-float {
-    bottom: 108px;
+  .map-screen .leaflet-container .leaflet-control-zoom.leaflet-bar {
+    margin-bottom: 84px;
+  }
+}
+/* A small phone: the three a little tighter, so they fit side by side. */
+@media (max-width: 380px) {
+  .map-screen .locate-btn {
+    gap: 4px;
+    padding: 0 11px 0 8px;
+    font-size: 15px;
+  }
+  .map-screen .view-toggle {
+    gap: 6px;
+    padding: 0 14px;
+    font-size: 16px;
+  }
+}
+@media (max-width: 340px) {
+  .map-screen .locate-btn,
+  .map-screen .view-toggle {
+    font-size: 14px;
+  }
+  .map-screen .locate-btn {
+    padding: 0 9px 0 7px;
+  }
+  .map-screen .view-toggle {
+    padding: 0 12px;
+  }
+  .map-screen .locate-float {
+    right: 8px;
+  }
+  .map-screen .post-float {
+    left: 8px;
   }
 }
 
