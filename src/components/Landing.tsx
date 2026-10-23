@@ -6,6 +6,7 @@ import type { MapActivity } from "@/components/ActivitiesMap";
 import { getT } from "@/i18n/server";
 import LanguagePicker from "@/components/LanguagePicker";
 import { CAN_PICK_LANGUAGE } from "@/i18n/config";
+import { SITE } from "@/lib/site";
 
 // Anonymous visitors get a real map (so there's something to see, and a
 // reason to sign up) but not real precision: jitter each pin by up to
@@ -67,6 +68,29 @@ export default async function Landing() {
 
   return (
     <div>
+      {/* Who this is, for Google: the name to show for the site (and the
+          other ways people write it), the address, and the logo. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: SITE.name,
+              alternateName: ["PackMates", SITE.domain],
+              url: `${SITE.home}/`,
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: SITE.name,
+              url: `${SITE.home}/`,
+              logo: `${SITE.home}/icon-512.png`,
+            },
+          ]),
+        }}
+      />
       {/* The same meetups, so the number up top and the pins below agree. */}
       <Welcome count={activities.length} />
 

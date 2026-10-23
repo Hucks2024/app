@@ -15,18 +15,21 @@ import { I18nProvider } from "@/i18n/client";
 const openSans = Open_Sans({ subsets: ["latin"], variable: "--font-open-sans" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE.url),
+  metadataBase: new URL(SITE.home),
   title: { default: `${SITE.name} · ${SITE.tagline}`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   openGraph: {
     title: `${SITE.name} · ${SITE.tagline}`,
     description: SITE.description,
-    url: SITE.url,
+    url: SITE.home,
     siteName: SITE.name,
     type: "website",
+    // The picture a shared link shows (public/og.png, 1200 x 630).
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${SITE.name}: find your people` }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
+    images: ["/og.png"],
     title: `${SITE.name} · ${SITE.tagline}`,
     description: SITE.description,
   },

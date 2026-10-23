@@ -20,12 +20,14 @@ ok("front page opens", home.status === 200, String(home.status));
 ok("...served by Cloudflare", home.headers.get("x-opennext") === "1" && /cloudflare/i.test(home.headers.get("server") ?? ""), home.headers.get("server"));
 const apex = await fetch("https://packmates.live/terms?x=1", { redirect: "manual", headers: { "User-Agent": UA } });
 ok("packmates.live goes to www", apex.status === 308 && apex.headers.get("location") === "https://www.packmates.live/terms?x=1", `${apex.status} ${apex.headers.get("location")}`);
-ok("...and it's the app", html.includes("A free map of meetups"));
+ok("...and it's the app", html.includes("free map of meetups"));
+ok("...with its name and logo for Google", html.includes('"@type":"WebSite","name":"Packmates"'));
+ok("...and the one address it's filed under", html.includes('<link rel="canonical" href="https://www.packmates.live"/>'));
 ok("...with Sign up at the top", html.includes(">Sign up</a>"));
 ok("...with the new heading", html.includes("find your people<"));
 ok("...with no tracking script added by Cloudflare", !html.includes("cloudflareinsights"));
 ok("...with the security rules", (home.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"));
-for (const path of ["/terms", "/privacy", "/info", "/login", "/robots.txt", "/manifest.webmanifest"]) {
+for (const path of ["/terms", "/privacy", "/info", "/login", "/robots.txt", "/manifest.webmanifest", "/sitemap.xml", "/og.png"]) {
   const r = await get(path);
   ok(`${path} opens`, r.status === 200, String(r.status));
 }

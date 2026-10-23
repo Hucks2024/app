@@ -10,7 +10,7 @@ import LanguagePicker from "@/components/LanguagePicker";
 import { CAN_PICK_LANGUAGE } from "@/i18n/config";
 
 export async function generateMetadata() {
-  return { title: (await getT()).common.info };
+  return { title: (await getT()).common.info, alternates: { canonical: "/info" } };
 }
 
 // Info (it used to be called Help), for when someone wants it, rather than a tour they have to sit

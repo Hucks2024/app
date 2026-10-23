@@ -23,6 +23,13 @@ export const SITE = {
   // Who it's made for: a recommendation shown around the site, not a
   // rule. Anyone the minimum age or over can still join.
   recommendedAges: "18-35",
+  // Where the site actually answers (packmates.live sends people on to
+  // it): the address search engines and link previews are given, so
+  // Google files every page under the one address.
+  home: "https://www.packmates.live",
   tagline: "We all belong in a pack… mate",
-  description: "We all belong in a pack… mate. A free map of meetups for 18-35s: paint, walk, run, coffee, anything.",
+  // What Google shows under the name, and link previews: what it is, in
+  // the words people search with.
+  description:
+    "Packmates is a free map of meetups for 18-35s: walks, runs, coffee, painting and more. Pick one, turn up, make new friends.",
 };
