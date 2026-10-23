@@ -58,7 +58,12 @@ const p = await (await b.newContext({ userAgent: UA, viewport: { width: 390, hei
 const errors = [];
 let tiles = 0;
 p.on("pageerror", (e) => errors.push(e.message.slice(0, 200)));
-p.on("console", (m) => { if (/Content Security Policy|Refused to/i.test(m.text())) errors.push(m.text().slice(0, 200)); });
+// Not from inside Cloudflare's person check box: its frame has rules of
+// its own, and logs it when they stop one of its own probes.
+p.on("console", (m) => {
+  if (m.location()?.url?.startsWith("https://challenges.cloudflare.com/") || /challenges\.cloudflare\.com/.test(m.text())) return;
+  if (/Content Security Policy|Refused to/i.test(m.text())) errors.push(m.text().slice(0, 200));
+});
 p.on("response", (r) => { if (r.url().includes("tiles.openfreemap.org") && r.ok()) tiles++; });
 await p.goto(BASE + "/", { waitUntil: "load" });
 await p.waitForTimeout(12000);
