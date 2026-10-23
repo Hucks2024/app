@@ -113,10 +113,10 @@ body {
 /* How many are going, centred just under the emoji, on the narrowing
    part of the drop (the white disc ends 33px down and the drop is still
    about 27px wide there). */
-/* With Today picked: the start time on a tag at the top of the pin, the
-   number going at the bottom turned inside out: white with black writing
-   and a black edge. Wider than the pin for a 12-hour clock, so it hangs
-   over both sides. */
+/* When, on a tag at the top of the pin: the start time if it's today,
+   or how many days off ("2 days"). The number going at the bottom turned
+   inside out: white with black writing and a black edge. Wider than the
+   pin for a 12-hour clock, so it hangs over both sides. */
 .map-pin-time {
   position: absolute;
   top: -11px;

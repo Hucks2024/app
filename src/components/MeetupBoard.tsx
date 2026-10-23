@@ -152,7 +152,6 @@ export default function MeetupBoard({
           activities={filtered}
           post={post}
           full
-          showTimes={day === "TODAY"}
           onLocated={(lat, lng) => setHere({ lat, lng })}
         />
       )}
