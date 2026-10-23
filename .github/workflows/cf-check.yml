@@ -20,6 +20,17 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Check
         run: BASE="https://www.packmates.live" node check.mjs
+      # A made-up answer to Cloudflare's person check: with the right secret
+      # it says the answer is wrong ("invalid-input-response"); with a wrong
+      # secret, that the secret is. Prints only Cloudflare's codes.
+      - name: Person check secret
+        if: always()
+        env:
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        run: |
+          curl -s -X POST https://challenges.cloudflare.com/turnstile/v0/siteverify \
+            --data-urlencode "secret=$TURNSTILE_SECRET_KEY" -d "response=made-up" \
+            | node -e 'let s="";process.stdin.on("data",(c)=>(s+=c)).on("end",()=>{const codes=JSON.parse(s)["error-codes"]||[];console.log("Cloudflare says:",codes.join(", "));process.exit(codes.includes("invalid-input-response")&&!codes.some((c)=>/secret/.test(c))?0:1);})'
       - name: Email records as a zone file
         run: node zone.mjs
       - name: What Cloudflare's name servers would answer

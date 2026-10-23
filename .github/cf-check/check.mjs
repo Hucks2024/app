@@ -62,6 +62,18 @@ await p.goto(BASE + "/login", { waitUntil: "load" });
 const email = p.getByRole("button", { name: /Continue with email/ });
 if (await email.isVisible()) await email.click();
 ok("sign in screen works", await p.locator("#signin-email").isVisible());
+// Joining's "are you a person?" (Cloudflare Turnstile, src/lib/turnstile.ts):
+// switched on, and Cloudflare happy to show it on this site. A made-up
+// address goes as far as the join form and no further, so no account is
+// made and nothing is sent.
+let challenge = 0;
+p.on("request", (r) => { if (r.url().startsWith("https://challenges.cloudflare.com/")) challenge++; });
+await p.locator("#signin-email").fill(`check-${Date.now()}@example.com`);
+await p.getByRole("button", { name: "Continue" }).click();
+await p.locator("#signin-name").waitFor({ timeout: 15000 });
+await p.waitForTimeout(8000);
+ok("join form loads Cloudflare's person check", challenge > 0, `${challenge} requests`);
+ok("...and its answer box is in the form", (await p.locator('form input[name="cf-turnstile-response"]').count()) === 1);
 ok("no page errors", errors.length === 0, JSON.stringify(errors));
 await b.close();
 console.log(fails ? `${fails} FAILED` : "ALL PASSED");
