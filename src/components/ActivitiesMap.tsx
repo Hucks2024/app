@@ -491,6 +491,7 @@ function KeepCardsClear() {
       const over = [
         ...document.querySelectorAll(".map-overlay-top, .view-toggle"),
         ...map.getContainer().querySelectorAll(".leaflet-control, .locate-btn"),
+        ...document.querySelectorAll(".post-float"),
       ];
       for (const o of over) {
         const r = o.getBoundingClientRect();

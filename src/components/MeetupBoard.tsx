@@ -224,6 +224,27 @@ export default function MeetupBoard({
         )}
       </div>
 
+      {/* Post, bottom left, opposite Near me: on the map, where people
+          think "there's nothing near me, I'll start one". Somebody who
+          can't post yet finds out how on the page it goes to. */}
+      {view === "map" && (
+        <Link href="/activities/new" className="post-float">
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {t.common.post}
+        </Link>
+      )}
+
       <button
         type="button"
         onClick={() => setView(view === "map" ? "list" : "map")}
